@@ -11,8 +11,9 @@ Scaffold only. Build order is in [`tasks/`](tasks/):
 1. [NBA data and projections](tasks/01-nba-data-and-projections.md), no Yahoo needed
 2. [Yahoo league state](tasks/02-yahoo-league-state.md), with a paste fallback if the API stays blocked
 3. [Matchup odds](tasks/03-matchup-odds.md)
+4. [Official injury report feed](tasks/04-injury-feed.md), no Yahoo needed; can run alongside task 1
 
-Later: week planner and FAAB bids, opponent and trade models, phone alerts.
+Later: week planner and FAAB bids, opponent and trade models, news alerts beyond the injury report.
 
 Rules for coding agents: [`AGENTS.md`](AGENTS.md).
 
