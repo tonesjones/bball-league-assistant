@@ -1,0 +1,21 @@
+{
+  "draftLabCommit": "8af24bc6de3e0d6e95ba48532c287eb80ab373c1",
+  "files": [
+    "player-pool.js",
+    "player-data.js",
+    "player-averages.js",
+    "playoff-data.js"
+  ],
+  "season": "2025–26",
+  "perGameSource": "https://hashtagbasketball.com/fantasy-basketball-rankings",
+  "perGameCaptured": "2026-10-02",
+  "playoffScheduleChecked": "2026-09-12",
+  "playoffScheduleSource": "https://hashtagbasketball.com/nba-fantasy-schedule",
+  "counts": {
+    "players": 605,
+    "withPerGame": 587,
+    "withPositions": 275,
+    "withMpg": 253
+  },
+  "notes": "Last season's priors only. Dropped on purpose: ADP, rank, cv z-scores, roleDelta, vacated usage, INJ badges."
+}
