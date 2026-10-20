@@ -49,9 +49,13 @@ export function normalCdf(z) {
   return z > 0 ? 1 - tail : tail;
 }
 
-export function needs(mine, opponent, phi = DEFAULT_PHI) {
+export function needs(mine, opponent, phi = DEFAULT_PHI, { shootingKnown = true } = {}) {
   const byCategory = {};
   for (const c of CATEGORIES) {
+    if (!shootingKnown && (c === 'FG%' || c === 'FT%')) {
+      byCategory[c] = { mine: null, opponent: null, margin: null, spread: null, pWin: null, label: 'unknown' };
+      continue;
+    }
     let variance;
     if (c === 'FG%' || c === 'FT%') {
       const key = c === 'FG%' ? 'fga' : 'fta';
@@ -66,5 +70,5 @@ export function needs(mine, opponent, phi = DEFAULT_PHI) {
     const label = pWin >= 0.25 && pWin <= 0.75 ? 'close' : pWin > 0.9 ? 'safe' : pWin < 0.1 ? 'lost' : 'lean';
     byCategory[c] = { mine: mine.totals[c], opponent: opponent.totals[c], margin, spread, pWin, label };
   }
-  return { categories: byCategory, expectedCategories: Object.values(byCategory).reduce((sum, c) => sum + c.pWin, 0) };
+  return { categories: byCategory, expectedCategories: Object.values(byCategory).reduce((sum, c) => sum + (c.pWin ?? 0), 0) };
 }

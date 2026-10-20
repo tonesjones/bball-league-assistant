@@ -18,14 +18,22 @@ export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
   return [fromDate, clears, addsFrom].sort().at(-1);
 }
 
-// The live matchup page shows banked FG% and FT% but not the makes and attempts behind them.
-const shootingWithoutAttempts = ({ totals, volume }) => ['mine', 'opponent'].some((side) =>
-  [['FG%', 'fga'], ['FT%', 'fta']].some(([c, attempts]) => totals?.[side]?.[c] != null && volume?.[side]?.[attempts] == null));
-
 export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
   fromDate = tomorrow(snapshot.asOf), addsFrom = fromDate, top = 10, phi,
-  seasonMargin = 0, protectRank = 120, poolSize = 150 } = {}) {
+  seasonMargin = 0, protectRank = 120, poolSize = 150, volumeStatus = {} } = {}) {
   const window = { start: snapshot.matchup.start, end: snapshot.matchup.end };
+  const banked = fromDate > window.start;
+  const shootingVolume = Object.fromEntries(['mine', 'opponent'].map((side) => [side,
+    !banked ? { status: 'matched', reason: 'no banked days' }
+      : !['fgm', 'fga', 'ftm', 'fta'].every((k) => Number.isFinite(snapshot.matchup.volume?.[side]?.[k]))
+        ? { ...volumeStatus[side], status: 'unknown', reason: volumeStatus[side]?.reason ?? 'banked makes and attempts unavailable' }
+        : volumeStatus[side] ?? { status: 'reported' }]));
+  const unknownVolume = Object.entries(shootingVolume).filter(([, v]) => v.status === 'unknown');
+  const scoring = { shootingKnown: !unknownVolume.length };
+  const shootingNotes = unknownVolume.length
+    ? [`FG% and FT% are not scored: ${unknownVolume.map(([side, v]) => `${side}: ${v.reason}`).join('; ')}.`]
+    : banked && Object.values(shootingVolume).some((v) => v.status === 'matched')
+      ? ['Banked shooting volume was rebuilt from game logs and matched Yahoo totals.'] : [];
   const unscored = [], priorByName = new Map(priors.map((p) => [p.name, p]));
   const values = seasonValues(priors, { poolSize });
   const match = (players, where) => players.map((p) => {
@@ -43,7 +51,7 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
   const project = (players, side, swap) => projectTeam(players, snapshot.matchup.totals?.[side],
     snapshot.matchup.volume?.[side], snapshot.settings, schedule, fromDate, window.end, swap);
   const mine = project(roster, 'mine'), opponent = project(opponentRoster, 'opponent');
-  const baseline = needs(mine, opponent, phi), pairs = [];
+  const baseline = needs(mine, opponent, phi, scoring), pairs = [];
   const protectedSet = new Set(protectedNames.map(normalizeName));
   const guardrail = { seasonMargin, protectRank, poolSize, blockedPairs: 0,
     protectedByRank: roster.filter((p) => p.season && p.season.rank <= protectRank)
@@ -63,8 +71,8 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
         continue;
       }
       const after = project(roster, 'mine', { pickup, drop, start });
-      const result = needs(after, opponent, phi);
-      const changes = Object.fromEntries(Object.keys(baseline.categories).map((c) => [c, {
+      const result = needs(after, opponent, phi, scoring);
+      const changes = Object.fromEntries(Object.keys(baseline.categories).filter((c) => baseline.categories[c].label !== 'unknown').map((c) => [c, {
         total: after.totals[c] - mine.totals[c], pWin: result.categories[c].pWin - baseline.categories[c].pWin,
       }]));
       pairs.push({ pickup: describe(pickup, start), drop: describe(drop, fromDate), pickupStart: start,
@@ -82,11 +90,10 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
     pickups.add(pickup); drops.add(drop);
   }
   return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft,
-    notes: ['v0 ignores positional eligibility; games already played toward the cap are unknown.',
+    volumeStatus: shootingVolume,
+    notes: [...shootingNotes, 'v0 ignores positional eligibility; games already played toward the cap are unknown.',
       'Pairs are scored independently against the current roster.',
       'Season guardrail: never drops a player with no prior or ranked within the protect rank, and a pickup needs season value at least the drop value plus the margin.',
-      'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.',
-      ...(shootingWithoutAttempts(snapshot.matchup)
-        ? ['Banked FG% and FT% makes and attempts are not on the live matchup page, so banked shooting is left out of the percentages.'] : [])],
+      'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
     baseline, suggestions, topPairs: pairs.slice(0, top), unscored, guardrail };
 }
