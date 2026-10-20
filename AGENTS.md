@@ -26,7 +26,7 @@ League facts:
 Carried over from Draft Lab's season manager. Treat them as tests, not suggestions:
 
 - Never suggest a drop without a named pickup who is better by the engine's own measure.
-- Never suggest dropping a player Tony marks as protected (`config/protected.json`).
+- Never suggest dropping a player Tony marks as protected (`local/protected.json`, git-ignored because it holds real names).
 - Never suggest picking up a player who is out or has no return timeline.
 - Every recommendation shows its numbers: Δ P(win this week), Δ P(title), and the as-of time of the data behind it.
 - FAAB: never bid more than the player's dollar value or the season pacing cap; never bid on a player available as a free agent.

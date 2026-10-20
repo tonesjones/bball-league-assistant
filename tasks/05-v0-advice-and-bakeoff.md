@@ -14,7 +14,8 @@ code-computed advice beats posting roster screenshots into a chatbot. See [`PLAN
 - `data/schedule-2026-27.json` and `data/ids.json` from Task 01.
 - `data/priors/players.json`: last season's per-game lines. A player with no prior gets no score
   and is listed as unscored, never ranked silently.
-- `config/protected.json`.
+- `local/protected.json` (git-ignored): `{"protected": ["Player Name", ...]}`. A missing file
+  means no protected players.
 
 ## Steps
 
@@ -174,6 +175,6 @@ player inside the top 120 shows up as a drop.
 Open:
 
 - Season value uses last season's per-game line only. No age, role change or injury news yet.
-- Tony's protected list goes in `config/protected.json`, which is committed. Real names there would
-  break the public-repo rule. A git-ignored override (for example `local/protected.json`) would fix
-  that.
+- ~~Tony's protected list was in committed `config/protected.json`.~~ Moved 2026-10-20 to git-ignored
+  `local/protected.json`. `npm run advise` prints how many names it read, and fails on a malformed
+  file.

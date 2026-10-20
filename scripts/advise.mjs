@@ -4,6 +4,23 @@ import { pathToFileURL } from 'node:url';
 import { advise } from '../src/engine/v0-advice.mjs';
 
 const readJson = async (file) => JSON.parse(await readFile(file, 'utf8'));
+const PROTECTED_FILE = 'local/protected.json';
+
+// Tony's protected names are private, so they live in git-ignored local/. No file means none.
+async function readProtected() {
+  let protection;
+  try {
+    protection = await readJson(PROTECTED_FILE);
+  } catch (err) {
+    if (err.code === 'ENOENT') return [];
+    throw new Error(`${PROTECTED_FILE}: ${err.message}`);
+  }
+  const names = protection?.protected;
+  if (!Array.isArray(names) || !names.every((n) => typeof n === 'string')) {
+    throw new Error(`${PROTECTED_FILE} must be {"protected": ["Player Name", ...]}`);
+  }
+  return names;
+}
 const number = (n) => n.toFixed(3);
 const signed = (n) => `${n >= 0 ? '+' : ''}${number(n)}`;
 
@@ -78,17 +95,18 @@ async function main(args) {
     snapshotPath = files[0]?.file;
     if (!snapshotPath) throw new Error('no local/snapshots/*.json snapshots found');
   }
-  const [snapshot, ids, priors, schedule, protection] = await Promise.all([
+  const [snapshot, ids, priors, schedule] = await Promise.all([
     snapshotPath, 'data/ids.json', 'data/priors/players.json', 'data/schedule-2026-27.json',
-    'config/protected.json',
   ].map(readJson));
-  const report = advise(snapshot, { ...options, ids, priors, schedule, protectedNames: protection.protected });
+  const protectedNames = await readProtected();
+  const report = advise(snapshot, { ...options, ids, priors, schedule, protectedNames });
   const text = formatAdvice(report);
   const output = path.join('local/advice', path.basename(snapshotPath));
   await mkdir(path.dirname(output), { recursive: true });
   await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
   console.log(text);
-  console.log(`\nJSON: ${output}`);
+  console.log(`\nProtected by Tony: ${protectedNames.length} (${PROTECTED_FILE})`);
+  console.log(`JSON: ${output}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

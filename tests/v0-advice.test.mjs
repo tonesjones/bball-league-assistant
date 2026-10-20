@@ -195,8 +195,7 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
   const f = fresh(); better(f);
   try {
     const files = { 'snapshot.json': f.snapshot, 'data/ids.json': f.ids, 'data/priors/players.json': f.priors,
-      'data/schedule-2026-27.json': f.schedule,
-      'config/protected.json': { protected: [] } };
+      'data/schedule-2026-27.json': f.schedule };
     for (const [name, value] of Object.entries(files)) {
       await mkdir(path.dirname(path.join(dir, name)), { recursive: true });
       await writeFile(path.join(dir, name), JSON.stringify(value));
@@ -217,6 +216,19 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     await writeFile(path.join(dir, 'local/snapshots/newest.json'), JSON.stringify(f.snapshot));
     const defaultOutput = execFileSync(process.execPath, [cli], { cwd: dir, encoding: 'utf8' });
     assert.match(defaultOutput, /newest.json/);
+    assert.match(output, /Protected by Tony: 0 \(local\/protected.json\)/);
+    const args = ['snapshot.json', '--from', '2026-10-22', '--margin', '-0.25', '--protect-rank', '0'];
+    const drop = report.topPairs[0].drop.name;
+    await writeFile(path.join(dir, 'local/protected.json'), JSON.stringify({ protected: [drop] }));
+    const protectedOutput = execFileSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8' });
+    assert.match(protectedOutput, /Protected by Tony: 1 /);
+    const protectedReport = JSON.parse(await readFile(path.join(dir, 'local/advice/snapshot.json'), 'utf8'));
+    assert.ok(protectedReport.topPairs.every((pair) => pair.drop.name !== drop));
+    for (const bad of ['{"protected": "x"}', '{"protected": [1]}', 'not json']) {
+      await writeFile(path.join(dir, 'local/protected.json'), bad);
+      assert.throws(() => execFileSync(process.execPath, [cli, ...args], { cwd: dir, stdio: 'pipe' }), /local\/protected.json/);
+    }
+    await rm(path.join(dir, 'local/protected.json'));
     for (const args of [['--from', '2026-02-30'], ['--top', '-1'], ['--margin', 'Infinity'], ['--margin', 'NaN'], ['--margin'], ['--protect-rank', '-1'], ['--protect-rank', '1.5']]) {
       assert.throws(() => execFileSync(process.execPath, [cli, ...args], { cwd: dir, stdio: 'pipe' }));
     }
