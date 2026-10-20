@@ -122,6 +122,12 @@ runs a hook that blocks Yahoo URLs outside the read-only list. Fetches run throu
 refresh is 8 pages. Checked live: a click and a blocked URL were refused, and the settings page
 still opened.
 
+**2026-10-19, parsers.** Task 02 steps 3 to 5 done: snapshot schema and `validate()`, one parser
+per page in `src/sources/yahoo-pages/`, synthetic fixtures, and `scripts/build-snapshot.mjs`. The
+real pre-season refresh builds a valid snapshot. Known gap: the transactions parser only handles
+an empty page, so the first refresh after a league move will fail until a real example is added
+(see the notes in Task 02). Next: Task 01 steps 2 and 3 (schedule and ID map), then Task 02 step 6.
+
 ## Open decisions
 
 - ~~Which pages the league read needs, and their URLs.~~ Settled 2026-10-19: 8 pages, listed with
