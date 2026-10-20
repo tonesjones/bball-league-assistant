@@ -161,3 +161,17 @@ test('validate lists every problem', () => {
     for (const part of ['asOf', 'settings is missing', 'team.roster', 'matchup.opponentRoster']) assert.match(err.message, new RegExp(part));
   }
 });
+
+test('free agents: status P is read, an unknown status code throws with the line', () => {
+  const fa = parseFreeAgents(page('fa-1').replace('Rico ValemontPlayer Note', 'Rico ValemontPPlayer Note'), 'fa-1');
+  assert.deepEqual(fa.find((p) => p.name === 'Rico Valemont').status, 'P');
+  assert.throws(
+    () => parseFreeAgents(page('fa-1').replace('Rico ValemontPlayer Note', 'Rico ValemontXPlayer Note'), 'fa-1'),
+    /fa-1: line \d+: unknown injury status code.*"Rico ValemontXPlayer Note"/,
+  );
+});
+
+test('player names: Jr./III suffixes and a status after a numeral still parse', () => {
+  const fa = parseFreeAgents(page('fa-1').replace('Kelly Oubreson Jr.QPlayer Note', 'Kelly Oubreson IIIQPlayer Note'), 'fa-1');
+  assert.equal(fa.find((p) => p.name === 'Kelly Oubreson III').status, 'Q');
+});
