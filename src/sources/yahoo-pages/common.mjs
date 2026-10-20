@@ -1,7 +1,7 @@
 // Shared helpers for the page parsers. Parsers are pure: text in, data out.
 
 export const SLOT_RE = /^(PG|SG|G|SF|PF|F|C|Util|BN|IL\+?|NA)$/;
-export const NAME_RE = /^(.+?)(INJ|GTD|DTD|SUSP|NA|O|Q)?(?:New Player Note|Player Note|No new player Notes)$/;
+export const NAME_RE = /^(.+?)(INJ|GTD|DTD|SUSP|NA|O|P|Q)?(?:New Player Note|Player Note|No new player Notes)$/;
 export const TEAMPOS_RE = /^([A-Z]{2,3}) - ([A-Z]{1,2}(?:,[A-Z]{1,2})*)$/;
 export const CATEGORIES = ['FG%', 'FT%', '3PM', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'TO'];
 
@@ -38,9 +38,11 @@ export function stopIndex(lines, from) {
 export function player(page, nameLine, teamLine, slot = null) {
   const m = NAME_RE.exec(nameLine.s);
   if (!m) throw fail(page, nameLine, 'expected a player name line');
+  const name = m[1].trim();
+  if (/[A-Z]$/.test(name) && !/ (II|III|IV|V)$/.test(name)) throw fail(page, nameLine, 'unknown injury status code after the player name');
   const t = TEAMPOS_RE.exec(teamLine?.s ?? '');
   if (!t) throw fail(page, teamLine ?? nameLine, 'expected "TEAM - POS,POS" after the player name');
-  return { name: m[1].trim(), nbaTeam: t[1], positions: t[2].split(','), status: m[2] ?? null, slot };
+  return { name, nbaTeam: t[1], positions: t[2].split(','), status: m[2] ?? null, slot };
 }
 
 // "-" becomes null.
