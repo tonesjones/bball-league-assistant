@@ -34,6 +34,9 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
     ? [`FG% and FT% are not scored: ${unknownVolume.map(([side, v]) => `${side}: ${v.reason}`).join('; ')}.`]
     : banked && Object.values(shootingVolume).some((v) => v.status === 'matched')
       ? ['Banked shooting volume was rebuilt from game logs and matched Yahoo totals.'] : [];
+  if (banked && Object.values(shootingVolume).some((v) => v.status === 'matched')) {
+    shootingNotes.push('Shooting volume assumes every open lineup slot was filled.');
+  }
   const unscored = [], priorByName = new Map(priors.map((p) => [p.name, p]));
   const values = seasonValues(priors, { poolSize });
   const match = (players, where) => players.map((p) => {

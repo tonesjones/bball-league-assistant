@@ -112,6 +112,7 @@ test('rebuilt volume is scored and reported, while pre-week missing volume still
   const rebuilt = run(f, { fromDate: '2026-10-22',
     volumeStatus: { mine: { status: 'matched' }, opponent: { status: 'matched' } } });
   assert.ok(rebuilt.notes.some((n) => /rebuilt from game logs/.test(n)));
+  assert.ok(rebuilt.notes.includes('Shooting volume assumes every open lineup slot was filled.'));
   assert.equal(rebuilt.baseline.categories['FG%'].label, 'close');
   assert.match(formatAdvice(rebuilt), /Shooting volume: mine: matched \| opponent: matched/);
   near(rebuilt.baseline.categories['FG%'].mine, 12 / 24);
