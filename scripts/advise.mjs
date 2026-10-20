@@ -18,6 +18,7 @@ export function formatAdvice(report) {
   const pairLines = (pair, i) => {
     lines.push(`${i + 1}. Pick up ${pair.pickup.name} (${pair.pickup.nbaTeam}, ${pair.pickup.status ?? 'healthy'}, ${pair.pickup.games} games from ${pair.pickupStart})`,
       `   Drop ${pair.drop.name} (${pair.drop.games} games left) | Score: ${signed(pair.score)} categories`);
+    lines.push(`   Season value: pickup ${signed(pair.pickup.seasonValue)} (#${pair.pickup.seasonRank}) vs drop ${signed(pair.drop.seasonValue)} (#${pair.drop.seasonRank})`);
     lines.push(`   ${Object.entries(pair.changes).map(([c, v]) => `${c}: total ${signed(v.total)}, P(win) ${signed(v.pWin)}`).join(' | ')}`);
   };
   report.suggestions.forEach(pairLines);
@@ -25,6 +26,14 @@ export function formatAdvice(report) {
   lines.push('', 'Top pairs before distinct pickup/drop filter:');
   report.topPairs.forEach(pairLines);
   if (!report.topPairs.length) lines.push('None.');
+  const g = report.guardrail;
+  lines.push('', 'Season guardrail:', `Margin: ${g.seasonMargin} | Protect rank: ${g.protectRank} | Blocked pairs: ${g.blockedPairs}`,
+    'Protected by rank:');
+  for (const p of g.protectedByRank) lines.push(`${p.name}: ${signed(p.value)} (#${p.rank})`);
+  if (!g.protectedByRank.length) lines.push('None.');
+  lines.push('No prior (protected, not in projection):');
+  for (const p of g.protectedNoPrior) lines.push(`${p.name} (${p.nbaTeam}): ${p.reason}`);
+  if (!g.protectedNoPrior.length) lines.push('None.');
   lines.push('', 'Unscored players:');
   for (const p of report.unscored) lines.push(`${p.name} (${p.nbaTeam}, ${p.where}): ${p.reason}`);
   if (!report.unscored.length) lines.push('None.');
@@ -44,7 +53,15 @@ async function main(args) {
     const arg = args[i];
     if (arg === '--from') options.fromDate = date(args[++i]);
     else if (arg === '--adds-from') options.addsFrom = date(args[++i]);
-    else if (arg === '--top') {
+    else if (arg === '--margin') {
+      const value = args[++i];
+      if (!value?.trim() || !Number.isFinite(Number(value))) throw new Error('--margin must be a finite number');
+      options.seasonMargin = Number(value);
+    } else if (arg === '--protect-rank') {
+      const value = args[++i];
+      if (!/^\d+$/.test(value ?? '') || !Number.isSafeInteger(Number(value))) throw new Error('--protect-rank must be a nonnegative integer');
+      options.protectRank = Number(value);
+    } else if (arg === '--top') {
       const value = args[++i];
       if (!/^\d+$/.test(value ?? '')) throw new Error('--top must be a nonnegative integer');
       options.top = Number(value);

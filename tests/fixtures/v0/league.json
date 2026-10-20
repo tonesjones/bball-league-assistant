@@ -118,6 +118,7 @@
       "team": "ZZZ",
       "mpg": 30,
       "perGame": {
+        "g": 70,
         "fgm": 5,
         "fga": 10,
         "ftm": 4,
@@ -136,6 +137,7 @@
       "team": "BBB",
       "mpg": 30,
       "perGame": {
+        "g": 70,
         "fgm": 5,
         "fga": 10,
         "ftm": 4,
@@ -154,6 +156,7 @@
       "team": "CCC",
       "mpg": 32,
       "perGame": {
+        "g": 70,
         "fgm": 5,
         "fga": 10,
         "ftm": 4,
