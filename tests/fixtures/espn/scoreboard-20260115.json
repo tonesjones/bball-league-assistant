@@ -1,0 +1,91 @@
+{
+ "events": [
+  {
+   "id": "401810433",
+   "date": "2026-01-15T19:00Z",
+   "status": {
+    "type": {
+     "name": "STATUS_FINAL"
+    }
+   },
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "19",
+        "abbreviation": "ORL"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "29",
+        "abbreviation": "MEM"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401810434",
+   "date": "2026-01-16T00:00Z",
+   "status": {
+    "type": {
+     "name": "STATUS_FINAL"
+    }
+   },
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "8",
+        "abbreviation": "DET"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "21",
+        "abbreviation": "PHX"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401810435",
+   "date": "2026-01-16T00:30Z",
+   "status": {
+    "type": {
+     "name": "STATUS_FINAL"
+    }
+   },
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "14",
+        "abbreviation": "MIA"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "2",
+        "abbreviation": "BOS"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

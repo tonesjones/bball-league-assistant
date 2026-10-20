@@ -9,6 +9,8 @@
   },
   "scripts": {
     "test": "node --test",
-    "import:draftlab": "node scripts/import-draftlab.mjs --from ../fantasy-basketball-mock-draft"
+    "import:draftlab": "node scripts/import-draftlab.mjs --from ../fantasy-basketball-mock-draft",
+    "fetch:gamelogs": "node scripts/fetch-gamelogs.mjs",
+    "bakeoff": "node scripts/bakeoff.mjs"
   }
 }

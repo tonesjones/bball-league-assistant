@@ -53,3 +53,8 @@ Rejected:
   headers. Could be read through the browser pane if ESPN breaks.
 - **balldontlie** (`api.balldontlie.io`): needs an API key (HTTP 401 without one), and the free
   tier is rate-limited.
+
+## NBA game logs
+
+- **What:** ESPN scoreboard and game summary box scores: `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=YYYYMMDD` and `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={eventId}`.
+- **Terms:** undocumented and unofficial. Personal, low-volume requests only; cache responses and back off on 429 and 5xx. Final game summaries are cached for a year.
