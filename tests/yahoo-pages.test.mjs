@@ -98,6 +98,7 @@ test('fixture pages build a snapshot that validates', () => {
   assert.equal(s.asOf, ASOF);
   assert.equal(s.team.addsUsedThisWeek, 0);
   assert.deepEqual(s.transactions, []);
+  assert.deepEqual([s.matchup.start, s.matchup.end], ['2026-10-27', '2026-11-01']);
   assert.deepEqual(s.freeAgents.map((p) => p.rank), [1, 2, 3, 4, 5, 6]);
   assert.equal(s.matchup.opponentName, 'Rim Runners');
   assert.doesNotThrow(() => validate(JSON.parse(JSON.stringify(s))));

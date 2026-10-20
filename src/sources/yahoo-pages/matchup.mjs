@@ -1,5 +1,6 @@
 import { load, fail, indexOf, stopIndex, player, num, SLOT_RE, NAME_RE, CATEGORIES } from './common.mjs';
 
+const DAY_RE = /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (\d{1,2}\/\d{1,2})$/;
 const HEADER = ['Team', 'FGM/A*', 'FG%', 'FTM/A*', 'FT%', '3PTM', 'PTS', 'REB', 'AST', 'ST', 'BLK', 'TO'];
 
 function ratio(page, line) {
@@ -33,6 +34,8 @@ export function parseMatchup(text, page = 'matchup') {
   HEADER.forEach((label, j) => {
     if (L[h + j]?.s !== label) throw fail(page, L[h + j] ?? L[h], `expected totals column "${label}"`);
   });
+  const days = L.slice(w, h).map((l) => DAY_RE.exec(l.s)?.[1]).filter(Boolean);
+  if (!days.length) throw fail(page, L[w], 'no day columns (like "Tue 10/20") after the week heading');
   const mine = totalsRow(page, L, h + HEADER.length);
   const opp = totalsRow(page, L, h + HEADER.length + 13);
 
@@ -68,6 +71,7 @@ export function parseMatchup(text, page = 'matchup') {
 
   return {
     week: Number(/\d+/.exec(L[w].s)[0]),
+    days,
     teamName: mine.name,
     opponentName: opp.name,
     totals: { mine: mine.totals, opponent: opp.totals },

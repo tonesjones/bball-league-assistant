@@ -115,20 +115,34 @@ at 0.98 barely moves.
 - No games left: every P(win) is 0, 0.5 or 1, and every swap scores 0.
 - The games cap stops counting games once the team reaches it.
 
-### Open questions for Tony
+### Decisions (Tony, 2026-10-19)
 
-1. Start counting remaining games from tomorrow, or include today when the refresh runs before tip-off?
-   Default: tomorrow. Yahoo locks a pickup's day, so an add made today usually plays from tomorrow.
-2. Should a pickup only count after Yahoo processes the move? FAAB waivers clear on a schedule. v0
-   assumes free agents play from tomorrow and waiver players from their `waiverClears` date.
+1. Remaining games count from the day after the snapshot (Los Angeles date).
+2. A pickup plays for Tony from the day Yahoo processes it: the later of tomorrow, the player's
+   waiver clear date, and `--adds-from`. The dropped player keeps his games before that day. Before
+   the season, Yahoo holds every add until Oct 21.
+3. The week's dates come from the matchup page's day columns (`matchup.start`, `matchup.end`).
+   Counting back from the playoff weeks doesn't work: Yahoo has longer weeks, so week 1 isn't
+   simply 7 days.
 
 ## Done when
 
-- [ ] Unit tests on a synthetic snapshot in `tests/fixtures/` cover: games left across a week
+- [x] Unit tests on a synthetic snapshot in `tests/fixtures/` cover: games left across a week
       boundary, a player who changed teams, FG%/FT% computed from makes and attempts, TO counted
       as fewer-is-better, and each guardrail.
-- [ ] `scripts/advise.mjs` runs on a real snapshot and every suggestion shows its numbers.
+- [x] `scripts/advise.mjs` runs on a real snapshot and every suggestion shows its numbers.
 - [ ] `docs/bakeoff-prompt.md` exists and has been used at least once.
 - [ ] `scripts/bakeoff.mjs score` runs on a synthetic log in `tests/fixtures/`.
 - [ ] Two full weeks of bakeoff logged, with the result and the gate decision written into
       `PLAN.md` under Status.
+
+## Notes from steps 1 to 5 (2026-10-19)
+
+Codex (Sol) wrote steps 1 to 5 from the design above. First run on the pre-season snapshot:
+
+- **v0 only sees this week.** It will drop one of Tony's core starters for a
+  pickup who adds a few rebounds over 6 days. Nothing yet weighs the rest of the season. Before
+  Tony acts on a suggestion, add a guardrail: only drop a player whose rest-of-season value from
+  the priors is below the pickup's, or within a margin Tony sets. Δ P(title) comes later.
+- Players with no prior (missed last season) don't count toward Tony's projection, so it runs
+  low. They're listed as unscored.

@@ -1,0 +1,171 @@
+{
+  "snapshot": {
+    "asOf": "2026-10-20T05:00:00Z",
+    "settings": {
+      "scoringType": "headone",
+      "rosterPositions": [
+        {
+          "slot": "Util",
+          "count": 2
+        },
+        {
+          "slot": "BN",
+          "count": 2
+        },
+        {
+          "slot": "IL+",
+          "count": 1
+        }
+      ],
+      "maxAddsPerWeek": 4,
+      "maxGamesPerWeek": null
+    },
+    "team": {
+      "addsUsedThisWeek": 0,
+      "roster": [
+        {
+          "name": "Alex Sample",
+          "nbaTeam": "AAA",
+          "status": null,
+          "slot": "Util"
+        }
+      ]
+    },
+    "matchup": {
+      "week": 1,
+      "start": "2026-10-20",
+      "end": "2026-11-01",
+      "totals": {
+        "mine": {},
+        "opponent": {}
+      },
+      "volume": {
+        "mine": {},
+        "opponent": {}
+      },
+      "opponentRoster": [
+        {
+          "name": "Blair Example",
+          "nbaTeam": "BBB",
+          "status": null,
+          "slot": "Util"
+        }
+      ]
+    },
+    "freeAgents": [
+      {
+        "name": "Casey Fiction",
+        "nbaTeam": "CCC",
+        "status": null,
+        "waiverClears": null
+      }
+    ]
+  },
+  "schedule": {
+    "games": [
+      {
+        "date": "2026-10-20",
+        "home": "AAA",
+        "away": "BBB"
+      },
+      {
+        "date": "2026-10-21",
+        "home": "CCC",
+        "away": "DDD"
+      },
+      {
+        "date": "2026-10-22",
+        "home": "AAA",
+        "away": "BBB"
+      },
+      {
+        "date": "2026-11-01",
+        "home": "AAA",
+        "away": "BBB"
+      },
+      {
+        "date": "2026-11-02",
+        "home": "AAA",
+        "away": "CCC"
+      }
+    ]
+  },
+  "ids": {
+    "players": [
+      {
+        "name": "Alex Sample",
+        "team": "AAA",
+        "espnId": "1",
+        "priorName": "Alex Old"
+      },
+      {
+        "name": "Blair Example",
+        "team": "BBB",
+        "espnId": "2",
+        "priorName": "Blair Old"
+      },
+      {
+        "name": "Casey Fiction",
+        "team": "CCC",
+        "espnId": "3",
+        "priorName": "Casey Old"
+      }
+    ]
+  },
+  "priors": [
+    {
+      "name": "Alex Old",
+      "team": "ZZZ",
+      "mpg": 30,
+      "perGame": {
+        "fgm": 5,
+        "fga": 10,
+        "ftm": 4,
+        "fta": 5,
+        "pts": 15,
+        "reb": 5,
+        "ast": 4,
+        "stl": 1,
+        "blk": 1,
+        "to": 2,
+        "fg3m": 1
+      }
+    },
+    {
+      "name": "Blair Old",
+      "team": "BBB",
+      "mpg": 30,
+      "perGame": {
+        "fgm": 5,
+        "fga": 10,
+        "ftm": 4,
+        "fta": 5,
+        "pts": 15,
+        "reb": 5,
+        "ast": 4,
+        "stl": 1,
+        "blk": 1,
+        "to": 2,
+        "fg3m": 1
+      }
+    },
+    {
+      "name": "Casey Old",
+      "team": "CCC",
+      "mpg": 32,
+      "perGame": {
+        "fgm": 5,
+        "fga": 10,
+        "ftm": 4,
+        "fta": 5,
+        "pts": 15,
+        "reb": 5,
+        "ast": 4,
+        "stl": 1,
+        "blk": 1,
+        "to": 2,
+        "fg3m": 1
+      }
+    }
+  ]
+}
