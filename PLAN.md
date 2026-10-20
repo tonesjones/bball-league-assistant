@@ -106,6 +106,11 @@ FAAB bid pricing, Δ P(title) from a season simulation, injury alerts
 
 Updated at the end of each session.
 
+**Checkpoint (2026-10-20).** Phase 0, step 3 of 4. League read, schedule and ID map, and v0 advice
+with the season guardrail are merged. Before the bakeoff can start: write
+`docs/bakeoff-prompt.md`, pick the chatbot, get Tony's OK on the advice output, and build the
+transactions parser once the league has a real move. Gate not yet run.
+
 **2026-10-19.** North star agreed. Scaffold only: Draft Lab priors in `data/priors/`, task specs,
 2 passing tests. Next: Phase 0, starting with the league read (Task 02) and the schedule.
 
@@ -133,6 +138,20 @@ an empty page, so the first refresh after a league move will fail until a real e
 Cup is set) and `data/ids.json`. The playoff-week check passes, and 123 of 126 players in the Yahoo
 snapshot map. Game logs and the bakeoff scripts are in a separate PR. Next: Task 05 v0 advice, from
 the needs design in that task file.
+
+**2026-10-20, v0 advice and guardrail.** Merged: NBA game logs and the bakeoff scoring script
+(#5), Yahoo status `P` with a hard failure on unknown status codes (#6), v0 add/drop advice that
+reads week dates from the matchup page (#7), and a season-value guardrail (#8). The first v0 run
+suggested 4 drops, and Tony judged all 4 bad: each swapped a core player for a streamer. The
+guardrail now protects the top 120 by season value and every roster player with no prior, and
+requires the pickup's season value to be at least the drop's plus `--margin`. On the same snapshot
+only one suggestion is left (a bench big ranked #161 for a pickup ranked #104), which Tony also
+called bad. PR #8 was written by Codex (Sol), reviewed by Claude and by Codex's reviewer, and
+passes 67 tests. The transactions page still had no moves, so its parser waits on branch
+`fix-transactions-parser`. Next: Tony reruns `npm run advise` and decides on `--margin` or
+protecting that player; move the protected list to a git-ignored `local/protected.json`; write
+`docs/bakeoff-prompt.md` and pick the chatbot; then start the 2-week bakeoff. Build the
+transactions parser when "retry transactions fetch" finds a real move.
 
 ## Open decisions
 
