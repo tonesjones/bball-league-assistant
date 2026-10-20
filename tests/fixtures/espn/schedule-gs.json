@@ -1,0 +1,158 @@
+{
+ "team": {
+  "id": "9",
+  "abbreviation": "GS"
+ },
+ "events": [
+  {
+   "id": "401909092",
+   "date": "2026-10-22T02:00Z",
+   "name": "Golden State Warriors at Los Angeles Lakers",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "13",
+        "abbreviation": "LAL"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "9",
+        "abbreviation": "GS"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401909850",
+   "date": "2026-10-24T02:00Z",
+   "name": "Memphis Grizzlies at Golden State Warriors",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "9",
+        "abbreviation": "GS"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "29",
+        "abbreviation": "MEM"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401909860",
+   "date": "2026-10-25T02:00Z",
+   "name": "Golden State Warriors at Phoenix Suns",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "21",
+        "abbreviation": "PHX"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "9",
+        "abbreviation": "GS"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401909876",
+   "date": "2026-10-27T02:00Z",
+   "name": "Golden State Warriors at Denver Nuggets",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "7",
+        "abbreviation": "DEN"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "9",
+        "abbreviation": "GS"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401909888",
+   "date": "2026-10-29T00:00Z",
+   "name": "Golden State Warriors at Minnesota Timberwolves",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "16",
+        "abbreviation": "MIN"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "9",
+        "abbreviation": "GS"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "401909285",
+   "date": "2026-10-31T02:00Z",
+   "name": "Los Angeles Lakers at Golden State Warriors",
+   "competitions": [
+    {
+     "competitors": [
+      {
+       "homeAway": "home",
+       "team": {
+        "id": "9",
+        "abbreviation": "GS"
+       }
+      },
+      {
+       "homeAway": "away",
+       "team": {
+        "id": "13",
+        "abbreviation": "LAL"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

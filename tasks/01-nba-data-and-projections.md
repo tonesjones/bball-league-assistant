@@ -27,7 +27,23 @@ For every NBA player, a per-game projection for each of the 9 categories with a 
 ## Done when
 
 - [ ] `docs/sources.md` names the source, its terms and rate limit.
-- [ ] Schedule check against `playoff-weeks.json` passes, or mismatches are listed and explained.
+- [x] Schedule check against `playoff-weeks.json` passes, or mismatches are listed and explained.
 - [ ] 95% or more of players with a 2025-26 line are matched in `data/ids.json`; the rest are listed.
 - [ ] Backtest on 2025-26: for each week from week 4 on, project each player's next-7-day category totals from games before that week. The model beats a "season average so far" baseline on mean absolute error in at least 7 of 9 categories. Results table in `docs/backtest-01.md`.
 - [ ] Unit tests cover the shrinkage formula, the name normalizer and the makes/attempts handling for FG% and FT%.
+
+## Notes from steps 2 and 3 (2026-10-19)
+
+- **Schedule:** `npm run fetch:schedule` wrote 1,200 games, 80 per team. The 2 missing games per team
+  are NBA Cup games ESPN hasn't scheduled yet. Re-fetch after the Cup group stage. The playoff-week
+  check (weeks 18 to 23) has no mismatches.
+- **Team codes:** Yahoo writes Washington as `WAS`; the priors use `WSH`. Code converts both ESPN
+  and prior codes with `standardCode()`, so the standard is Yahoo's.
+- **ID map:** `npm run build:ids` matched 462 of 605 priors (76%), short of the 95% target. The 143
+  unmatched priors aren't on any current ESPN roster: retired, unsigned or overseas, mostly
+  players with few games last season. That target counts the wrong set, so measure against the
+  players who matter instead. Against the pre-season Yahoo snapshot, 123 of 126 rostered and
+  free-agent players match (`npm run match:ids`). The matcher handles nicknames ("Cam" for
+  "Cameron") by last name plus a first-name prefix.
+- `data/ids.json` lists every player on a current ESPN roster. Re-run `build:ids` after trades
+  and signings.

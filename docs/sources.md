@@ -45,6 +45,8 @@ Notes from the first fetch:
   once, cache it in `local/cache/`, and re-fetch at most weekly. Back off on 429 and 5xx.
 - **ESPN team abbreviations** differ from the standard codes in places (`GS`, `SA`, `NY`, `NO`,
   `UTAH`, `WSH`). Map them to `GSW`, `SAS`, `NYK`, `NOP`, `UTA`, `WAS`.
+- **Roster endpoint:** `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{espnTeamId}/roster`.
+- Schedule dates are converted to the US Eastern calendar date of ESPN's UTC tip time.
 
 Rejected:
 
