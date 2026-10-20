@@ -7,9 +7,9 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { tomorrow } from '../src/engine/weeks.mjs';
 import { gamesLeft } from '../src/engine/games-left.mjs';
-import { needs, projectTeam } from '../src/engine/needs.mjs';
+import { needs, projectTeam, UNKNOWN_MPG } from '../src/engine/needs.mjs';
 import { advise, pickupStart } from '../src/engine/v0-advice.mjs';
-import { formatAdvice } from '../scripts/advise.mjs';
+import { formatAdvice, snapshotFreshness } from '../scripts/advise.mjs';
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url), 'utf8'));
 const fresh = () => structuredClone(fixture);
@@ -46,7 +46,60 @@ test('identical teams give 0.5 everywhere and equal swap scores zero', () => {
   const r = run(f);
   for (const c of Object.values(r.baseline.categories)) assert.equal(c.pWin, 0.5);
   assert.equal(r.topPairs[0].score, 0);
-  assert.deepEqual(r.suggestions, []);
+  assert.equal(r.decision.action, 'hold');
+});
+
+test('hold below the default threshold, move at the threshold, and retain the best pair with top zero', () => {
+  const f = fresh(); sameSchedule(f); f.priors[2].perGame.pts = 15.1;
+  const r = run(f);
+  assert.equal(r.holdBelow, 0.15);
+  assert.equal(r.decision.action, 'hold');
+  assert.ok(r.decision.best.score > 0 && r.decision.best.score < 0.15);
+  assert.match(r.decision.reason, /expected categories/);
+  assert.match(formatAdvice(r), /^Hold:/);
+  const move = run(f, { holdBelow: r.decision.best.score, top: 0 });
+  assert.equal(move.decision.action, 'move');
+  assert.deepEqual(move.topPairs, []);
+  assert.match(formatAdvice(move), /^Move: pick up Casey Fiction, drop Alex Sample\nUnknown games: mine 0 \| opponent 0/);
+  assert.match(move.notes.join(' '), /refresh the league and rerun/);
+  assert.doesNotMatch(move.notes.join(' '), /Pairs are scored independently|ignores positional eligibility/);
+  assert.equal(run(f, { holdBelow: 10 }).decision.action, 'hold');
+  assert.equal(run(fresh(), { protectedNames: ['Alex Sample'] }).decision.best, null);
+  for (const holdBelow of [-1, NaN, Infinity]) assert.throws(() => run(f, { holdBelow }), /holdBelow/);
+});
+
+test('no-prior starts consume slots and the cap, contribute zero, and are reported per side and pair', () => {
+  const f = fresh(); better(f);
+  f.snapshot.settings.rosterPositions[0].count = 1;
+  f.priors[0].mpg = UNKNOWN_MPG - 1;
+  f.priors[1].perGame = null;
+  const unknown = { name: 'Drew Placeholder', nbaTeam: 'AAA', positions: ['C'], slot: 'BN', prior: null };
+  f.snapshot.team.roster.push(unknown);
+  const r = run(f);
+  assert.equal(r.baseline.categories.PTS.mine, 0);
+  assert.equal(r.baseline.categories.PTS.opponent, 0);
+  assert.deepEqual(r.unknownGames, { mine: 3, opponent: 3 });
+  assert.equal(r.topPairs[0].unknownGames, 0);
+  const p = project(f, [scored(f), unknown]);
+  assert.equal(p.unknownGames, 3);
+  assert.equal(p.started.length, 3);
+  assert.equal(p.totals.PTS, 0);
+  f.snapshot.settings.maxGamesPerWeek = 1;
+  assert.equal(project(f, [unknown]).unknownGames, 1);
+  for (const slot of ['IL', 'IL+']) assert.equal(project(f, [{ ...unknown, slot }]).unknownGames, 0);
+  for (const status of ['O', 'INJ', 'SUSP', 'NA']) assert.equal(project(f, [{ ...unknown, status }]).unknownGames, 0);
+  assert.equal(project(f, [{ ...unknown, nbaTeam: 'ZZZ' }]).unknownGames, 0);
+});
+
+test('snapshot freshness uses a fixed clock, refuses old data, and permits an explicit stale override', () => {
+  const asOf = '2026-10-20T00:00:00Z', now = Date.parse('2026-10-20T12:00:00Z');
+  assert.deepEqual(snapshotFreshness(asOf, { now }), { ageHours: 12, maxAgeHours: 12, stale: false });
+  assert.throws(() => snapshotFreshness(asOf, { now: now + 3_600_000 }), /13.00 hours old/);
+  assert.deepEqual(snapshotFreshness(asOf, { now: now + 3_600_000, allowStale: true }),
+    { ageHours: 13, maxAgeHours: 12, stale: true });
+  assert.equal(snapshotFreshness(asOf, { now, maxAgeHours: 24 }).stale, false);
+  assert.throws(() => snapshotFreshness('bad', { now, allowStale: true }), /invalid snapshot/);
+  for (const maxAgeHours of [-1, Infinity, NaN]) assert.throws(() => snapshotFreshness(asOf, { now, maxAgeHours }), /max-age-hours/);
 });
 
 test('40 banked REB lead with one game left is safe; REB-only upgrade adds near zero', () => {
@@ -64,7 +117,7 @@ test('TO is fewer-is-better and additional TO lowers its win probability', () =>
   assert.ok(r.topPairs[0].changes.TO.total > 0);
   assert.ok(r.topPairs[0].changes.TO.pWin < 0);
   assert.ok(r.topPairs[0].score < 0);
-  assert.equal(r.suggestions.length, 0);
+  assert.equal(r.decision.action, 'hold');
 });
 
 test('FG/FT percentages use banked plus remaining makes and attempts, not averages', () => {
@@ -136,7 +189,7 @@ test('zero games left produces deterministic probabilities and zero swap scores'
   assert.equal(r.baseline.categories.PTS.pWin, 1);
   assert.equal(r.baseline.categories.TO.pWin, 0);
   assert.ok(r.topPairs.every((p) => p.score === 0));
-  assert.deepEqual(r.suggestions, []);
+  assert.equal(r.decision.action, 'hold');
 });
 
 test('daily starts use mpg, allow BN, exclude IL/IL+ and every blocked status', () => {
@@ -157,6 +210,7 @@ test('remaining games cap stops both teams and is reapplied after each swap', ()
   assert.equal(r.baseline.categories.PTS.opponent, 15);
   assert.equal(r.topPairs[0].changes.PTS.total, 45);
   assert.equal(project(f, [scored(f)]).started.length, 1);
+  assert.match(r.notes.join(' '), /cap ignores games already used/);
 });
 
 test('waivers delay pickup while the dropped player keeps earlier games', () => {
@@ -181,7 +235,7 @@ test('addsFrom and fromDate override pickup processing; drop keeps earlier start
 
 test('protected names are normalized before excluding drops', () => {
   const f = fresh(); better(f);
-  assert.equal(run(f).suggestions.length, 1);
+  assert.equal(run(f).decision.action, 'move');
   assert.deepEqual(run(f, { protectedNames: ['Álex Sample Jr.'] }).topPairs, []);
 });
 
@@ -209,23 +263,24 @@ test('unmapped, ambiguous, missing-prior and null-line players remain unscored a
   }
 });
 
-test('greedy distinct picks/drops respect adds left, null default, and zero floor', () => {
+test('one best move respects adds left, null default, and zero floor', () => {
   const f = fresh(); better(f);
   for (let i = 1; i <= 5; i++) {
-    const name = `Roster Fiction ${i}`, pickup = `Pickup Fiction ${i}`;
-    f.snapshot.team.roster.push({ ...f.snapshot.team.roster[0], name });
+    const pickup = `Pickup Fiction ${i}`;
     f.snapshot.freeAgents.push({ ...f.snapshot.freeAgents[0], name: pickup });
-    f.ids.players.push({ name, espnId: `r${i}`, priorName: 'Alex Old' }, { name: pickup, espnId: `p${i}`, priorName: 'Casey Old' });
+    f.ids.players.push({ name: pickup, espnId: `p${i}`, priorName: 'Casey Old' });
   }
-  f.snapshot.settings.rosterPositions[0].count = 8;
   for (const [max, used, expected] of [[4, 2, 2], [null, 0, 4], [2, 9, 0], [0, 0, 0]]) {
     f.snapshot.settings.maxAddsPerWeek = max; f.snapshot.team.addsUsedThisWeek = used;
     const r = run(f, { top: 100 });
-    assert.equal(r.suggestions.length, expected);
-    assert.equal(new Set(r.suggestions.map((p) => p.pickup.name)).size, expected);
-    assert.equal(new Set(r.suggestions.map((p) => p.drop.name)).size, expected);
-    assert.ok(r.suggestions.every((p) => p.score > 0));
-    assert.equal(r.suggestions[0]?.score, expected ? r.topPairs[0].score : undefined);
+    assert.equal(r.addsLeft, expected);
+    assert.equal(r.decision.action, expected ? 'move' : 'hold');
+    assert.equal('suggestions' in r, false);
+    if (expected) assert.deepEqual(r.decision.pair, r.topPairs[0]);
+    else {
+      assert.match(r.decision.reason, /No adds left/);
+      assert.deepEqual(r.decision.best, r.topPairs[0]);
+    }
   }
 });
 
@@ -250,23 +305,27 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
       await writeFile(path.join(dir, name), JSON.stringify(value));
     }
     const cli = fileURLToPath(new URL('../scripts/advise.mjs', import.meta.url));
-    const output = execFileSync(process.execPath, [cli, 'snapshot.json', '--from', '2026-10-22', '--adds-from', '2026-11-01', '--top', '1', '--margin', '-0.25', '--protect-rank', '0'], { cwd: dir, encoding: 'utf8' });
+    const output = execFileSync(process.execPath, [cli, 'snapshot.json', '--allow-stale', '--max-age-hours', '0', '--hold-below', '0.02', '--from', '2026-10-22', '--adds-from', '2026-11-01', '--top', '1', '--margin', '-0.25', '--protect-rank', '0'], { cwd: dir, encoding: 'utf8' });
     const report = JSON.parse(await readFile(path.join(dir, 'local/advice/snapshot.json'), 'utf8'));
     assert.equal(report.fromDate, '2026-10-22');
     assert.equal(report.topPairs.length, 1);
     assert.equal(report.topPairs[0].pickupStart, '2026-11-01');
     assert.equal(report.guardrail.seasonMargin, -0.25);
     assert.equal(report.guardrail.protectRank, 0);
+    assert.equal(report.holdBelow, 0.02);
+    assert.equal(report.freshness.stale, true);
+    assert.match(output, /^STALE:/);
+    assert.throws(() => execFileSync(process.execPath, [cli, 'snapshot.json', '--max-age-hours', '0'], { cwd: dir, stdio: 'pipe' }), /hours old/);
     assert.match(output, /Season value: pickup [+-][\d.]+ \(#\d+\) vs drop [+-][\d.]+ \(#\d+\)/);
     assert.match(output, /Season guardrail:/);
-    assert.match(output, /No prior \(protected, not in projection\):/);
+    assert.match(output, /No prior \(protected, starts counted as unknown games\):/);
     assert.ok(output.includes(formatAdvice(report)));
     await mkdir(path.join(dir, 'local/snapshots'), { recursive: true });
     await writeFile(path.join(dir, 'local/snapshots/newest.json'), JSON.stringify(f.snapshot));
-    const defaultOutput = execFileSync(process.execPath, [cli], { cwd: dir, encoding: 'utf8' });
+    const defaultOutput = execFileSync(process.execPath, [cli, '--allow-stale'], { cwd: dir, encoding: 'utf8' });
     assert.match(defaultOutput, /newest.json/);
     assert.match(output, /Protected by Tony: 0 \(local\/protected.json\)/);
-    const args = ['snapshot.json', '--from', '2026-10-22', '--margin', '-0.25', '--protect-rank', '0'];
+    const args = ['snapshot.json', '--allow-stale', '--from', '2026-10-22', '--margin', '-0.25', '--protect-rank', '0'];
     const drop = report.topPairs[0].drop.name;
     await writeFile(path.join(dir, 'local/protected.json'), JSON.stringify({ protected: [drop] }));
     const protectedOutput = execFileSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8' });
@@ -278,7 +337,7 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
       assert.throws(() => execFileSync(process.execPath, [cli, ...args], { cwd: dir, stdio: 'pipe' }), /local\/protected.json/);
     }
     await rm(path.join(dir, 'local/protected.json'));
-    for (const args of [['--from', '2026-02-30'], ['--top', '-1'], ['--margin', 'Infinity'], ['--margin', 'NaN'], ['--margin'], ['--protect-rank', '-1'], ['--protect-rank', '1.5']]) {
+    for (const args of [['--from', '2026-02-30'], ['--top', '-1'], ['--margin', 'Infinity'], ['--margin', 'NaN'], ['--margin'], ['--protect-rank', '-1'], ['--protect-rank', '1.5'], ['--hold-below', '-1'], ['--hold-below', 'NaN'], ['--hold-below'], ['--max-age-hours', '-1'], ['--max-age-hours', 'Infinity'], ['--max-age-hours']]) {
       assert.throws(() => execFileSync(process.execPath, [cli, ...args], { cwd: dir, stdio: 'pipe' }));
     }
   } finally {
@@ -294,9 +353,9 @@ test('a weekly upgrade with lower season value is blocked and counted once', () 
   f.snapshot.freeAgents[0].nbaTeam = 'BBB';
   f.snapshot.team.roster[0].nbaTeam = 'CCC';
   const unrestricted = run(f, { seasonMargin: -100 });
-  assert.ok(unrestricted.suggestions[0].score > 0);
+  assert.ok(unrestricted.decision.pair.score > 0);
   const r = run(f);
-  assert.deepEqual(r.suggestions, []);
+  assert.equal(r.decision.action, 'hold');
   assert.deepEqual(r.topPairs, []);
   assert.equal(r.guardrail.blockedPairs, 1);
 });
@@ -306,28 +365,28 @@ test('positive seasonMargin blocks a small upgrade; negative margin permits a sm
   f.priors[2].perGame.pts = 15.1;
   f.priors.push({ name: 'Marigold Anchor', perGame: { ...f.priors[0].perGame, pts: 100 } },
     { name: 'Nettle Anchor', perGame: { ...f.priors[0].perGame, pts: 0 } });
-  const pair = run(f).suggestions[0];
+  const pair = run(f, { holdBelow: 0 }).decision.pair;
   const gap = pair.pickup.seasonValue - pair.drop.seasonValue;
   assert.ok(gap > 0 && gap < 0.01);
   assert.equal(run(f, { seasonMargin: gap + 0.01 }).guardrail.blockedPairs, 1);
-  assert.equal(run(f, { seasonMargin: gap }).suggestions.length, 1);
+  assert.equal(run(f, { seasonMargin: gap, holdBelow: 0 }).decision.action, 'move');
   f.priors[2].perGame.pts = 14.9;
   f.snapshot.freeAgents[0].nbaTeam = 'BBB';
   f.snapshot.team.roster[0].nbaTeam = 'CCC';
-  const worse = run(f, { seasonMargin: -100 }).suggestions[0];
+  const worse = run(f, { seasonMargin: -100 }).decision.pair;
   const loss = worse.pickup.seasonValue - worse.drop.seasonValue;
   assert.ok(loss < 0);
-  assert.equal(run(f, { seasonMargin: loss - 0.01 }).suggestions.length, 1);
-  assert.equal(run(f, { seasonMargin: loss + 0.01 }).suggestions.length, 0);
+  assert.equal(run(f, { seasonMargin: loss - 0.01 }).decision.action, 'move');
+  assert.equal(run(f, { seasonMargin: loss + 0.01 }).decision.action, 'hold');
 });
 
 test('rank protection blocks a drop even for a better pickup', () => {
   const f = fresh(); better(f);
-  const pair = run(f).suggestions[0];
+  const pair = run(f).decision.pair;
   assert.ok(pair.pickup.seasonValue > pair.drop.seasonValue);
   assert.equal(pair.drop.seasonRank, 2);
   const r = run(f, { protectRank: 2 });
-  assert.deepEqual(r.suggestions, []);
+  assert.equal(r.decision.action, 'hold');
   assert.deepEqual(r.topPairs, []);
   assert.equal(r.guardrail.blockedPairs, 1);
   assert.deepEqual(r.guardrail.protectedByRank, [{ name: pair.drop.name, value: pair.drop.seasonValue, rank: 2 }]);
@@ -345,20 +404,20 @@ test('roster players without usable priors are protected and listed with lookup 
     if (failure === 'zero-games') f.priors[0].perGame.g = 0;
     const r = run(f);
     assert.deepEqual(r.topPairs, []);
-    assert.deepEqual(r.suggestions, []);
+    assert.equal(r.decision.action, 'hold');
     assert.equal(r.guardrail.blockedPairs, 1);
     assert.deepEqual(r.guardrail.protectedNoPrior, [{ name: 'Alex Sample', nbaTeam: 'AAA',
       reason: failure === 'ambiguous' ? 'ambiguous' : failure === 'unmapped' ? 'not found'
         : failure === 'zero-games' ? 'no games in prior' : 'no prior' }]);
-    assert.match(formatAdvice(r), /No prior \(protected, not in projection\):\nAlex Sample \(AAA\):/);
+    assert.match(formatAdvice(r), /No prior \(protected, starts counted as unknown games\):\nAlex Sample \(AAA\):/);
   }
 });
 
-test('suggestions and top pairs expose prior-name season values and ranks', () => {
+test('decision and top pairs expose prior-name season values and ranks', () => {
   const f = fresh(); better(f);
   const r = run(f);
   assert.equal(r.guardrail.poolSize, 150);
-  for (const pair of [...r.suggestions, ...r.topPairs]) {
+  for (const pair of [r.decision.pair, ...r.topPairs]) {
     for (const p of [pair.pickup, pair.drop]) {
       assert.ok(Number.isFinite(p.seasonValue));
       assert.ok(Number.isInteger(p.seasonRank));
