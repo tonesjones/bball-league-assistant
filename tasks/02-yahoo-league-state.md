@@ -1,45 +1,78 @@
 # Task 02: Yahoo league state
 
+Phase 0. See [`PLAN.md`](../PLAN.md).
+
 ## Goal
 
-A single, validated snapshot of league state that the engine reads, no matter how it was collected: Yahoo API, a pasted page, or (later) a bookmarklet.
+A single, validated snapshot of league state that the engine reads, built from Yahoo pages read on
+demand in a browser Tony is already signed in to. No Yahoo API, no pasting.
 
 ## Background
 
-Since 22 July 2026, Yahoo returns HTTP 403 "This application is not authorized to perform this action" on Fantasy endpoints for any app not approved through its access program ([apply](https://sports.yahoo.com/developer/access/); reports in [yfpy #84](https://github.com/uberfastman/yfpy/issues/84)). Draft Lab's app hits this. Approval is reported to take 2 to 7 weeks and sometimes needs a new app whose Client ID is sent back to Yahoo. Until it is approved, the API cannot be relied on.
+Since 22 July 2026, Yahoo returns HTTP 403 on Fantasy API endpoints for any app not approved
+through its access program, which needs an application, an email exchange and an NDA. Tony isn't
+pursuing it. Pasting pages by hand every day was the fallback, and it's too much effort. So an agent
+reads the pages instead, and code parses them.
 
-So the build order inside this task is: the paste loader first (step 5b), the API loader only once a probe passes (steps 1 to 3 and 5a).
+## How a refresh works
+
+1. Tony says "update league" in Claude Code.
+2. An agent (Haiku or Sonnet if a subagent can drive the browser tools, otherwise the main session)
+   opens each page below in the signed-in browser, reads its text with the browser's page-text
+   tool, and saves it unchanged to `local/raw/<YYYY-MM-DD-HHmm>/<page>.txt`. It doesn't interpret,
+   summarize or edit anything.
+3. `scripts/build-snapshot.mjs` parses the newest raw folder and writes
+   `local/snapshots/<timestamp>.json`.
+
+If Yahoo shows a sign-in page, the agent stops and tells Tony. It never signs in or enters
+credentials. One read per page per refresh: no loops, no retries faster than a minute apart.
+
+## Pages
+
+Record each page's URL pattern (with the league and team IDs as placeholders) in
+`docs/sources.md`. The real IDs go in `.env` (`YAHOO_LEAGUE_ID`, `YAHOO_TEAM_ID`).
+
+- **League settings**: categories, roster positions, max adds per week, games cap, playoff weeks,
+  scoring type. Read at setup and when the parser finds the settings missing.
+- **Tony's team**: roster with positions, status and slots.
+- **This week's matchup**: the opponent, both rosters, banked category totals.
+- **Free agents**: Yahoo's available-players list, as many pages as needed to cover the top 100
+  or so, with each player's team and status.
+- **Transactions**: adds, drops, trades, winning FAAB bids. Gives adds used this week and waiver
+  clear times.
+
+That's about 5 to 8 page reads per refresh.
 
 ## Steps
 
-1. **Auth (after approval).** `scripts/yahoo-auth.mjs` runs the OAuth 2.0 authorization-code flow once with the existing Yahoo app's client ID and secret from `.env` (`YAHOO_CLIENT_ID`, `YAHOO_CLIENT_SECRET`), requesting scope `fspt-r` only. It stores the refresh token in `local/yahoo-token.json`. Document in the task notes which redirect URI worked.
-2. **Probe.** `scripts/yahoo-probe.mjs` refreshes the token once, then calls each endpoint below 10 times, spaced at least 1 second apart, and writes status codes and error bodies to `local/probe-<timestamp>.json`. It prints a one-line pass/fail.
-    - league settings (categories, roster positions, max adds, max games, playoff weeks, scoring type)
-    - league standings and teams (including each team's FAAB balance)
-    - each team's roster for today
-    - this week's scoreboard (matchups and live category totals)
-    - league transactions (adds, drops, trades, winning FAAB bids)
-    - available players with status FA and with status W
-3. **If the probe fails** with 403 "not authorized", the app is not approved yet: record the date at the end of this file and stop work on the API loader. Any other error is a bug here.
-4. **Schema.** `src/sources/league-state.mjs` defines the snapshot: settings, teams (id, name, FAAB balance, adds used this week), rosters (player key, name, positions, status, slot), this week's matchup and banked category totals, transactions, free agents and waiver players with their clear dates. Include a `validate(snapshot)` function and an `asOf` timestamp on every snapshot.
-5. **Loaders.** All return the same schema:
-    - (a) `fromYahooApi()` for the API, once approved.
-    - (b) Paste loaders, built first. Tony selects all on a Yahoo page in his browser, copies, and pastes into `local/paste/<page>.txt`; `scripts/load-paste.mjs` parses whatever files are there:
-        - `rosters.txt`: each team's roster page, pasted one after another (once at setup, then only when a trade happens).
-        - `transactions.txt`: the league transactions page, which carries adds, drops, trades and winning FAAB bids. `fromPastedTransactions(text, previousSnapshot)` applies them to the last snapshot. Daily.
-        - `matchup.txt`: this week's matchup page, for the opponent and banked category totals. Daily during the week.
-        - `standings.txt`: standings, including FAAB balances if Yahoo shows them there; otherwise balances are derived as $100 minus winning bids from transactions.
-      Free agents are derived: every player in `data/ids.json` minus rostered players. Waiver status comes from drop times in transactions.
-6. **Fixtures.** Save one full real snapshot to `local/fixtures/` (git-ignored). Build a small synthetic snapshot with made-up names in `tests/fixtures/league-state.json` for tests.
-7. **ID map.** Add Yahoo player keys to `data/ids.json` by matching names and teams. List unmatched rostered or available players.
+1. **Fetch instructions.** Write the agent's steps in `docs/update-league.md`: page list, save
+   paths, the sign-in stop rule. Short enough for Haiku to follow without judgment calls.
+2. **First real fetch.** Run it once by hand, save the raw text in `local/raw/`, and confirm each
+   page's text contains what the parser needs. Note any page that loads data after the first render.
+3. **Schema.** `src/sources/league-state.mjs` defines the snapshot: settings, Tony's team (adds
+   used this week, FAAB balance), rosters (Tony's and the opponent's: name, team, positions,
+   status, slot), this week's matchup and banked category totals, free agents and waiver players
+   with clear times, transactions. Include `validate(snapshot)` and an `asOf` timestamp.
+4. **Parsers.** One per page in `src/sources/yahoo-pages/`, pure (text in, data out). Together they
+   build the snapshot. A page whose text doesn't match the expected layout throws with the page
+   name and the line that broke. Never a partial snapshot.
+5. **Fixtures.** Real raw text stays in `local/` (git-ignored). For tests, write synthetic page
+   texts with made-up names in `tests/fixtures/yahoo-pages/`, matching the real layout.
+6. **ID map.** Match every rostered and free-agent player to `data/ids.json` (Task 01) by
+   normalized name and team. List unmatched players.
 
 ## Done when
 
-- [ ] The paste loaders build a valid snapshot from real pasted pages (kept in `local/`), and from synthetic pastes with made-up names in `tests/fixtures/paste/` for tests.
-- [ ] Unrecognized paste formats fail loudly with the line that broke, never a partial snapshot.
-- [ ] After approval only: the probe passes, every call returning 200 across one full run, and `fromYahooApi()` and the paste loaders give the same snapshot for the same day.
-- [ ] `validate()` passes on the real snapshot and on the synthetic one, and rejects a snapshot with a missing roster or settings.
-- [ ] A replay test rebuilds this week's category totals from box scores (Task 01) for each team's started players and matches the Yahoo scoreboard within rounding.
-- [ ] The paste loader passes a test on a synthetic transactions page with an add, a drop, a FAAB claim and a trade.
-- [ ] Every rostered player in the league maps to a player in `data/ids.json`.
-- [ ] Nothing league-identifying is committed (`git grep` for the league ID and team names comes back empty).
+- [ ] `docs/update-league.md` exists, and a refresh following it produces raw text for every page.
+- [ ] Parsers build a valid snapshot from a real refresh (kept in `local/`) and from the synthetic
+      pages in `tests/fixtures/yahoo-pages/`.
+- [ ] A changed or unknown page layout fails loudly with the page and line, never a partial snapshot.
+- [ ] `validate()` passes on the real and synthetic snapshots, and rejects one with a missing
+      roster or settings.
+- [ ] Rosters and matchup totals in the snapshot match what the Yahoo app shows at the same time.
+- [ ] Every rostered player maps to `data/ids.json`, or is listed as unmatched.
+- [ ] Nothing league-identifying is committed (`git grep` for the league ID and team names comes
+      back empty).
+
+Later (Phase 1): a replay test that rebuilds this week's category totals from box scores (Task 01)
+and matches the Yahoo matchup within rounding.

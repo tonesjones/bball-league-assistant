@@ -1,19 +1,15 @@
 # bball-league-assistant
 
-An in-season assistant for one Yahoo H2H 9-category fantasy basketball league. It scores every move by how much it raises the chance of winning this week and the title, plans the week within the 4-add limit, prices FAAB bids against rivals, and sends one clear recommendation when news breaks. It only recommends: every move is made by hand in Yahoo.
+An in-season assistant for one Yahoo H2H 9-category fantasy basketball league. It suggests add/drop moves for the current week, with the numbers behind each one. It never makes a move. You make every move by hand in Yahoo.
 
-Plain Node scripts on a schedule do all the work. Nothing calls an LLM at runtime.
+League data comes from Yahoo pages read in a browser you're already signed in to, not from the Yahoo API. An LLM agent fetches the pages, and plain Node code computes every number.
+
+The first version has to beat a simple baseline: roster screenshots posted into a chatbot with a fixed prompt. Matchup odds, a web app and FAAB bids come only after that test passes.
 
 ## Status
 
-Scaffold only. Build order is in [`tasks/`](tasks/):
-
-1. [NBA data and projections](tasks/01-nba-data-and-projections.md), no Yahoo needed
-2. [Yahoo league state](tasks/02-yahoo-league-state.md): paste loaders first, the API once Yahoo approves access
-3. [Matchup odds](tasks/03-matchup-odds.md)
-4. [Official injury report feed](tasks/04-injury-feed.md), no Yahoo needed; can run alongside task 1
-
-Later: week planner and FAAB bids, opponent and trade models, news alerts beyond the injury report.
+Scaffold only. The plan, phases and how we'll know it works are in [`PLAN.md`](PLAN.md). Task specs
+are in [`tasks/`](tasks/).
 
 Rules for coding agents: [`AGENTS.md`](AGENTS.md).
 
@@ -22,7 +18,7 @@ Rules for coding agents: [`AGENTS.md`](AGENTS.md).
 Requires Node 20 or later.
 
 ```
-cp .env.example .env        # add the Yahoo app's client ID and secret
+cp .env.example .env        # add your league and team IDs
 npm test
 ```
 

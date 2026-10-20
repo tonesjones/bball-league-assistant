@@ -1,6 +1,7 @@
 # Task 04: Official injury report feed
 
-Independent of Yahoo. Can be built alongside Task 01.
+**Later, nice-to-have.** The Yahoo app already shows which of Tony's players are injured, so this
+waits until Phases 0 to 2 in [`PLAN.md`](../PLAN.md) are done. Independent of Yahoo.
 
 ## Goal
 
