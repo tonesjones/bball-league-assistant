@@ -14,6 +14,7 @@
     "build:ids": "node scripts/build-ids.mjs",
     "match:ids": "node scripts/match-ids.mjs",
     "fetch:gamelogs": "node scripts/fetch-gamelogs.mjs",
-    "bakeoff": "node scripts/bakeoff.mjs"
+    "bakeoff": "node scripts/bakeoff.mjs",
+    "advise": "node scripts/advise.mjs"
   }
 }

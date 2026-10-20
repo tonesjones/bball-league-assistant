@@ -10,6 +10,14 @@ export function countAdds(transactions, teamName) {
   return transactions.filter((t) => t.type === 'add' && t.team === teamName).length;
 }
 
+// Day columns are M/D. The year is asOf's, moved by one when the dates cross New Year.
+function isoDay(md, asOf) {
+  const [m, d] = md.split('/').map(Number);
+  const ref = new Date(asOf), refMonth = ref.getUTCMonth() + 1;
+  const year = ref.getUTCFullYear() + (m < refMonth - 6 ? 1 : m > refMonth + 6 ? -1 : 0);
+  return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
 // pages: { settings, team, matchup, transactions, 'fa-1': text, 'fa-2': text, ... }
 export function buildSnapshot(pages, asOf) {
   const missing = ['settings', 'team', 'matchup', 'transactions'].filter((k) => typeof pages[k] !== 'string');
@@ -34,6 +42,8 @@ export function buildSnapshot(pages, asOf) {
     team: { ...team, addsUsedThisWeek: countAdds(transactions, team.name) },
     matchup: {
       week: m.week,
+      start: isoDay(m.days[0], asOf),
+      end: isoDay(m.days.at(-1), asOf),
       opponentName: m.opponentName,
       totals: m.totals,
       volume: m.volume,

@@ -5,7 +5,7 @@
 //   settings: { scoringType, categories, rosterPositions: [{slot, count}], maxAddsPerWeek|null,
 //               maxGamesPerWeek|null, waiverType, playoffs: {teams, weeks, endsOn}, raw },
 //   team: { name, record: {wins, losses, ties}, faabBalance, addsUsedThisWeek, roster: [player] },
-//   matchup: { week, opponentName, totals: {mine, opponent}, volume: {mine, opponent},
+//   matchup: { week, start, end (YYYY-MM-DD), opponentName, totals: {mine, opponent}, volume: {mine, opponent},
 //              score: {mine, opponent}, opponentRoster: [player] },
 //   freeAgents: [{ rank, name, nbaTeam, positions, status, waiverClears|null }],
 //   transactions: []
@@ -69,6 +69,7 @@ export function validate(s) {
   if (!isObj(m)) need(false, 'matchup is missing');
   else {
     need(Number.isInteger(m.week), 'matchup.week is missing');
+    for (const k of ['start', 'end']) need(/^\d{4}-\d{2}-\d{2}$/.test(m[k] ?? ''), `matchup.${k} must be YYYY-MM-DD`);
     need(isStr(m.opponentName), 'matchup.opponentName is missing');
     for (const side of ['mine', 'opponent']) {
       const tot = m.totals?.[side];
