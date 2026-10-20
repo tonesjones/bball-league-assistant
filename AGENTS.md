@@ -28,7 +28,10 @@ Carried over from Draft Lab's season manager. Treat them as tests, not suggestio
 - Never suggest a drop without a named pickup who is better by the engine's own measure.
 - Never suggest dropping a player Tony marks as protected (`local/protected.json`, git-ignored because it holds real names).
 - Never suggest picking up a player who is out or has no return timeline.
-- Every recommendation shows its numbers: Δ P(win this week), Δ P(title), and the as-of time of the data behind it.
+- Every recommendation shows its numbers and the as-of time of the data behind it. In Phase 0 the numbers are approximate: the change in expected categories won and each category's change. Δ P(win this week) is required once matchup odds land (Task 03), and Δ P(title) once the season simulation does.
+- Recommend one move per refresh, or hold. Other moves were scored against the roster before that move, so rerun after it.
+- When an input a category depends on is unknown (for example this week's banked shooting volume), mark that category unknown and leave it out of the score. Never project it as zero.
+- Refuse a stale snapshot unless Tony overrides it, and say how old it is.
 - FAAB: never bid more than the player's dollar value or the season pacing cap; never bid on a player available as a free agent.
 
 ## How to work
