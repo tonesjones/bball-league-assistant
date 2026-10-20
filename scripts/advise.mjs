@@ -28,24 +28,39 @@ async function readProtected() {
 const number = (n) => n == null ? 'unknown' : n.toFixed(3);
 const signed = (n) => `${n >= 0 ? '+' : ''}${number(n)}`;
 
+export function snapshotFreshness(asOf, { maxAgeHours = 12, allowStale = false, now = Date.now() } = {}) {
+  const timestamp = Date.parse(asOf);
+  if (!Number.isFinite(timestamp)) throw new Error('invalid snapshot asOf');
+  if (!Number.isFinite(maxAgeHours) || maxAgeHours < 0) throw new Error('--max-age-hours must be a nonnegative finite number');
+  const ageHours = Math.max(0, (now - timestamp) / 3_600_000);
+  const stale = ageHours > maxAgeHours;
+  if (stale && !allowStale) throw new Error(`Snapshot is ${ageHours.toFixed(2)} hours old (maximum ${maxAgeHours}); refresh it or pass --allow-stale.`);
+  return { ageHours, maxAgeHours, stale };
+}
+
 export function formatAdvice(report) {
-  const lines = [`Snapshot: ${report.asOf}`, `Week ${report.week}: ${report.window.start} to ${report.window.end}`,
+  const d = report.decision;
+  const lines = [d.action === 'move' ? `Move: pick up ${d.pair.pickup.name}, drop ${d.pair.drop.name}` : `Hold: ${d.reason}`,
+    `Unknown games: mine ${report.unknownGames.mine} | opponent ${report.unknownGames.opponent}`, '',
+    `Snapshot: ${report.asOf}`, `Week ${report.week}: ${report.window.start} to ${report.window.end}`,
     `From: ${report.fromDate} | Adds from: ${report.addsFrom} | Adds left: ${report.addsLeft}`,
     `Shooting volume: ${Object.entries(report.volumeStatus).map(([side, v]) => `${side}: ${v.status}${v.reason ? ` (${v.reason})` : ''}${v.unmatched?.length ? `; unmatched: ${v.unmatched.join(', ')}` : ''}`).join(' | ')}`, '',
     'Category     Mine       Opponent   P(win)   Need'];
+  if (report.freshness?.stale) lines.unshift(`STALE: snapshot is ${report.freshness.ageHours.toFixed(2)} hours old (maximum ${report.freshness.maxAgeHours}).`, '');
   for (const [c, v] of Object.entries(report.baseline.categories)) {
     lines.push(`${c.padEnd(8)} ${number(v.mine).padStart(10)} ${number(v.opponent).padStart(10)} ${number(v.pWin).padStart(8)}   ${v.label}`);
   }
-  lines.push('', ...report.notes, '', 'Suggestions:');
+  lines.push('', ...report.notes, '', 'Decision details:');
   const pairLines = (pair, i) => {
     lines.push(`${i + 1}. Pick up ${pair.pickup.name} (${pair.pickup.nbaTeam}, ${pair.pickup.status ?? 'healthy'}, ${pair.pickup.games} games from ${pair.pickupStart})`,
       `   Drop ${pair.drop.name} (${pair.drop.games} games left) | Score: ${signed(pair.score)} categories`);
+    lines.push(`   Unknown games (mine after move): ${pair.unknownGames}`);
     lines.push(`   Season value: pickup ${signed(pair.pickup.seasonValue)} (#${pair.pickup.seasonRank}) vs drop ${signed(pair.drop.seasonValue)} (#${pair.drop.seasonRank})`);
     lines.push(`   ${Object.entries(pair.changes).map(([c, v]) => `${c}: total ${signed(v.total)}, P(win) ${signed(v.pWin)}`).join(' | ')}`);
   };
-  report.suggestions.forEach(pairLines);
-  if (!report.suggestions.length) lines.push('None.');
-  lines.push('', 'Top pairs before distinct pickup/drop filter:');
+  if (d.action === 'move') pairLines(d.pair, 0);
+  else lines.push(d.reason);
+  lines.push('', 'Top pairs (alternatives against the current roster):');
   report.topPairs.forEach(pairLines);
   if (!report.topPairs.length) lines.push('None.');
   const g = report.guardrail;
@@ -53,7 +68,7 @@ export function formatAdvice(report) {
     'Protected by rank:');
   for (const p of g.protectedByRank) lines.push(`${p.name}: ${signed(p.value)} (#${p.rank})`);
   if (!g.protectedByRank.length) lines.push('None.');
-  lines.push('No prior (protected, not in projection):');
+  lines.push('No prior (protected, starts counted as unknown games):');
   for (const p of g.protectedNoPrior) lines.push(`${p.name} (${p.nbaTeam}): ${p.reason}`);
   if (!g.protectedNoPrior.length) lines.push('None.');
   lines.push('', 'Unscored players:');
@@ -70,11 +85,18 @@ function date(value) {
 
 async function main(args) {
   let snapshotPath;
-  const options = {};
+  const options = {}, freshnessOptions = {};
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--from') options.fromDate = date(args[++i]);
     else if (arg === '--adds-from') options.addsFrom = date(args[++i]);
+    else if (arg === '--allow-stale') freshnessOptions.allowStale = true;
+    else if (arg === '--max-age-hours' || arg === '--hold-below') {
+      const value = args[++i];
+      if (!value?.trim() || !Number.isFinite(Number(value)) || Number(value) < 0) throw new Error(`${arg} must be a nonnegative finite number`);
+      if (arg === '--max-age-hours') freshnessOptions.maxAgeHours = Number(value);
+      else options.holdBelow = Number(value);
+    }
     else if (arg === '--margin') {
       const value = args[++i];
       if (!value?.trim() || !Number.isFinite(Number(value))) throw new Error('--margin must be a finite number');
@@ -100,8 +122,10 @@ async function main(args) {
     snapshotPath = files[0]?.file;
     if (!snapshotPath) throw new Error('no local/snapshots/*.json snapshots found');
   }
-  const [snapshot, ids, priors, schedule] = await Promise.all([
-    snapshotPath, 'data/ids.json', 'data/priors/players.json', 'data/schedule-2026-27.json',
+  const snapshot = await readJson(snapshotPath);
+  const freshness = snapshotFreshness(snapshot.asOf, freshnessOptions);
+  const [ids, priors, schedule] = await Promise.all([
+    'data/ids.json', 'data/priors/players.json', 'data/schedule-2026-27.json',
   ].map(readJson));
   const protectedNames = await readProtected();
   const fromDate = options.fromDate ?? tomorrow(snapshot.asOf);
@@ -123,7 +147,7 @@ async function main(args) {
       }
     }
   }
-  const report = advise(snapshot, { ...options, ids, priors, schedule, protectedNames });
+  const report = { ...advise(snapshot, { ...options, ids, priors, schedule, protectedNames }), freshness };
   const text = formatAdvice(report);
   const output = path.join('local/advice', path.basename(snapshotPath));
   await mkdir(path.dirname(output), { recursive: true });

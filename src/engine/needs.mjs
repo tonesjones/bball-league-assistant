@@ -4,6 +4,9 @@ import { addDays } from './weeks.mjs';
 export const STAT = { '3PM': 'fg3m', PTS: 'pts', REB: 'reb', AST: 'ast', STL: 'stl', BLK: 'blk', TO: 'to' };
 export const DEFAULT_PHI = { PTS: 4, REB: 1.5, AST: 1.5, '3PM': 1.5, STL: 1.2, BLK: 1.5, TO: 1.2 };
 export const BLOCKED = ['O', 'INJ', 'SUSP', 'NA'];
+export const UNKNOWN_MPG = 24;
+const priority = (p) => p.prior ? p.prior.mpg ?? 0 : UNKNOWN_MPG;
+const active = (slot) => !['BN', 'IL', 'IL+'].includes(slot);
 const KEYS = ['fgm', 'fga', 'ftm', 'fta', ...Object.values(STAT)];
 const empty = () => Object.fromEntries(KEYS.map((k) => [k, 0]));
 const categories = (line) => ({
@@ -12,13 +15,33 @@ const categories = (line) => ({
   'FT%': line.fta ? line.ftm / line.fta : 0,
 });
 
+export function assignLineup(players, slots) {
+  const positions = slots.filter((p) => active(p.slot)).flatMap((p) => Array(p.count).fill(p.slot));
+  const placed = Array(positions.length).fill(null);
+  const fits = (p, slot) => slot === 'Util' || (p.positions ?? []).some((pos) =>
+    pos === slot || slot === 'G' && ['PG', 'SG'].includes(pos) || slot === 'F' && ['SF', 'PF'].includes(pos));
+  const place = (player, seen) => {
+    for (let i = 0; i < positions.length; i++) {
+      if (seen.has(i) || !fits(player, positions[i])) continue;
+      seen.add(i);
+      if (!placed[i] || place(placed[i], seen)) {
+        placed[i] = player;
+        return true;
+      }
+    }
+    return false;
+  };
+  const selected = [...players].sort((a, b) => priority(b) - priority(a))
+    .filter((p) => place(p, new Set()));
+  return selected.map((player) => ({ player, slot: positions[placed.indexOf(player)] }));
+}
+
 // Roster entries carry their matched prior. A swap takes effect on its start date.
 export function projectTeam(roster, totals, volume, settings, schedule, fromDate, endDate, swap = null) {
   const remaining = empty(), banked = empty(), started = [];
+  let unknownGames = 0;
   for (const [c, k] of Object.entries(STAT)) banked[k] = totals?.[c] ?? 0;
   for (const k of ['fgm', 'fga', 'ftm', 'fta']) banked[k] = volume?.[k] ?? 0;
-  const slots = settings.rosterPositions.filter((p) => !['BN', 'IL', 'IL+'].includes(p.slot))
-    .reduce((sum, p) => sum + p.count, 0);
   const cap = settings.maxGamesPerWeek ?? Infinity;
   const teamsByDate = new Map();
   for (const g of schedule.games) {
@@ -28,17 +51,17 @@ export function projectTeam(roster, totals, volume, settings, schedule, fromDate
   for (let date = fromDate; date <= endDate && started.length < cap; date = addDays(date, 1)) {
     const players = swap && date >= swap.start
       ? roster.map((p) => p === swap.drop ? { ...swap.pickup, slot: 'BN' } : p) : roster;
-    const eligible = players.filter((p) => p.prior && !['IL', 'IL+'].includes(p.slot)
-      && !BLOCKED.includes(p.status) && teamsByDate.get(date)?.has(p.nbaTeam))
-      .sort((a, b) => (b.prior.mpg ?? 0) - (a.prior.mpg ?? 0));
-    for (const p of eligible.slice(0, slots)) {
+    const eligible = players.filter((p) => !['IL', 'IL+'].includes(p.slot)
+      && !BLOCKED.includes(p.status) && teamsByDate.get(date)?.has(p.nbaTeam));
+    for (const { player: p, slot } of assignLineup(eligible, settings.rosterPositions)) {
       if (started.length >= cap) break;
-      started.push({ name: p.name, date });
+      started.push({ name: p.name, date, slot });
+      if (!p.prior) { unknownGames++; continue; }
       for (const k of KEYS) remaining[k] += p.prior.perGame[k] ?? 0;
     }
   }
   const line = Object.fromEntries(KEYS.map((k) => [k, banked[k] + remaining[k]]));
-  return { totals: categories(line), line, remaining, started };
+  return { totals: categories(line), line, remaining, started, unknownGames };
 }
 
 export function normalCdf(z) {

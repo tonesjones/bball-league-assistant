@@ -20,7 +20,8 @@ export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
 
 export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
   fromDate = tomorrow(snapshot.asOf), addsFrom = fromDate, top = 10, phi,
-  seasonMargin = 0, protectRank = 120, poolSize = 150, volumeStatus = {} } = {}) {
+  seasonMargin = 0, protectRank = 120, poolSize = 150, volumeStatus = {}, holdBelow = 0.15 } = {}) {
+  if (!Number.isFinite(holdBelow) || holdBelow < 0) throw new Error('holdBelow must be a nonnegative finite number');
   const window = { start: snapshot.matchup.start, end: snapshot.matchup.end };
   const banked = fromDate > window.start;
   const shootingVolume = Object.fromEntries(['mine', 'opponent'].map((side) => [side,
@@ -79,24 +80,23 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
         total: after.totals[c] - mine.totals[c], pWin: result.categories[c].pWin - baseline.categories[c].pWin,
       }]));
       pairs.push({ pickup: describe(pickup, start), drop: describe(drop, fromDate), pickupStart: start,
-        changes, score: result.expectedCategories - baseline.expectedCategories });
+        unknownGames: after.unknownGames, changes, score: result.expectedCategories - baseline.expectedCategories });
     }
   }
   pairs.sort((a, b) => b.score - a.score);
   const addsLeft = Math.max(0, (snapshot.settings.maxAddsPerWeek ?? 4) - snapshot.team.addsUsedThisWeek);
-  const suggestions = [], pickups = new Set(), drops = new Set();
-  for (const pair of pairs) {
-    if (suggestions.length >= addsLeft) break;
-    const pickup = normalizeName(pair.pickup.name), drop = normalizeName(pair.drop.name);
-    if (pair.score <= 0 || pickups.has(pickup) || drops.has(drop)) continue;
-    suggestions.push(pair);
-    pickups.add(pickup); drops.add(drop);
-  }
+  const best = pairs[0] ?? null;
+  const decision = !addsLeft ? { action: 'hold', reason: 'No adds left this week.', best }
+    : !best ? { action: 'hold', reason: 'No eligible add/drop pairs.', best }
+      : best.score <= 0 || best.score < holdBelow
+        ? { action: 'hold', reason: `Best move gains ${best.score.toFixed(3)} expected categories; requires a positive gain of at least ${holdBelow}.`, best }
+        : { action: 'move', pair: best };
   return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft,
     volumeStatus: shootingVolume,
-    notes: [...shootingNotes, 'v0 ignores positional eligibility; games already played toward the cap are unknown.',
-      'Pairs are scored independently against the current roster.',
+    unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow,
+    notes: [...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
+      'After making the move, refresh the league and rerun; the other pairs were scored against the current roster.',
       'Season guardrail: never drops a player with no prior or ranked within the protect rank, and a pickup needs season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
-    baseline, suggestions, topPairs: pairs.slice(0, top), unscored, guardrail };
+    baseline, decision, topPairs: pairs.slice(0, top), unscored, guardrail };
 }
