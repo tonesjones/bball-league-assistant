@@ -115,10 +115,17 @@ written, and the first real fetch saved all 9 pages to `local/raw/`. Page URLs a
 `docs/sources.md`). Next: Task 02 steps 3 to 5 (schema, parsers, synthetic fixtures), then Task
 01 steps 2 and 3 (schedule and ID map).
 
+**2026-10-19, guardrails.** The league read is now read-only by enforcement, not only by
+instruction: `.claude/settings.json` denies the browser's click, type, form and script tools and
+runs a hook that blocks Yahoo URLs outside the read-only list. Fetches run through the
+`yahoo-reader` agent. The opponent page was dropped (the matchup page has both rosters), so a
+refresh is 8 pages. Checked live: a click and a blocked URL were refused, and the settings page
+still opened.
+
 ## Open decisions
 
-- ~~Which pages the league read needs, and their URLs.~~ Settled 2026-10-19: 9 pages, listed in
-  `docs/sources.md`.
+- ~~Which pages the league read needs, and their URLs.~~ Settled 2026-10-19: 8 pages, listed with
+  the reason for each in `docs/update-league.md` (the first fetch also read the opponent page).
 - ~~Whether a Haiku or Sonnet subagent can drive the browser tools.~~ Settled 2026-10-19: yes. A
   Haiku subagent (general-purpose agent, `model: haiku`) used the built-in browser pane's tools
   and fetched all 9 pages by following `docs/update-league.md` in about 2.5 minutes. It saves

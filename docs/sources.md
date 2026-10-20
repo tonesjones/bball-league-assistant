@@ -21,7 +21,7 @@ Base URL: `https://basketball.fantasysports.yahoo.com/nba`
 | Settings | `/{L}/settings` | Scoring type, roster positions, stat categories, max acquisitions per week, waiver type and time, playoff weeks, trade end date. A two-column `Setting<TAB>Value` table. |
 | Tony's team | `/{L}/{T}` | Record, this week's opponent, waiver (FAAB) budget, roster with slots, positions, status and stats. |
 | Matchup | `/{L}/matchup?mid1={T}` | Current week, category totals for both teams (live, and per day), both rosters' stats. |
-| Opponent | `/{L}/{OPP}` | The opponent's roster, same layout as Tony's team. |
+| Opponent | `/{L}/{OPP}` | The opponent's roster, same layout as Tony's team. Not read by default: the matchup page lists both rosters with slots. |
 | Free agents | `/{L}/players?status=A&pos=P&sort=AR&sdir=1&count={0,25,50,75}` | 25 available players per page, ranked, with team, positions, status and stats. Four pages cover the top 100. |
 | Transactions | `/{L}/transactions` | Adds, drops, trades and winning FAAB bids. Empty before the first move ("No recent transactions"). |
 
