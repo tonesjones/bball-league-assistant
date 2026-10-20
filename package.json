@@ -12,6 +12,8 @@
     "import:draftlab": "node scripts/import-draftlab.mjs --from ../fantasy-basketball-mock-draft",
     "fetch:schedule": "node scripts/fetch-schedule.mjs",
     "build:ids": "node scripts/build-ids.mjs",
-    "match:ids": "node scripts/match-ids.mjs"
+    "match:ids": "node scripts/match-ids.mjs",
+    "fetch:gamelogs": "node scripts/fetch-gamelogs.mjs",
+    "bakeoff": "node scripts/bakeoff.mjs"
   }
 }
