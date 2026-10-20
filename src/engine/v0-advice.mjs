@@ -2,6 +2,7 @@ import { findPlayer, normalizeName } from './names.mjs';
 import { tomorrow } from './weeks.mjs';
 import { gamesLeft } from './games-left.mjs';
 import { BLOCKED, projectTeam, needs } from './needs.mjs';
+import { seasonValues } from './season-value.mjs';
 
 export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
   let clears = fromDate;
@@ -18,14 +19,19 @@ export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
 }
 
 export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
-  fromDate = tomorrow(snapshot.asOf), addsFrom = fromDate, top = 10, phi } = {}) {
+  fromDate = tomorrow(snapshot.asOf), addsFrom = fromDate, top = 10, phi,
+  seasonMargin = 0, protectRank = 120, poolSize = 150 } = {}) {
   const window = { start: snapshot.matchup.start, end: snapshot.matchup.end };
   const unscored = [], priorByName = new Map(priors.map((p) => [p.name, p]));
+  const values = seasonValues(priors, { poolSize });
   const match = (players, where) => players.map((p) => {
     const { player, reason } = findPlayer(ids.players, p.name, p.nbaTeam);
     const prior = priorByName.get(player?.priorName);
-    if (!prior?.perGame) unscored.push({ ...p, where, reason: reason ?? 'no prior' });
-    return { ...p, espnId: player?.espnId ?? null, prior: prior?.perGame ? prior : null };
+    const season = values.get(player?.priorName);
+    const unscoredReason = reason ?? (prior?.perGame ? 'no games in prior' : 'no prior');
+    if (!season) unscored.push({ ...p, where, reason: unscoredReason });
+    return { ...p, espnId: player?.espnId ?? null, prior: season ? prior : null,
+      season: season ? { value: season.value, rank: season.rank } : null, unscoredReason };
   });
   const roster = match(snapshot.team.roster, 'roster');
   const opponentRoster = match(snapshot.matchup.opponentRoster, 'opponent');
@@ -35,11 +41,23 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
   const mine = project(roster, 'mine'), opponent = project(opponentRoster, 'opponent');
   const baseline = needs(mine, opponent, phi), pairs = [];
   const protectedSet = new Set(protectedNames.map(normalizeName));
+  const guardrail = { seasonMargin, protectRank, poolSize, blockedPairs: 0,
+    protectedByRank: roster.filter((p) => p.season && p.season.rank <= protectRank)
+      .map((p) => ({ name: p.name, ...p.season })).sort((a, b) => a.rank - b.rank),
+    protectedNoPrior: roster.filter((p) => !p.season)
+      .map((p) => ({ name: p.name, nbaTeam: p.nbaTeam, reason: p.unscoredReason })),
+  };
   const describe = (p, from) => ({ name: p.name, nbaTeam: p.nbaTeam, status: p.status ?? null,
-    espnId: p.espnId, games: gamesLeft(p, schedule, from, window.end) });
+    espnId: p.espnId, games: gamesLeft(p, schedule, from, window.end),
+    seasonValue: p.season.value, seasonRank: p.season.rank });
   for (const pickup of freeAgents.filter((p) => p.prior && !BLOCKED.includes(p.status))) {
     const start = pickupStart(pickup, fromDate, window, addsFrom);
-    for (const drop of roster.filter((p) => p.prior && !protectedSet.has(normalizeName(p.name)))) {
+    for (const drop of roster.filter((p) => !protectedSet.has(normalizeName(p.name)))) {
+      if (!drop.season || drop.season.rank <= protectRank
+        || pickup.season.value < drop.season.value + seasonMargin) {
+        guardrail.blockedPairs++;
+        continue;
+      }
       const after = project(roster, 'mine', { pickup, drop, start });
       const result = needs(after, opponent, phi);
       const changes = Object.fromEntries(Object.keys(baseline.categories).map((c) => [c, {
@@ -62,6 +80,7 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
   return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft,
     notes: ['v0 ignores positional eligibility; games already played toward the cap are unknown.',
       'Pairs are scored independently against the current roster.',
+      'Season guardrail: never drops a player with no prior or ranked within the protect rank, and a pickup needs season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
-    baseline, suggestions, topPairs: pairs.slice(0, top), unscored };
+    baseline, suggestions, topPairs: pairs.slice(0, top), unscored, guardrail };
 }

@@ -146,3 +146,34 @@ Codex (Sol) wrote steps 1 to 5 from the design above. First run on the pre-seaso
   the priors is below the pickup's, or within a margin Tony sets. Δ P(title) comes later.
 - Players with no prior (missed last season) don't count toward Tony's projection, so it runs
   low. They're listed as unscored.
+
+## Season-value guardrail (2026-10-20)
+
+Tony judged all 4 suggestions from the first run bad: each one dropped a core player for a streamer.
+Fix, built by Codex (Sol) and reviewed by Claude:
+
+- `src/engine/season-value.mjs` (pure) gives each prior a season value: per-game z-scores in the 9
+  categories against the top 150 players (two passes: rank on all players, then rescore against the
+  top 150). FG% and FT% count as makes minus attempts times the pool percentage. TO counts negative.
+  Positive values are scaled by `min(1, games / 70)`. Negative values aren't scaled, so missing games
+  can't make a poor player look better. Rank 1 is best.
+- `advise` drops a player only when all of these hold: he has a prior, he ranks outside the top
+  `protectRank` (default 120), and the pickup's season value is at least his plus `seasonMargin`
+  (default 0). Roster players with no prior are never dropped, never treated as 0, and listed under
+  "No prior (protected, not in projection)".
+- `npm run advise -- --margin <n> --protect-rank <n>` sets both. Each suggestion prints both
+  players' season values and ranks. A "Season guardrail" section lists the players protected by
+  rank and how many pairs were blocked.
+
+Rerun on the 2026-10-19 snapshot: 1,140 pairs blocked. Three of the four bad drops rank #8 to #96
+and are now protected. So are the three roster players with no prior. One suggestion is left, the
+same as the first run's #1: drop a bench big ranked #161 for a pickup ranked #104. Tony called that
+one bad too. If he still wants to keep that player, he marks him protected or raises `--margin`. No
+player inside the top 120 shows up as a drop.
+
+Open:
+
+- Season value uses last season's per-game line only. No age, role change or injury news yet.
+- Tony's protected list goes in `config/protected.json`, which is committed. Real names there would
+  break the public-repo rule. A git-ignored override (for example `local/protected.json`) would fix
+  that.

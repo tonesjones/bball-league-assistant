@@ -13,7 +13,7 @@ import { formatAdvice } from '../scripts/advise.mjs';
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url), 'utf8'));
 const fresh = () => structuredClone(fixture);
-const options = (f, extra = {}) => ({ ...f, ...extra });
+const options = (f, extra = {}) => ({ ...f, protectRank: 0, ...extra });
 const run = (f, extra) => advise(f.snapshot, options(f, extra));
 const near = (a, b, epsilon = 1e-9) => assert.ok(Math.abs(a - b) < epsilon, `${a} != ${b}`);
 const sameSchedule = (f) => { f.snapshot.freeAgents[0].nbaTeam = 'AAA'; };
@@ -60,7 +60,7 @@ test('40 banked REB lead with one game left is safe; REB-only upgrade adds near 
 
 test('TO is fewer-is-better and additional TO lowers its win probability', () => {
   const f = fresh(); sameSchedule(f); f.priors[2].perGame.to = 10;
-  const r = run(f);
+  const r = run(f, { seasonMargin: -100 });
   assert.ok(r.topPairs[0].changes.TO.total > 0);
   assert.ok(r.topPairs[0].changes.TO.pWin < 0);
   assert.ok(r.topPairs[0].score < 0);
@@ -74,7 +74,7 @@ test('FG/FT percentages use banked plus remaining makes and attempts, not averag
   near(p.totals['FT%'], 13 / 25);
   sameSchedule(f);
   Object.assign(f.priors[2].perGame, { fgm: 8, fga: 30, ftm: 5, fta: 20 });
-  const r = run(f);
+  const r = run(f, { seasonMargin: -100 });
   assert.ok(r.topPairs[0].changes['FG%'].total < 0);
   assert.ok(r.topPairs[0].changes['FG%'].pWin < 0);
   assert.ok(r.topPairs[0].changes['FT%'].total < 0);
@@ -202,17 +202,22 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
       await writeFile(path.join(dir, name), JSON.stringify(value));
     }
     const cli = fileURLToPath(new URL('../scripts/advise.mjs', import.meta.url));
-    const output = execFileSync(process.execPath, [cli, 'snapshot.json', '--from', '2026-10-22', '--adds-from', '2026-11-01', '--top', '1'], { cwd: dir, encoding: 'utf8' });
+    const output = execFileSync(process.execPath, [cli, 'snapshot.json', '--from', '2026-10-22', '--adds-from', '2026-11-01', '--top', '1', '--margin', '-0.25', '--protect-rank', '0'], { cwd: dir, encoding: 'utf8' });
     const report = JSON.parse(await readFile(path.join(dir, 'local/advice/snapshot.json'), 'utf8'));
     assert.equal(report.fromDate, '2026-10-22');
     assert.equal(report.topPairs.length, 1);
     assert.equal(report.topPairs[0].pickupStart, '2026-11-01');
+    assert.equal(report.guardrail.seasonMargin, -0.25);
+    assert.equal(report.guardrail.protectRank, 0);
+    assert.match(output, /Season value: pickup [+-][\d.]+ \(#\d+\) vs drop [+-][\d.]+ \(#\d+\)/);
+    assert.match(output, /Season guardrail:/);
+    assert.match(output, /No prior \(protected, not in projection\):/);
     assert.ok(output.includes(formatAdvice(report)));
     await mkdir(path.join(dir, 'local/snapshots'), { recursive: true });
     await writeFile(path.join(dir, 'local/snapshots/newest.json'), JSON.stringify(f.snapshot));
     const defaultOutput = execFileSync(process.execPath, [cli], { cwd: dir, encoding: 'utf8' });
     assert.match(defaultOutput, /newest.json/);
-    for (const args of [['--from', '2026-02-30'], ['--top', '-1']]) {
+    for (const args of [['--from', '2026-02-30'], ['--top', '-1'], ['--margin', 'Infinity'], ['--margin', 'NaN'], ['--margin'], ['--protect-rank', '-1'], ['--protect-rank', '1.5']]) {
       assert.throws(() => execFileSync(process.execPath, [cli, ...args], { cwd: dir, stdio: 'pipe' }));
     }
   } finally {
@@ -220,4 +225,83 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     assert.ok(path.resolve(dir).startsWith(path.resolve(tmpdir()) + path.sep));
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test('a weekly upgrade with lower season value is blocked and counted once', () => {
+  const f = fresh();
+  f.priors[2].perGame.pts = 14;
+  f.snapshot.freeAgents[0].nbaTeam = 'BBB';
+  f.snapshot.team.roster[0].nbaTeam = 'CCC';
+  const unrestricted = run(f, { seasonMargin: -100 });
+  assert.ok(unrestricted.suggestions[0].score > 0);
+  const r = run(f);
+  assert.deepEqual(r.suggestions, []);
+  assert.deepEqual(r.topPairs, []);
+  assert.equal(r.guardrail.blockedPairs, 1);
+});
+
+test('positive seasonMargin blocks a small upgrade; negative margin permits a small downgrade', () => {
+  const f = fresh(); sameSchedule(f);
+  f.priors[2].perGame.pts = 15.1;
+  f.priors.push({ name: 'Marigold Anchor', perGame: { ...f.priors[0].perGame, pts: 100 } },
+    { name: 'Nettle Anchor', perGame: { ...f.priors[0].perGame, pts: 0 } });
+  const pair = run(f).suggestions[0];
+  const gap = pair.pickup.seasonValue - pair.drop.seasonValue;
+  assert.ok(gap > 0 && gap < 0.01);
+  assert.equal(run(f, { seasonMargin: gap + 0.01 }).guardrail.blockedPairs, 1);
+  assert.equal(run(f, { seasonMargin: gap }).suggestions.length, 1);
+  f.priors[2].perGame.pts = 14.9;
+  f.snapshot.freeAgents[0].nbaTeam = 'BBB';
+  f.snapshot.team.roster[0].nbaTeam = 'CCC';
+  const worse = run(f, { seasonMargin: -100 }).suggestions[0];
+  const loss = worse.pickup.seasonValue - worse.drop.seasonValue;
+  assert.ok(loss < 0);
+  assert.equal(run(f, { seasonMargin: loss - 0.01 }).suggestions.length, 1);
+  assert.equal(run(f, { seasonMargin: loss + 0.01 }).suggestions.length, 0);
+});
+
+test('rank protection blocks a drop even for a better pickup', () => {
+  const f = fresh(); better(f);
+  const pair = run(f).suggestions[0];
+  assert.ok(pair.pickup.seasonValue > pair.drop.seasonValue);
+  assert.equal(pair.drop.seasonRank, 2);
+  const r = run(f, { protectRank: 2 });
+  assert.deepEqual(r.suggestions, []);
+  assert.deepEqual(r.topPairs, []);
+  assert.equal(r.guardrail.blockedPairs, 1);
+  assert.deepEqual(r.guardrail.protectedByRank, [{ name: pair.drop.name, value: pair.drop.seasonValue, rank: 2 }]);
+  assert.equal(advise(f.snapshot, f).guardrail.protectRank, 120);
+  assert.match(formatAdvice(r), /Alex Sample: [+-][\d.]+ \(#2\)/);
+});
+
+test('roster players without usable priors are protected and listed with lookup reasons', () => {
+  for (const failure of ['unmapped', 'ambiguous', 'missing', 'null', 'zero-games']) {
+    const f = fresh(); better(f);
+    if (failure === 'unmapped') f.ids.players.shift();
+    if (failure === 'ambiguous') f.ids.players.push({ ...f.ids.players[0] });
+    if (failure === 'missing') f.ids.players[0].priorName = null;
+    if (failure === 'null') f.priors[0].perGame = null;
+    if (failure === 'zero-games') f.priors[0].perGame.g = 0;
+    const r = run(f);
+    assert.deepEqual(r.topPairs, []);
+    assert.deepEqual(r.suggestions, []);
+    assert.equal(r.guardrail.blockedPairs, 1);
+    assert.deepEqual(r.guardrail.protectedNoPrior, [{ name: 'Alex Sample', nbaTeam: 'AAA',
+      reason: failure === 'ambiguous' ? 'ambiguous' : failure === 'unmapped' ? 'not found'
+        : failure === 'zero-games' ? 'no games in prior' : 'no prior' }]);
+    assert.match(formatAdvice(r), /No prior \(protected, not in projection\):\nAlex Sample \(AAA\):/);
+  }
+});
+
+test('suggestions and top pairs expose prior-name season values and ranks', () => {
+  const f = fresh(); better(f);
+  const r = run(f);
+  assert.equal(r.guardrail.poolSize, 150);
+  for (const pair of [...r.suggestions, ...r.topPairs]) {
+    for (const p of [pair.pickup, pair.drop]) {
+      assert.ok(Number.isFinite(p.seasonValue));
+      assert.ok(Number.isInteger(p.seasonRank));
+    }
+  }
+  assert.match(r.notes.join(' '), /Season guardrail/);
 });
