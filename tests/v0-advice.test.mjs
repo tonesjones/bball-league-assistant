@@ -80,10 +80,59 @@ test('FG/FT percentages use banked plus remaining makes and attempts, not averag
   assert.ok(r.topPairs[0].changes['FT%'].total < 0);
 });
 
+test('an unknown side removes both shooting categories from baseline and every pair score', () => {
+  for (const side of ['mine', 'opponent']) {
+    const f = fresh(); sameSchedule(f);
+    for (const team of ['mine', 'opponent']) f.snapshot.matchup.volume[team] = { fgm: 2, fga: 4, ftm: 4, fta: 8 };
+    f.snapshot.matchup.volume[side].fga = null;
+    Object.assign(f.priors[2].perGame, { fgm: 1, fga: 30, ftm: 1, fta: 30 });
+    const r = run(f, { fromDate: '2026-10-22', seasonMargin: -100,
+      volumeStatus: { [side]: { status: 'unknown', reason: 'no combination matches' } } });
+    for (const c of ['FG%', 'FT%']) {
+      assert.equal(r.baseline.categories[c].label, 'unknown');
+      assert.equal(r.baseline.categories[c].pWin, null);
+      assert.ok(r.topPairs.every((pair) => !(c in pair.changes)));
+    }
+    near(r.baseline.expectedCategories, 3.5);
+    assert.ok(r.topPairs.length > 0);
+    for (const pair of r.topPairs) near(pair.score, Object.values(pair.changes).reduce((sum, c) => sum + c.pWin, 0));
+    near(r.topPairs[0].score, 0);
+    assert.match(r.notes[0], /FG% and FT% are not scored:.*no combination matches/);
+    assert.match(formatAdvice(r), new RegExp(`${side}: unknown \\(no combination matches\\)`));
+    assert.match(formatAdvice(r), /FG%.*unknown/);
+  }
+});
+
+test('rebuilt volume is scored and reported, while pre-week missing volume still scores shooting', () => {
+  const f = fresh();
+  const r = run(f);
+  assert.equal(r.baseline.categories['FG%'].label, 'close');
+  assert.ok(!r.notes.some((n) => /not scored|rebuilt/.test(n)));
+  for (const side of ['mine', 'opponent']) f.snapshot.matchup.volume[side] = { fgm: 2, fga: 4, ftm: 4, fta: 8 };
+  const rebuilt = run(f, { fromDate: '2026-10-22',
+    volumeStatus: { mine: { status: 'matched' }, opponent: { status: 'matched' } } });
+  assert.ok(rebuilt.notes.some((n) => /rebuilt from game logs/.test(n)));
+  assert.ok(rebuilt.notes.includes('Shooting volume assumes every open lineup slot was filled.'));
+  assert.equal(rebuilt.baseline.categories['FG%'].label, 'close');
+  assert.match(formatAdvice(rebuilt), /Shooting volume: mine: matched \| opponent: matched/);
+  near(rebuilt.baseline.categories['FG%'].mine, 12 / 24);
+});
+
+test('volume status shows unmatched names for both matched and unknown results', () => {
+  const f = fresh();
+  f.snapshot.matchup.volume.mine = { fgm: 2, fga: 4, ftm: 4, fta: 8 };
+  const r = run(f, { fromDate: '2026-10-22', volumeStatus: {
+    mine: { status: 'matched', unmatched: ['Alex Sample'] },
+    opponent: { status: 'unknown', reason: 'no combination matches', unmatched: ['Blair Example'] },
+  } });
+  assert.match(formatAdvice(r), /mine: matched; unmatched: Alex Sample/);
+  assert.match(formatAdvice(r), /opponent: unknown \(no combination matches\); unmatched: Blair Example/);
+});
+
 test('zero games left produces deterministic probabilities and zero swap scores', () => {
   const f = fresh(); f.snapshot.matchup.totals.mine = { PTS: 3, TO: 2 };
   const r = run(f, { fromDate: '2026-11-02' });
-  for (const c of Object.values(r.baseline.categories)) assert.ok([0, 0.5, 1].includes(c.pWin));
+  for (const c of Object.values(r.baseline.categories)) assert.ok(c.label === 'unknown' || [0, 0.5, 1].includes(c.pWin));
   assert.equal(r.baseline.categories.PTS.pWin, 1);
   assert.equal(r.baseline.categories.TO.pWin, 0);
   assert.ok(r.topPairs.every((p) => p.score === 0));

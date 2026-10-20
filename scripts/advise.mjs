@@ -2,6 +2,10 @@ import { readFile, readdir, stat, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { advise } from '../src/engine/v0-advice.mjs';
+import { estimateVolume } from '../src/engine/shooting-volume.mjs';
+import { findPlayer } from '../src/engine/names.mjs';
+import { addDays, tomorrow } from '../src/engine/weeks.mjs';
+import { loadGameLogs } from '../src/sources/gamelogs.mjs';
 
 const readJson = async (file) => JSON.parse(await readFile(file, 'utf8'));
 const PROTECTED_FILE = 'local/protected.json';
@@ -21,12 +25,13 @@ async function readProtected() {
   }
   return names;
 }
-const number = (n) => n.toFixed(3);
+const number = (n) => n == null ? 'unknown' : n.toFixed(3);
 const signed = (n) => `${n >= 0 ? '+' : ''}${number(n)}`;
 
 export function formatAdvice(report) {
   const lines = [`Snapshot: ${report.asOf}`, `Week ${report.week}: ${report.window.start} to ${report.window.end}`,
-    `From: ${report.fromDate} | Adds from: ${report.addsFrom} | Adds left: ${report.addsLeft}`, '',
+    `From: ${report.fromDate} | Adds from: ${report.addsFrom} | Adds left: ${report.addsLeft}`,
+    `Shooting volume: ${Object.entries(report.volumeStatus).map(([side, v]) => `${side}: ${v.status}${v.reason ? ` (${v.reason})` : ''}${v.unmatched?.length ? `; unmatched: ${v.unmatched.join(', ')}` : ''}`).join(' | ')}`, '',
     'Category     Mine       Opponent   P(win)   Need'];
   for (const [c, v] of Object.entries(report.baseline.categories)) {
     lines.push(`${c.padEnd(8)} ${number(v.mine).padStart(10)} ${number(v.opponent).padStart(10)} ${number(v.pWin).padStart(8)}   ${v.label}`);
@@ -99,6 +104,25 @@ async function main(args) {
     snapshotPath, 'data/ids.json', 'data/priors/players.json', 'data/schedule-2026-27.json',
   ].map(readJson));
   const protectedNames = await readProtected();
+  const fromDate = options.fromDate ?? tomorrow(snapshot.asOf);
+  const from = snapshot.matchup.start, to = [addDays(fromDate, -1), snapshot.matchup.end].sort()[0];
+  const missingVolume = (side) => !['fgm', 'fga', 'ftm', 'fta'].every((k) => Number.isFinite(snapshot.matchup.volume?.[side]?.[k]));
+  if (to >= from && ['mine', 'opponent'].some(missingVolume)) {
+    const logs = await loadGameLogs(schedule.season ?? '2026-27', from, to);
+    const slots = snapshot.settings.rosterPositions.filter((p) => !['BN', 'IL', 'IL+'].includes(p.slot))
+      .reduce((sum, p) => sum + p.count, 0);
+    options.volumeStatus = {};
+    snapshot.matchup.volume ??= {};
+    for (const [side, players] of [['mine', snapshot.team.roster], ['opponent', snapshot.matchup.opponentRoster]]) {
+      if (!missingVolume(side)) { options.volumeStatus[side] = { status: 'reported' }; continue; }
+      const roster = players.map((p) => ({ ...p, espnId: findPlayer(ids.players, p.name, p.nbaTeam).player?.espnId }));
+      const result = estimateVolume({ roster, totals: snapshot.matchup.totals?.[side], logs, from, to, slots });
+      options.volumeStatus[side] = result;
+      if (result.status === 'matched') {
+        snapshot.matchup.volume[side] = Object.fromEntries(['fgm', 'fga', 'ftm', 'fta'].map((k) => [k, result[k]]));
+      }
+    }
+  }
   const report = advise(snapshot, { ...options, ids, priors, schedule, protectedNames });
   const text = formatAdvice(report);
   const output = path.join('local/advice', path.basename(snapshotPath));
