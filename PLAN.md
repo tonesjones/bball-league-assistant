@@ -128,6 +128,12 @@ real pre-season refresh builds a valid snapshot. Known gap: the transactions par
 an empty page, so the first refresh after a league move will fail until a real example is added
 (see the notes in Task 02). Next: Task 01 steps 2 and 3 (schedule and ID map), then Task 02 step 6.
 
+**2026-10-19, schedule and IDs.** Task 01 steps 2 and 3 and Task 02 step 6 done, written by Codex
+(Luna) and reviewed here: `data/schedule-2026-27.json` (ESPN, 80 of 82 games per team until the NBA
+Cup is set) and `data/ids.json`. The playoff-week check passes, and 123 of 126 players in the Yahoo
+snapshot map. Game logs and the bakeoff scripts are in a separate PR. Next: Task 05 v0 advice, from
+the needs design in that task file.
+
 ## Open decisions
 
 - ~~Which pages the league read needs, and their URLs.~~ Settled 2026-10-19: 8 pages, listed with

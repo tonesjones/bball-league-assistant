@@ -9,6 +9,9 @@
   },
   "scripts": {
     "test": "node --test",
-    "import:draftlab": "node scripts/import-draftlab.mjs --from ../fantasy-basketball-mock-draft"
+    "import:draftlab": "node scripts/import-draftlab.mjs --from ../fantasy-basketball-mock-draft",
+    "fetch:schedule": "node scripts/fetch-schedule.mjs",
+    "build:ids": "node scripts/build-ids.mjs",
+    "match:ids": "node scripts/match-ids.mjs"
   }
 }

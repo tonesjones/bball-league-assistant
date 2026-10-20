@@ -1,0 +1,7206 @@
+{
+  "season": "2026-27",
+  "fetchedAt": "2026-10-20T05:24:12.213Z",
+  "games": [
+    {
+      "espnEventId": "401909088",
+      "date": "2026-10-20",
+      "home": "DET",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401909089",
+      "date": "2026-10-20",
+      "home": "NYK",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909090",
+      "date": "2026-10-20",
+      "home": "SAS",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909091",
+      "date": "2026-10-21",
+      "home": "MIA",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401909092",
+      "date": "2026-10-21",
+      "home": "LAL",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401909834",
+      "date": "2026-10-21",
+      "home": "ORL",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401909835",
+      "date": "2026-10-21",
+      "home": "WAS",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401909836",
+      "date": "2026-10-21",
+      "home": "BKN",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401909837",
+      "date": "2026-10-21",
+      "home": "TOR",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909838",
+      "date": "2026-10-21",
+      "home": "MEM",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401909839",
+      "date": "2026-10-21",
+      "home": "NOP",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401909840",
+      "date": "2026-10-21",
+      "home": "HOU",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401909841",
+      "date": "2026-10-21",
+      "home": "POR",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401909842",
+      "date": "2026-10-21",
+      "home": "LAC",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401909093",
+      "date": "2026-10-22",
+      "home": "PHI",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401909094",
+      "date": "2026-10-22",
+      "home": "OKC",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401909095",
+      "date": "2026-10-23",
+      "home": "BOS",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401909096",
+      "date": "2026-10-23",
+      "home": "SAS",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401909843",
+      "date": "2026-10-23",
+      "home": "CHA",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401909844",
+      "date": "2026-10-23",
+      "home": "IND",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401909845",
+      "date": "2026-10-23",
+      "home": "ORL",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401909846",
+      "date": "2026-10-23",
+      "home": "WAS",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401909847",
+      "date": "2026-10-23",
+      "home": "MIA",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401909848",
+      "date": "2026-10-23",
+      "home": "MIL",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909849",
+      "date": "2026-10-23",
+      "home": "UTA",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401909850",
+      "date": "2026-10-23",
+      "home": "GSW",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401909851",
+      "date": "2026-10-23",
+      "home": "LAL",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401909852",
+      "date": "2026-10-23",
+      "home": "SAC",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401909853",
+      "date": "2026-10-24",
+      "home": "CHA",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909854",
+      "date": "2026-10-24",
+      "home": "CLE",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909855",
+      "date": "2026-10-24",
+      "home": "PHI",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401909856",
+      "date": "2026-10-24",
+      "home": "ATL",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401909857",
+      "date": "2026-10-24",
+      "home": "CHI",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401909858",
+      "date": "2026-10-24",
+      "home": "DAL",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909859",
+      "date": "2026-10-24",
+      "home": "DEN",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401909860",
+      "date": "2026-10-24",
+      "home": "PHX",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401909861",
+      "date": "2026-10-25",
+      "home": "UTA",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401909862",
+      "date": "2026-10-25",
+      "home": "BKN",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401909863",
+      "date": "2026-10-25",
+      "home": "NYK",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401909864",
+      "date": "2026-10-25",
+      "home": "MIN",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401909865",
+      "date": "2026-10-25",
+      "home": "OKC",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401909866",
+      "date": "2026-10-25",
+      "home": "PHI",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401909867",
+      "date": "2026-10-25",
+      "home": "SAC",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401909868",
+      "date": "2026-10-26",
+      "home": "CHA",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401909869",
+      "date": "2026-10-26",
+      "home": "CLE",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401909870",
+      "date": "2026-10-26",
+      "home": "BOS",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909871",
+      "date": "2026-10-26",
+      "home": "MIA",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401909872",
+      "date": "2026-10-26",
+      "home": "MIL",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401909873",
+      "date": "2026-10-26",
+      "home": "OKC",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401909874",
+      "date": "2026-10-26",
+      "home": "HOU",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401909875",
+      "date": "2026-10-26",
+      "home": "UTA",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401909876",
+      "date": "2026-10-26",
+      "home": "DEN",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401909877",
+      "date": "2026-10-27",
+      "home": "BOS",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909878",
+      "date": "2026-10-27",
+      "home": "NYK",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401909879",
+      "date": "2026-10-27",
+      "home": "SAS",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401909880",
+      "date": "2026-10-27",
+      "home": "LAL",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401909881",
+      "date": "2026-10-28",
+      "home": "ATL",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909882",
+      "date": "2026-10-28",
+      "home": "CLE",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401909883",
+      "date": "2026-10-28",
+      "home": "DET",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401909884",
+      "date": "2026-10-28",
+      "home": "IND",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909885",
+      "date": "2026-10-28",
+      "home": "TOR",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401909886",
+      "date": "2026-10-28",
+      "home": "CHI",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401909887",
+      "date": "2026-10-28",
+      "home": "MIL",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401909888",
+      "date": "2026-10-28",
+      "home": "MIN",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401909889",
+      "date": "2026-10-28",
+      "home": "NOP",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401909890",
+      "date": "2026-10-28",
+      "home": "UTA",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909891",
+      "date": "2026-10-28",
+      "home": "DAL",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909892",
+      "date": "2026-10-28",
+      "home": "LAC",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401909893",
+      "date": "2026-10-29",
+      "home": "ATL",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401909894",
+      "date": "2026-10-29",
+      "home": "NOP",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401909895",
+      "date": "2026-10-29",
+      "home": "POR",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401909277",
+      "date": "2026-10-30",
+      "home": "WAS",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401909278",
+      "date": "2026-10-30",
+      "home": "BOS",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909279",
+      "date": "2026-10-30",
+      "home": "BKN",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401909280",
+      "date": "2026-10-30",
+      "home": "PHI",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401909281",
+      "date": "2026-10-30",
+      "home": "TOR",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401909282",
+      "date": "2026-10-30",
+      "home": "MIA",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401909283",
+      "date": "2026-10-30",
+      "home": "DAL",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401909284",
+      "date": "2026-10-30",
+      "home": "MIN",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401909285",
+      "date": "2026-10-30",
+      "home": "GSW",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401909286",
+      "date": "2026-10-30",
+      "home": "PHX",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401909896",
+      "date": "2026-10-31",
+      "home": "UTA",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401909897",
+      "date": "2026-10-31",
+      "home": "CHA",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909898",
+      "date": "2026-10-31",
+      "home": "NOP",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401909899",
+      "date": "2026-10-31",
+      "home": "MEM",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401909900",
+      "date": "2026-10-31",
+      "home": "MIL",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401909901",
+      "date": "2026-10-31",
+      "home": "SAS",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401909902",
+      "date": "2026-10-31",
+      "home": "HOU",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909903",
+      "date": "2026-11-01",
+      "home": "ORL",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401909904",
+      "date": "2026-11-01",
+      "home": "IND",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909905",
+      "date": "2026-11-01",
+      "home": "GSW",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401909906",
+      "date": "2026-11-01",
+      "home": "LAL",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401909907",
+      "date": "2026-11-02",
+      "home": "CLE",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909908",
+      "date": "2026-11-02",
+      "home": "CHA",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401909909",
+      "date": "2026-11-02",
+      "home": "IND",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401909910",
+      "date": "2026-11-02",
+      "home": "NYK",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909911",
+      "date": "2026-11-02",
+      "home": "ORL",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401909912",
+      "date": "2026-11-02",
+      "home": "PHI",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909913",
+      "date": "2026-11-02",
+      "home": "DAL",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401909914",
+      "date": "2026-11-02",
+      "home": "MEM",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401909915",
+      "date": "2026-11-02",
+      "home": "MIN",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401909916",
+      "date": "2026-11-02",
+      "home": "HOU",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401909917",
+      "date": "2026-11-02",
+      "home": "SAS",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401909918",
+      "date": "2026-11-02",
+      "home": "DEN",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401909919",
+      "date": "2026-11-02",
+      "home": "GSW",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401909920",
+      "date": "2026-11-02",
+      "home": "LAC",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401909921",
+      "date": "2026-11-02",
+      "home": "LAL",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909922",
+      "date": "2026-11-04",
+      "home": "DET",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909923",
+      "date": "2026-11-04",
+      "home": "WAS",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401909924",
+      "date": "2026-11-04",
+      "home": "BOS",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401909925",
+      "date": "2026-11-04",
+      "home": "BKN",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401909926",
+      "date": "2026-11-04",
+      "home": "NYK",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909927",
+      "date": "2026-11-04",
+      "home": "MEM",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401909928",
+      "date": "2026-11-04",
+      "home": "NOP",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401909929",
+      "date": "2026-11-04",
+      "home": "OKC",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401909930",
+      "date": "2026-11-04",
+      "home": "HOU",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401909931",
+      "date": "2026-11-04",
+      "home": "DEN",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401909932",
+      "date": "2026-11-04",
+      "home": "PHX",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401909933",
+      "date": "2026-11-04",
+      "home": "SAS",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401909934",
+      "date": "2026-11-04",
+      "home": "SAC",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401909935",
+      "date": "2026-11-04",
+      "home": "LAC",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909936",
+      "date": "2026-11-05",
+      "home": "PHX",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401909937",
+      "date": "2026-11-05",
+      "home": "GSW",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909287",
+      "date": "2026-11-06",
+      "home": "ATL",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401909288",
+      "date": "2026-11-06",
+      "home": "CHA",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401909289",
+      "date": "2026-11-06",
+      "home": "CLE",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909290",
+      "date": "2026-11-06",
+      "home": "DAL",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401909291",
+      "date": "2026-11-06",
+      "home": "MEM",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909292",
+      "date": "2026-11-06",
+      "home": "MIL",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401909293",
+      "date": "2026-11-06",
+      "home": "NOP",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401909294",
+      "date": "2026-11-06",
+      "home": "LAL",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401909295",
+      "date": "2026-11-06",
+      "home": "SAC",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909938",
+      "date": "2026-11-07",
+      "home": "IND",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401909939",
+      "date": "2026-11-07",
+      "home": "ATL",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909940",
+      "date": "2026-11-07",
+      "home": "CLE",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401909941",
+      "date": "2026-11-07",
+      "home": "OKC",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401909942",
+      "date": "2026-11-07",
+      "home": "GSW",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401909943",
+      "date": "2026-11-07",
+      "home": "PHX",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401909944",
+      "date": "2026-11-07",
+      "home": "POR",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909945",
+      "date": "2026-11-08",
+      "home": "CHI",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909946",
+      "date": "2026-11-08",
+      "home": "DET",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401909947",
+      "date": "2026-11-08",
+      "home": "MIN",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401909948",
+      "date": "2026-11-08",
+      "home": "DAL",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909949",
+      "date": "2026-11-08",
+      "home": "MIL",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401909950",
+      "date": "2026-11-08",
+      "home": "LAC",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401909951",
+      "date": "2026-11-08",
+      "home": "SAC",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909952",
+      "date": "2026-11-09",
+      "home": "ATL",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401909953",
+      "date": "2026-11-09",
+      "home": "CHA",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401909954",
+      "date": "2026-11-09",
+      "home": "DET",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401909955",
+      "date": "2026-11-09",
+      "home": "TOR",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401909956",
+      "date": "2026-11-09",
+      "home": "DAL",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401909957",
+      "date": "2026-11-09",
+      "home": "HOU",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401909958",
+      "date": "2026-11-09",
+      "home": "PHX",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909959",
+      "date": "2026-11-09",
+      "home": "GSW",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401909960",
+      "date": "2026-11-10",
+      "home": "NYK",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401909961",
+      "date": "2026-11-10",
+      "home": "PHI",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401909962",
+      "date": "2026-11-10",
+      "home": "PHX",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401909963",
+      "date": "2026-11-10",
+      "home": "UTA",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909964",
+      "date": "2026-11-10",
+      "home": "SAC",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401909965",
+      "date": "2026-11-10",
+      "home": "POR",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909966",
+      "date": "2026-11-11",
+      "home": "IND",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401909967",
+      "date": "2026-11-11",
+      "home": "NYK",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401909968",
+      "date": "2026-11-11",
+      "home": "TOR",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401909969",
+      "date": "2026-11-11",
+      "home": "CHI",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909970",
+      "date": "2026-11-11",
+      "home": "MEM",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401909971",
+      "date": "2026-11-11",
+      "home": "MIL",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401909972",
+      "date": "2026-11-11",
+      "home": "NOP",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909973",
+      "date": "2026-11-11",
+      "home": "UTA",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401909974",
+      "date": "2026-11-11",
+      "home": "HOU",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401909975",
+      "date": "2026-11-11",
+      "home": "POR",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909976",
+      "date": "2026-11-12",
+      "home": "PHI",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401909977",
+      "date": "2026-11-12",
+      "home": "WAS",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401909978",
+      "date": "2026-11-12",
+      "home": "MIN",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401909979",
+      "date": "2026-11-12",
+      "home": "PHX",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401909296",
+      "date": "2026-11-13",
+      "home": "IND",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401909297",
+      "date": "2026-11-13",
+      "home": "ORL",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401909298",
+      "date": "2026-11-13",
+      "home": "MIA",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401909299",
+      "date": "2026-11-13",
+      "home": "CHI",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401909300",
+      "date": "2026-11-13",
+      "home": "NOP",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401909301",
+      "date": "2026-11-13",
+      "home": "HOU",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401909302",
+      "date": "2026-11-13",
+      "home": "SAS",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401909303",
+      "date": "2026-11-13",
+      "home": "SAC",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401909304",
+      "date": "2026-11-13",
+      "home": "LAC",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909980",
+      "date": "2026-11-14",
+      "home": "NOP",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401909981",
+      "date": "2026-11-14",
+      "home": "CLE",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401909982",
+      "date": "2026-11-14",
+      "home": "MIA",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401909983",
+      "date": "2026-11-14",
+      "home": "MEM",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909984",
+      "date": "2026-11-14",
+      "home": "MIN",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909985",
+      "date": "2026-11-15",
+      "home": "PHI",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401909986",
+      "date": "2026-11-15",
+      "home": "PHX",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401909987",
+      "date": "2026-11-15",
+      "home": "LAC",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401909988",
+      "date": "2026-11-15",
+      "home": "UTA",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909989",
+      "date": "2026-11-15",
+      "home": "BOS",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401909990",
+      "date": "2026-11-15",
+      "home": "TOR",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401909991",
+      "date": "2026-11-15",
+      "home": "WAS",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401909992",
+      "date": "2026-11-15",
+      "home": "MIL",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401909993",
+      "date": "2026-11-15",
+      "home": "SAC",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909994",
+      "date": "2026-11-16",
+      "home": "BOS",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401909995",
+      "date": "2026-11-16",
+      "home": "CLE",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909996",
+      "date": "2026-11-16",
+      "home": "WAS",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401909997",
+      "date": "2026-11-16",
+      "home": "BKN",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909998",
+      "date": "2026-11-16",
+      "home": "MIA",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401909999",
+      "date": "2026-11-16",
+      "home": "MIN",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910000",
+      "date": "2026-11-16",
+      "home": "NOP",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910001",
+      "date": "2026-11-16",
+      "home": "DEN",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910002",
+      "date": "2026-11-17",
+      "home": "TOR",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910003",
+      "date": "2026-11-17",
+      "home": "MIN",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910004",
+      "date": "2026-11-17",
+      "home": "SAS",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910005",
+      "date": "2026-11-17",
+      "home": "LAL",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910006",
+      "date": "2026-11-17",
+      "home": "LAC",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910007",
+      "date": "2026-11-18",
+      "home": "CLE",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910008",
+      "date": "2026-11-18",
+      "home": "IND",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910009",
+      "date": "2026-11-18",
+      "home": "MIA",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910010",
+      "date": "2026-11-18",
+      "home": "ORL",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910011",
+      "date": "2026-11-18",
+      "home": "BKN",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910012",
+      "date": "2026-11-18",
+      "home": "TOR",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910013",
+      "date": "2026-11-18",
+      "home": "NOP",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910014",
+      "date": "2026-11-18",
+      "home": "OKC",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910015",
+      "date": "2026-11-18",
+      "home": "DEN",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910016",
+      "date": "2026-11-18",
+      "home": "DAL",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910017",
+      "date": "2026-11-18",
+      "home": "LAL",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910018",
+      "date": "2026-11-18",
+      "home": "SAC",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910019",
+      "date": "2026-11-19",
+      "home": "MEM",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910020",
+      "date": "2026-11-19",
+      "home": "MIL",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910021",
+      "date": "2026-11-19",
+      "home": "MIN",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910022",
+      "date": "2026-11-19",
+      "home": "SAS",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401909305",
+      "date": "2026-11-20",
+      "home": "ATL",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401909306",
+      "date": "2026-11-20",
+      "home": "BKN",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401909307",
+      "date": "2026-11-20",
+      "home": "CLE",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401909308",
+      "date": "2026-11-20",
+      "home": "DET",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401909309",
+      "date": "2026-11-20",
+      "home": "CHI",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401909310",
+      "date": "2026-11-20",
+      "home": "OKC",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401909311",
+      "date": "2026-11-20",
+      "home": "UTA",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401909312",
+      "date": "2026-11-20",
+      "home": "DEN",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401909313",
+      "date": "2026-11-20",
+      "home": "LAL",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910023",
+      "date": "2026-11-21",
+      "home": "PHI",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910024",
+      "date": "2026-11-21",
+      "home": "NYK",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910025",
+      "date": "2026-11-21",
+      "home": "DAL",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910026",
+      "date": "2026-11-21",
+      "home": "MIN",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910027",
+      "date": "2026-11-21",
+      "home": "SAS",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910028",
+      "date": "2026-11-21",
+      "home": "SAC",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910029",
+      "date": "2026-11-22",
+      "home": "ATL",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910030",
+      "date": "2026-11-22",
+      "home": "MIA",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910031",
+      "date": "2026-11-22",
+      "home": "WAS",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910032",
+      "date": "2026-11-22",
+      "home": "CHI",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910033",
+      "date": "2026-11-22",
+      "home": "UTA",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910034",
+      "date": "2026-11-22",
+      "home": "NYK",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910035",
+      "date": "2026-11-22",
+      "home": "GSW",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910036",
+      "date": "2026-11-23",
+      "home": "CHA",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910037",
+      "date": "2026-11-23",
+      "home": "PHI",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910038",
+      "date": "2026-11-23",
+      "home": "IND",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910039",
+      "date": "2026-11-23",
+      "home": "TOR",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910040",
+      "date": "2026-11-23",
+      "home": "MIN",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910041",
+      "date": "2026-11-23",
+      "home": "CHI",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910042",
+      "date": "2026-11-23",
+      "home": "NOP",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910043",
+      "date": "2026-11-23",
+      "home": "HOU",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910044",
+      "date": "2026-11-23",
+      "home": "LAL",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910045",
+      "date": "2026-11-23",
+      "home": "SAC",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909314",
+      "date": "2026-11-24",
+      "home": "ORL",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401909315",
+      "date": "2026-11-24",
+      "home": "WAS",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401909316",
+      "date": "2026-11-24",
+      "home": "DEN",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401909317",
+      "date": "2026-11-25",
+      "home": "PHI",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909318",
+      "date": "2026-11-25",
+      "home": "CHA",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909319",
+      "date": "2026-11-25",
+      "home": "NYK",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401909320",
+      "date": "2026-11-25",
+      "home": "OKC",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401909321",
+      "date": "2026-11-25",
+      "home": "MEM",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401909322",
+      "date": "2026-11-25",
+      "home": "MIL",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909323",
+      "date": "2026-11-25",
+      "home": "HOU",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401909324",
+      "date": "2026-11-25",
+      "home": "GSW",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401909325",
+      "date": "2026-11-25",
+      "home": "POR",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909326",
+      "date": "2026-11-27",
+      "home": "NYK",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909327",
+      "date": "2026-11-27",
+      "home": "DET",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401909328",
+      "date": "2026-11-27",
+      "home": "IND",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909329",
+      "date": "2026-11-27",
+      "home": "TOR",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401909330",
+      "date": "2026-11-27",
+      "home": "BOS",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401909331",
+      "date": "2026-11-27",
+      "home": "MIN",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401909332",
+      "date": "2026-11-27",
+      "home": "PHX",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401909333",
+      "date": "2026-11-27",
+      "home": "SAS",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401909334",
+      "date": "2026-11-27",
+      "home": "UTA",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401909335",
+      "date": "2026-11-27",
+      "home": "LAC",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401909336",
+      "date": "2026-11-27",
+      "home": "POR",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910046",
+      "date": "2026-11-28",
+      "home": "WAS",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910047",
+      "date": "2026-11-28",
+      "home": "CHA",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910048",
+      "date": "2026-11-28",
+      "home": "CHI",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910049",
+      "date": "2026-11-28",
+      "home": "MIL",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910050",
+      "date": "2026-11-28",
+      "home": "HOU",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910051",
+      "date": "2026-11-29",
+      "home": "MEM",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910052",
+      "date": "2026-11-29",
+      "home": "SAS",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910053",
+      "date": "2026-11-29",
+      "home": "UTA",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910054",
+      "date": "2026-11-29",
+      "home": "CLE",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910055",
+      "date": "2026-11-29",
+      "home": "DET",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910056",
+      "date": "2026-11-29",
+      "home": "NYK",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910057",
+      "date": "2026-11-29",
+      "home": "TOR",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910058",
+      "date": "2026-11-29",
+      "home": "POR",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910059",
+      "date": "2026-11-29",
+      "home": "GSW",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910060",
+      "date": "2026-11-29",
+      "home": "SAC",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910061",
+      "date": "2026-11-30",
+      "home": "CHA",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910062",
+      "date": "2026-11-30",
+      "home": "DET",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910063",
+      "date": "2026-11-30",
+      "home": "BKN",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910064",
+      "date": "2026-11-30",
+      "home": "HOU",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910065",
+      "date": "2026-11-30",
+      "home": "DAL",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910066",
+      "date": "2026-11-30",
+      "home": "MIL",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910067",
+      "date": "2026-11-30",
+      "home": "SAC",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910068",
+      "date": "2026-12-01",
+      "home": "CLE",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910069",
+      "date": "2026-12-01",
+      "home": "PHI",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910070",
+      "date": "2026-12-01",
+      "home": "MIA",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910071",
+      "date": "2026-12-01",
+      "home": "CHI",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910072",
+      "date": "2026-12-01",
+      "home": "HOU",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910073",
+      "date": "2026-12-01",
+      "home": "PHX",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910074",
+      "date": "2026-12-01",
+      "home": "POR",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910075",
+      "date": "2026-12-01",
+      "home": "GSW",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910076",
+      "date": "2026-12-02",
+      "home": "DET",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910077",
+      "date": "2026-12-02",
+      "home": "PHI",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910078",
+      "date": "2026-12-02",
+      "home": "BOS",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910079",
+      "date": "2026-12-02",
+      "home": "DAL",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910080",
+      "date": "2026-12-02",
+      "home": "MIL",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910081",
+      "date": "2026-12-02",
+      "home": "NOP",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910082",
+      "date": "2026-12-02",
+      "home": "OKC",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910083",
+      "date": "2026-12-02",
+      "home": "PHX",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910084",
+      "date": "2026-12-02",
+      "home": "LAC",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910085",
+      "date": "2026-12-03",
+      "home": "ATL",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910086",
+      "date": "2026-12-03",
+      "home": "MIA",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910087",
+      "date": "2026-12-03",
+      "home": "CHI",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910088",
+      "date": "2026-12-03",
+      "home": "SAS",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910089",
+      "date": "2026-12-03",
+      "home": "POR",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910090",
+      "date": "2026-12-12",
+      "home": "MEM",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910091",
+      "date": "2026-12-12",
+      "home": "WAS",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910092",
+      "date": "2026-12-12",
+      "home": "PHI",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910093",
+      "date": "2026-12-12",
+      "home": "CLE",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910094",
+      "date": "2026-12-12",
+      "home": "MIA",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910095",
+      "date": "2026-12-12",
+      "home": "PHX",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910096",
+      "date": "2026-12-12",
+      "home": "UTA",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910097",
+      "date": "2026-12-12",
+      "home": "POR",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910098",
+      "date": "2026-12-13",
+      "home": "BKN",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910099",
+      "date": "2026-12-13",
+      "home": "OKC",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910100",
+      "date": "2026-12-13",
+      "home": "IND",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910101",
+      "date": "2026-12-13",
+      "home": "CHI",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910102",
+      "date": "2026-12-13",
+      "home": "SAS",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910103",
+      "date": "2026-12-13",
+      "home": "SAC",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910104",
+      "date": "2026-12-14",
+      "home": "CHA",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910105",
+      "date": "2026-12-14",
+      "home": "DET",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910106",
+      "date": "2026-12-14",
+      "home": "ORL",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910107",
+      "date": "2026-12-14",
+      "home": "BOS",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910108",
+      "date": "2026-12-14",
+      "home": "CHI",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910109",
+      "date": "2026-12-14",
+      "home": "DAL",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910110",
+      "date": "2026-12-14",
+      "home": "MEM",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910111",
+      "date": "2026-12-14",
+      "home": "HOU",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910112",
+      "date": "2026-12-14",
+      "home": "PHX",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910113",
+      "date": "2026-12-14",
+      "home": "UTA",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910114",
+      "date": "2026-12-14",
+      "home": "LAL",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910115",
+      "date": "2026-12-15",
+      "home": "CLE",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910116",
+      "date": "2026-12-15",
+      "home": "POR",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910117",
+      "date": "2026-12-16",
+      "home": "BOS",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910118",
+      "date": "2026-12-16",
+      "home": "CHA",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910119",
+      "date": "2026-12-16",
+      "home": "DET",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910120",
+      "date": "2026-12-16",
+      "home": "IND",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910121",
+      "date": "2026-12-16",
+      "home": "ORL",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910122",
+      "date": "2026-12-16",
+      "home": "BKN",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910123",
+      "date": "2026-12-16",
+      "home": "TOR",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910124",
+      "date": "2026-12-16",
+      "home": "CHI",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910125",
+      "date": "2026-12-16",
+      "home": "MEM",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910126",
+      "date": "2026-12-16",
+      "home": "NOP",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910127",
+      "date": "2026-12-16",
+      "home": "OKC",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910128",
+      "date": "2026-12-16",
+      "home": "HOU",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910129",
+      "date": "2026-12-16",
+      "home": "MIN",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910130",
+      "date": "2026-12-17",
+      "home": "IND",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910131",
+      "date": "2026-12-17",
+      "home": "PHI",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910132",
+      "date": "2026-12-17",
+      "home": "DEN",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910133",
+      "date": "2026-12-18",
+      "home": "CHA",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910134",
+      "date": "2026-12-18",
+      "home": "MIA",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910135",
+      "date": "2026-12-18",
+      "home": "WAS",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910136",
+      "date": "2026-12-18",
+      "home": "BOS",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910137",
+      "date": "2026-12-18",
+      "home": "BKN",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910138",
+      "date": "2026-12-18",
+      "home": "DET",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910139",
+      "date": "2026-12-18",
+      "home": "TOR",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910140",
+      "date": "2026-12-18",
+      "home": "MEM",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910141",
+      "date": "2026-12-18",
+      "home": "MIL",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910142",
+      "date": "2026-12-18",
+      "home": "MIN",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910143",
+      "date": "2026-12-18",
+      "home": "NOP",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910144",
+      "date": "2026-12-18",
+      "home": "SAS",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910145",
+      "date": "2026-12-19",
+      "home": "CHA",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910146",
+      "date": "2026-12-19",
+      "home": "ATL",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910147",
+      "date": "2026-12-19",
+      "home": "DAL",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910148",
+      "date": "2026-12-19",
+      "home": "DEN",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910149",
+      "date": "2026-12-20",
+      "home": "BKN",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910150",
+      "date": "2026-12-20",
+      "home": "TOR",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910151",
+      "date": "2026-12-20",
+      "home": "MEM",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910152",
+      "date": "2026-12-20",
+      "home": "CLE",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910153",
+      "date": "2026-12-20",
+      "home": "MIA",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910154",
+      "date": "2026-12-20",
+      "home": "ATL",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910155",
+      "date": "2026-12-20",
+      "home": "NOP",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910156",
+      "date": "2026-12-20",
+      "home": "BOS",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910157",
+      "date": "2026-12-20",
+      "home": "MIL",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910158",
+      "date": "2026-12-20",
+      "home": "LAC",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910159",
+      "date": "2026-12-21",
+      "home": "CHA",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910160",
+      "date": "2026-12-21",
+      "home": "CLE",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910161",
+      "date": "2026-12-21",
+      "home": "ORL",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910162",
+      "date": "2026-12-21",
+      "home": "BKN",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910163",
+      "date": "2026-12-21",
+      "home": "MIA",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910164",
+      "date": "2026-12-21",
+      "home": "MIN",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910165",
+      "date": "2026-12-21",
+      "home": "NOP",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910166",
+      "date": "2026-12-21",
+      "home": "SAS",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910167",
+      "date": "2026-12-21",
+      "home": "LAL",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910168",
+      "date": "2026-12-21",
+      "home": "LAC",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910169",
+      "date": "2026-12-22",
+      "home": "WAS",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910170",
+      "date": "2026-12-22",
+      "home": "OKC",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910171",
+      "date": "2026-12-22",
+      "home": "GSW",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910172",
+      "date": "2026-12-23",
+      "home": "ATL",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910173",
+      "date": "2026-12-23",
+      "home": "ORL",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910174",
+      "date": "2026-12-23",
+      "home": "WAS",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910175",
+      "date": "2026-12-23",
+      "home": "BOS",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910176",
+      "date": "2026-12-23",
+      "home": "BKN",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910177",
+      "date": "2026-12-23",
+      "home": "MIA",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910178",
+      "date": "2026-12-23",
+      "home": "NYK",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910179",
+      "date": "2026-12-23",
+      "home": "PHI",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910180",
+      "date": "2026-12-23",
+      "home": "MEM",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910181",
+      "date": "2026-12-23",
+      "home": "MIL",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910182",
+      "date": "2026-12-23",
+      "home": "NOP",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910183",
+      "date": "2026-12-23",
+      "home": "PHX",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910184",
+      "date": "2026-12-23",
+      "home": "LAL",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910185",
+      "date": "2026-12-23",
+      "home": "SAC",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910186",
+      "date": "2026-12-23",
+      "home": "LAC",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401909097",
+      "date": "2026-12-25",
+      "home": "NYK",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909098",
+      "date": "2026-12-25",
+      "home": "BOS",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401909099",
+      "date": "2026-12-25",
+      "home": "LAL",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909100",
+      "date": "2026-12-25",
+      "home": "MIN",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401909101",
+      "date": "2026-12-25",
+      "home": "GSW",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910187",
+      "date": "2026-12-26",
+      "home": "WAS",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910188",
+      "date": "2026-12-26",
+      "home": "ATL",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910189",
+      "date": "2026-12-26",
+      "home": "UTA",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910190",
+      "date": "2026-12-26",
+      "home": "BKN",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910191",
+      "date": "2026-12-26",
+      "home": "ORL",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910192",
+      "date": "2026-12-26",
+      "home": "CHI",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910193",
+      "date": "2026-12-26",
+      "home": "DAL",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910194",
+      "date": "2026-12-26",
+      "home": "LAC",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910195",
+      "date": "2026-12-27",
+      "home": "HOU",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910196",
+      "date": "2026-12-27",
+      "home": "CLE",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910197",
+      "date": "2026-12-27",
+      "home": "MIA",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910198",
+      "date": "2026-12-27",
+      "home": "NYK",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910199",
+      "date": "2026-12-27",
+      "home": "ORL",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910200",
+      "date": "2026-12-27",
+      "home": "SAC",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910201",
+      "date": "2026-12-27",
+      "home": "DET",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910202",
+      "date": "2026-12-27",
+      "home": "SAS",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910203",
+      "date": "2026-12-27",
+      "home": "DEN",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910204",
+      "date": "2026-12-27",
+      "home": "GSW",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910205",
+      "date": "2026-12-27",
+      "home": "LAC",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910206",
+      "date": "2026-12-27",
+      "home": "LAL",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910207",
+      "date": "2026-12-28",
+      "home": "TOR",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910208",
+      "date": "2026-12-28",
+      "home": "BOS",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910209",
+      "date": "2026-12-28",
+      "home": "PHX",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910210",
+      "date": "2026-12-28",
+      "home": "DEN",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910211",
+      "date": "2026-12-29",
+      "home": "ATL",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910212",
+      "date": "2026-12-29",
+      "home": "CHA",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910213",
+      "date": "2026-12-29",
+      "home": "IND",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910214",
+      "date": "2026-12-29",
+      "home": "DAL",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910215",
+      "date": "2026-12-29",
+      "home": "MEM",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910216",
+      "date": "2026-12-29",
+      "home": "OKC",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910217",
+      "date": "2026-12-29",
+      "home": "POR",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910218",
+      "date": "2026-12-29",
+      "home": "SAC",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910219",
+      "date": "2026-12-29",
+      "home": "LAL",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910220",
+      "date": "2026-12-30",
+      "home": "DET",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910221",
+      "date": "2026-12-30",
+      "home": "TOR",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910222",
+      "date": "2026-12-30",
+      "home": "CHI",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910223",
+      "date": "2026-12-30",
+      "home": "PHX",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910224",
+      "date": "2026-12-30",
+      "home": "UTA",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910225",
+      "date": "2026-12-30",
+      "home": "GSW",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910226",
+      "date": "2026-12-31",
+      "home": "CHA",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910227",
+      "date": "2026-12-31",
+      "home": "ATL",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910228",
+      "date": "2026-12-31",
+      "home": "CLE",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910229",
+      "date": "2026-12-31",
+      "home": "IND",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910230",
+      "date": "2026-12-31",
+      "home": "MIN",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910231",
+      "date": "2026-12-31",
+      "home": "SAC",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910232",
+      "date": "2026-12-31",
+      "home": "NOP",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910233",
+      "date": "2026-12-31",
+      "home": "OKC",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910234",
+      "date": "2026-12-31",
+      "home": "PHX",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910235",
+      "date": "2027-01-01",
+      "home": "WAS",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910236",
+      "date": "2027-01-01",
+      "home": "DET",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910237",
+      "date": "2027-01-01",
+      "home": "TOR",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910238",
+      "date": "2027-01-01",
+      "home": "MIL",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910239",
+      "date": "2027-01-01",
+      "home": "HOU",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910240",
+      "date": "2027-01-01",
+      "home": "UTA",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910241",
+      "date": "2027-01-02",
+      "home": "CHA",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910242",
+      "date": "2027-01-02",
+      "home": "DEN",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910243",
+      "date": "2027-01-02",
+      "home": "IND",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910244",
+      "date": "2027-01-02",
+      "home": "NOP",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910245",
+      "date": "2027-01-02",
+      "home": "ATL",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910246",
+      "date": "2027-01-02",
+      "home": "CHI",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910247",
+      "date": "2027-01-02",
+      "home": "OKC",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910248",
+      "date": "2027-01-02",
+      "home": "GSW",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910249",
+      "date": "2027-01-02",
+      "home": "PHX",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910250",
+      "date": "2027-01-02",
+      "home": "POR",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910251",
+      "date": "2027-01-03",
+      "home": "DEN",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910252",
+      "date": "2027-01-03",
+      "home": "MIL",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910253",
+      "date": "2027-01-03",
+      "home": "ORL",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910254",
+      "date": "2027-01-03",
+      "home": "TOR",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910255",
+      "date": "2027-01-03",
+      "home": "WAS",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910256",
+      "date": "2027-01-03",
+      "home": "HOU",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910257",
+      "date": "2027-01-03",
+      "home": "MIN",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910258",
+      "date": "2027-01-03",
+      "home": "OKC",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910259",
+      "date": "2027-01-04",
+      "home": "IND",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910260",
+      "date": "2027-01-04",
+      "home": "PHI",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910261",
+      "date": "2027-01-04",
+      "home": "NOP",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910262",
+      "date": "2027-01-04",
+      "home": "PHX",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910263",
+      "date": "2027-01-04",
+      "home": "UTA",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910264",
+      "date": "2027-01-04",
+      "home": "POR",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910265",
+      "date": "2027-01-05",
+      "home": "CHA",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910266",
+      "date": "2027-01-05",
+      "home": "CLE",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910267",
+      "date": "2027-01-05",
+      "home": "ORL",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910268",
+      "date": "2027-01-05",
+      "home": "WAS",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910269",
+      "date": "2027-01-05",
+      "home": "MIA",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910270",
+      "date": "2027-01-05",
+      "home": "CHI",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910271",
+      "date": "2027-01-05",
+      "home": "HOU",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910272",
+      "date": "2027-01-05",
+      "home": "DEN",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910273",
+      "date": "2027-01-05",
+      "home": "SAC",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910274",
+      "date": "2027-01-06",
+      "home": "BKN",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910275",
+      "date": "2027-01-06",
+      "home": "PHI",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910276",
+      "date": "2027-01-06",
+      "home": "NOP",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910277",
+      "date": "2027-01-06",
+      "home": "SAS",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910278",
+      "date": "2027-01-06",
+      "home": "GSW",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910279",
+      "date": "2027-01-07",
+      "home": "ATL",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910280",
+      "date": "2027-01-07",
+      "home": "CHA",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910281",
+      "date": "2027-01-07",
+      "home": "ORL",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910282",
+      "date": "2027-01-07",
+      "home": "WAS",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910283",
+      "date": "2027-01-07",
+      "home": "BKN",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910284",
+      "date": "2027-01-07",
+      "home": "TOR",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910285",
+      "date": "2027-01-07",
+      "home": "DAL",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910286",
+      "date": "2027-01-07",
+      "home": "MIL",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910287",
+      "date": "2027-01-07",
+      "home": "HOU",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910288",
+      "date": "2027-01-07",
+      "home": "GSW",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910289",
+      "date": "2027-01-07",
+      "home": "LAL",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910290",
+      "date": "2027-01-07",
+      "home": "SAC",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910291",
+      "date": "2027-01-08",
+      "home": "PHI",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910292",
+      "date": "2027-01-08",
+      "home": "WAS",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910293",
+      "date": "2027-01-08",
+      "home": "TOR",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910294",
+      "date": "2027-01-08",
+      "home": "NOP",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910295",
+      "date": "2027-01-08",
+      "home": "SAS",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910296",
+      "date": "2027-01-08",
+      "home": "DAL",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910297",
+      "date": "2027-01-08",
+      "home": "LAL",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910298",
+      "date": "2027-01-08",
+      "home": "SAC",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910299",
+      "date": "2027-01-09",
+      "home": "CLE",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910300",
+      "date": "2027-01-09",
+      "home": "BKN",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910301",
+      "date": "2027-01-09",
+      "home": "IND",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910302",
+      "date": "2027-01-09",
+      "home": "GSW",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910303",
+      "date": "2027-01-09",
+      "home": "POR",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910304",
+      "date": "2027-01-09",
+      "home": "LAC",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910305",
+      "date": "2027-01-10",
+      "home": "ATL",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910306",
+      "date": "2027-01-10",
+      "home": "DET",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910307",
+      "date": "2027-01-10",
+      "home": "MIA",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910308",
+      "date": "2027-01-10",
+      "home": "ORL",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910309",
+      "date": "2027-01-10",
+      "home": "TOR",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910310",
+      "date": "2027-01-10",
+      "home": "MEM",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910311",
+      "date": "2027-01-10",
+      "home": "PHX",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910312",
+      "date": "2027-01-10",
+      "home": "SAC",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910313",
+      "date": "2027-01-11",
+      "home": "IND",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910314",
+      "date": "2027-01-11",
+      "home": "WAS",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910315",
+      "date": "2027-01-11",
+      "home": "BOS",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910316",
+      "date": "2027-01-11",
+      "home": "NYK",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910317",
+      "date": "2027-01-11",
+      "home": "MIN",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910318",
+      "date": "2027-01-11",
+      "home": "LAC",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910319",
+      "date": "2027-01-12",
+      "home": "MIA",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910320",
+      "date": "2027-01-12",
+      "home": "TOR",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910321",
+      "date": "2027-01-12",
+      "home": "PHI",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910322",
+      "date": "2027-01-12",
+      "home": "MEM",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910323",
+      "date": "2027-01-12",
+      "home": "MIL",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910324",
+      "date": "2027-01-12",
+      "home": "UTA",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910325",
+      "date": "2027-01-12",
+      "home": "POR",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910326",
+      "date": "2027-01-12",
+      "home": "GSW",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910327",
+      "date": "2027-01-13",
+      "home": "ATL",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910328",
+      "date": "2027-01-13",
+      "home": "BOS",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910329",
+      "date": "2027-01-13",
+      "home": "IND",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910330",
+      "date": "2027-01-13",
+      "home": "TOR",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910331",
+      "date": "2027-01-13",
+      "home": "OKC",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910332",
+      "date": "2027-01-13",
+      "home": "GSW",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910333",
+      "date": "2027-01-13",
+      "home": "POR",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910334",
+      "date": "2027-01-14",
+      "home": "SAS",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910335",
+      "date": "2027-01-14",
+      "home": "DET",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910336",
+      "date": "2027-01-14",
+      "home": "PHI",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910337",
+      "date": "2027-01-14",
+      "home": "NYK",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910338",
+      "date": "2027-01-14",
+      "home": "CHI",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910339",
+      "date": "2027-01-14",
+      "home": "DEN",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910340",
+      "date": "2027-01-14",
+      "home": "UTA",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910341",
+      "date": "2027-01-14",
+      "home": "LAL",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910342",
+      "date": "2027-01-14",
+      "home": "SAC",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910343",
+      "date": "2027-01-15",
+      "home": "ATL",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910344",
+      "date": "2027-01-15",
+      "home": "IND",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910345",
+      "date": "2027-01-15",
+      "home": "TOR",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910346",
+      "date": "2027-01-15",
+      "home": "MIL",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910347",
+      "date": "2027-01-15",
+      "home": "OKC",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910348",
+      "date": "2027-01-15",
+      "home": "HOU",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910349",
+      "date": "2027-01-15",
+      "home": "POR",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910350",
+      "date": "2027-01-15",
+      "home": "LAC",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910351",
+      "date": "2027-01-16",
+      "home": "PHI",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910352",
+      "date": "2027-01-16",
+      "home": "BOS",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910353",
+      "date": "2027-01-16",
+      "home": "NYK",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910354",
+      "date": "2027-01-16",
+      "home": "MEM",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910355",
+      "date": "2027-01-16",
+      "home": "HOU",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910356",
+      "date": "2027-01-16",
+      "home": "DEN",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910357",
+      "date": "2027-01-17",
+      "home": "NOP",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910358",
+      "date": "2027-01-17",
+      "home": "WAS",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910359",
+      "date": "2027-01-17",
+      "home": "CHI",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910360",
+      "date": "2027-01-17",
+      "home": "OKC",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910361",
+      "date": "2027-01-17",
+      "home": "UTA",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910362",
+      "date": "2027-01-17",
+      "home": "MIA",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910363",
+      "date": "2027-01-17",
+      "home": "DEN",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910364",
+      "date": "2027-01-17",
+      "home": "LAL",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401909473",
+      "date": "2027-01-18",
+      "home": "CLE",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401909474",
+      "date": "2027-01-18",
+      "home": "ATL",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909475",
+      "date": "2027-01-18",
+      "home": "NYK",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401909476",
+      "date": "2027-01-18",
+      "home": "MEM",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910365",
+      "date": "2027-01-18",
+      "home": "WAS",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910366",
+      "date": "2027-01-18",
+      "home": "DAL",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910367",
+      "date": "2027-01-18",
+      "home": "LAC",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910368",
+      "date": "2027-01-19",
+      "home": "ORL",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910369",
+      "date": "2027-01-19",
+      "home": "PHI",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910370",
+      "date": "2027-01-19",
+      "home": "TOR",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910371",
+      "date": "2027-01-19",
+      "home": "MIA",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910372",
+      "date": "2027-01-19",
+      "home": "DAL",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910373",
+      "date": "2027-01-19",
+      "home": "DEN",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910374",
+      "date": "2027-01-19",
+      "home": "SAC",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910375",
+      "date": "2027-01-20",
+      "home": "ATL",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910376",
+      "date": "2027-01-20",
+      "home": "BKN",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910377",
+      "date": "2027-01-20",
+      "home": "BOS",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910378",
+      "date": "2027-01-20",
+      "home": "NYK",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910379",
+      "date": "2027-01-20",
+      "home": "MIN",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910380",
+      "date": "2027-01-20",
+      "home": "NOP",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910381",
+      "date": "2027-01-20",
+      "home": "PHX",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910382",
+      "date": "2027-01-20",
+      "home": "UTA",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910383",
+      "date": "2027-01-20",
+      "home": "SAS",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910384",
+      "date": "2027-01-20",
+      "home": "SAC",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910385",
+      "date": "2027-01-21",
+      "home": "BOS",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910386",
+      "date": "2027-01-21",
+      "home": "BKN",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910387",
+      "date": "2027-01-21",
+      "home": "DEN",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910388",
+      "date": "2027-01-21",
+      "home": "GSW",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910389",
+      "date": "2027-01-22",
+      "home": "ATL",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910390",
+      "date": "2027-01-22",
+      "home": "CHA",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910391",
+      "date": "2027-01-22",
+      "home": "ORL",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910392",
+      "date": "2027-01-22",
+      "home": "DET",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910393",
+      "date": "2027-01-22",
+      "home": "NOP",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910394",
+      "date": "2027-01-22",
+      "home": "OKC",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910395",
+      "date": "2027-01-22",
+      "home": "PHX",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910396",
+      "date": "2027-01-22",
+      "home": "SAS",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910397",
+      "date": "2027-01-22",
+      "home": "GSW",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910398",
+      "date": "2027-01-22",
+      "home": "LAL",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910399",
+      "date": "2027-01-22",
+      "home": "LAC",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910400",
+      "date": "2027-01-23",
+      "home": "CHI",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910401",
+      "date": "2027-01-23",
+      "home": "BKN",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910402",
+      "date": "2027-01-23",
+      "home": "BOS",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910403",
+      "date": "2027-01-23",
+      "home": "MIA",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910404",
+      "date": "2027-01-23",
+      "home": "DAL",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910405",
+      "date": "2027-01-23",
+      "home": "DEN",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910406",
+      "date": "2027-01-24",
+      "home": "SAS",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910407",
+      "date": "2027-01-24",
+      "home": "PHX",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910408",
+      "date": "2027-01-24",
+      "home": "LAL",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910409",
+      "date": "2027-01-24",
+      "home": "DET",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910410",
+      "date": "2027-01-24",
+      "home": "ORL",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910411",
+      "date": "2027-01-24",
+      "home": "NYK",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910412",
+      "date": "2027-01-24",
+      "home": "GSW",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910413",
+      "date": "2027-01-25",
+      "home": "BOS",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910414",
+      "date": "2027-01-25",
+      "home": "CHA",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910415",
+      "date": "2027-01-25",
+      "home": "PHI",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910416",
+      "date": "2027-01-25",
+      "home": "BKN",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910417",
+      "date": "2027-01-25",
+      "home": "CHI",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910418",
+      "date": "2027-01-25",
+      "home": "MEM",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910419",
+      "date": "2027-01-25",
+      "home": "NOP",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910420",
+      "date": "2027-01-25",
+      "home": "DEN",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910421",
+      "date": "2027-01-26",
+      "home": "DET",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910422",
+      "date": "2027-01-26",
+      "home": "IND",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910423",
+      "date": "2027-01-26",
+      "home": "NYK",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910424",
+      "date": "2027-01-26",
+      "home": "SAS",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910425",
+      "date": "2027-01-26",
+      "home": "UTA",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910426",
+      "date": "2027-01-26",
+      "home": "POR",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910427",
+      "date": "2027-01-26",
+      "home": "LAL",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910428",
+      "date": "2027-01-27",
+      "home": "CLE",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910429",
+      "date": "2027-01-27",
+      "home": "PHI",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910430",
+      "date": "2027-01-27",
+      "home": "BOS",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910431",
+      "date": "2027-01-27",
+      "home": "BKN",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910432",
+      "date": "2027-01-27",
+      "home": "TOR",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910433",
+      "date": "2027-01-27",
+      "home": "SAS",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910434",
+      "date": "2027-01-27",
+      "home": "HOU",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910435",
+      "date": "2027-01-27",
+      "home": "MIN",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910436",
+      "date": "2027-01-27",
+      "home": "POR",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910437",
+      "date": "2027-01-28",
+      "home": "IND",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910438",
+      "date": "2027-01-28",
+      "home": "NYK",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910439",
+      "date": "2027-01-28",
+      "home": "ORL",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910440",
+      "date": "2027-01-28",
+      "home": "WAS",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910441",
+      "date": "2027-01-28",
+      "home": "NOP",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910442",
+      "date": "2027-01-28",
+      "home": "OKC",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910443",
+      "date": "2027-01-28",
+      "home": "UTA",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910444",
+      "date": "2027-01-28",
+      "home": "MIL",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910445",
+      "date": "2027-01-29",
+      "home": "TOR",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910446",
+      "date": "2027-01-29",
+      "home": "BOS",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910447",
+      "date": "2027-01-29",
+      "home": "BKN",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910448",
+      "date": "2027-01-29",
+      "home": "DAL",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910449",
+      "date": "2027-01-29",
+      "home": "HOU",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910450",
+      "date": "2027-01-29",
+      "home": "MIN",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910451",
+      "date": "2027-01-30",
+      "home": "MIA",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910452",
+      "date": "2027-01-30",
+      "home": "OKC",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910453",
+      "date": "2027-01-30",
+      "home": "GSW",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910454",
+      "date": "2027-01-30",
+      "home": "IND",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910455",
+      "date": "2027-01-30",
+      "home": "CLE",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910456",
+      "date": "2027-01-30",
+      "home": "MIL",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910457",
+      "date": "2027-01-30",
+      "home": "NYK",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910458",
+      "date": "2027-01-30",
+      "home": "UTA",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910459",
+      "date": "2027-01-31",
+      "home": "DET",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910460",
+      "date": "2027-01-31",
+      "home": "ORL",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910461",
+      "date": "2027-01-31",
+      "home": "TOR",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910462",
+      "date": "2027-01-31",
+      "home": "MIN",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910463",
+      "date": "2027-01-31",
+      "home": "OKC",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910464",
+      "date": "2027-01-31",
+      "home": "CHA",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910465",
+      "date": "2027-01-31",
+      "home": "DEN",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910466",
+      "date": "2027-01-31",
+      "home": "DAL",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910467",
+      "date": "2027-02-01",
+      "home": "ATL",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910468",
+      "date": "2027-02-01",
+      "home": "PHI",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910469",
+      "date": "2027-02-01",
+      "home": "BKN",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910470",
+      "date": "2027-02-01",
+      "home": "IND",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910471",
+      "date": "2027-02-01",
+      "home": "MIL",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910472",
+      "date": "2027-02-01",
+      "home": "UTA",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910473",
+      "date": "2027-02-01",
+      "home": "GSW",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910474",
+      "date": "2027-02-02",
+      "home": "DET",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910475",
+      "date": "2027-02-02",
+      "home": "ORL",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910476",
+      "date": "2027-02-02",
+      "home": "MIA",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910477",
+      "date": "2027-02-02",
+      "home": "BOS",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910478",
+      "date": "2027-02-02",
+      "home": "DAL",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910479",
+      "date": "2027-02-02",
+      "home": "DEN",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910480",
+      "date": "2027-02-02",
+      "home": "LAC",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910481",
+      "date": "2027-02-02",
+      "home": "POR",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910482",
+      "date": "2027-02-03",
+      "home": "DET",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910483",
+      "date": "2027-02-03",
+      "home": "IND",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910484",
+      "date": "2027-02-03",
+      "home": "MEM",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910485",
+      "date": "2027-02-03",
+      "home": "PHX",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910486",
+      "date": "2027-02-03",
+      "home": "HOU",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910487",
+      "date": "2027-02-03",
+      "home": "LAC",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910488",
+      "date": "2027-02-04",
+      "home": "WAS",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910489",
+      "date": "2027-02-04",
+      "home": "BKN",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910490",
+      "date": "2027-02-04",
+      "home": "CHA",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910491",
+      "date": "2027-02-04",
+      "home": "MIA",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910492",
+      "date": "2027-02-04",
+      "home": "NYK",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910493",
+      "date": "2027-02-04",
+      "home": "CHI",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910494",
+      "date": "2027-02-04",
+      "home": "SAS",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910495",
+      "date": "2027-02-04",
+      "home": "DEN",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910496",
+      "date": "2027-02-04",
+      "home": "POR",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910497",
+      "date": "2027-02-04",
+      "home": "SAC",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910498",
+      "date": "2027-02-05",
+      "home": "ATL",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910499",
+      "date": "2027-02-05",
+      "home": "CHA",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910500",
+      "date": "2027-02-05",
+      "home": "PHI",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910501",
+      "date": "2027-02-05",
+      "home": "DEN",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910502",
+      "date": "2027-02-05",
+      "home": "PHX",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910503",
+      "date": "2027-02-05",
+      "home": "OKC",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910504",
+      "date": "2027-02-06",
+      "home": "DAL",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910505",
+      "date": "2027-02-06",
+      "home": "MIN",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910506",
+      "date": "2027-02-06",
+      "home": "MEM",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910507",
+      "date": "2027-02-06",
+      "home": "BKN",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910508",
+      "date": "2027-02-06",
+      "home": "CLE",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910509",
+      "date": "2027-02-06",
+      "home": "TOR",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910510",
+      "date": "2027-02-06",
+      "home": "CHI",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910511",
+      "date": "2027-02-06",
+      "home": "SAS",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910512",
+      "date": "2027-02-06",
+      "home": "SAC",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910513",
+      "date": "2027-02-07",
+      "home": "ATL",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910514",
+      "date": "2027-02-07",
+      "home": "DET",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910515",
+      "date": "2027-02-07",
+      "home": "MIN",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910516",
+      "date": "2027-02-07",
+      "home": "DAL",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910517",
+      "date": "2027-02-07",
+      "home": "TOR",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910518",
+      "date": "2027-02-07",
+      "home": "PHI",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910519",
+      "date": "2027-02-07",
+      "home": "OKC",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910520",
+      "date": "2027-02-07",
+      "home": "SAC",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910521",
+      "date": "2027-02-08",
+      "home": "ATL",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910522",
+      "date": "2027-02-08",
+      "home": "IND",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910523",
+      "date": "2027-02-08",
+      "home": "PHI",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910524",
+      "date": "2027-02-08",
+      "home": "WAS",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910525",
+      "date": "2027-02-08",
+      "home": "MEM",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910526",
+      "date": "2027-02-08",
+      "home": "MIL",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910527",
+      "date": "2027-02-08",
+      "home": "PHX",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910528",
+      "date": "2027-02-09",
+      "home": "CLE",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910529",
+      "date": "2027-02-09",
+      "home": "BOS",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910530",
+      "date": "2027-02-09",
+      "home": "BKN",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910531",
+      "date": "2027-02-09",
+      "home": "NYK",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910532",
+      "date": "2027-02-09",
+      "home": "CHI",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910533",
+      "date": "2027-02-09",
+      "home": "DAL",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910534",
+      "date": "2027-02-09",
+      "home": "MIL",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910535",
+      "date": "2027-02-09",
+      "home": "OKC",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910536",
+      "date": "2027-02-09",
+      "home": "UTA",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910537",
+      "date": "2027-02-09",
+      "home": "LAC",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910538",
+      "date": "2027-02-10",
+      "home": "ATL",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910539",
+      "date": "2027-02-10",
+      "home": "IND",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910540",
+      "date": "2027-02-10",
+      "home": "WAS",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910541",
+      "date": "2027-02-10",
+      "home": "BOS",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910542",
+      "date": "2027-02-10",
+      "home": "MEM",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910543",
+      "date": "2027-02-10",
+      "home": "PHX",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910544",
+      "date": "2027-02-10",
+      "home": "LAL",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910545",
+      "date": "2027-02-11",
+      "home": "CHA",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910546",
+      "date": "2027-02-11",
+      "home": "IND",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910547",
+      "date": "2027-02-11",
+      "home": "PHI",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910548",
+      "date": "2027-02-11",
+      "home": "DAL",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910549",
+      "date": "2027-02-11",
+      "home": "HOU",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910550",
+      "date": "2027-02-11",
+      "home": "DEN",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910551",
+      "date": "2027-02-11",
+      "home": "OKC",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910552",
+      "date": "2027-02-12",
+      "home": "ATL",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910553",
+      "date": "2027-02-12",
+      "home": "ORL",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910554",
+      "date": "2027-02-12",
+      "home": "WAS",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910555",
+      "date": "2027-02-12",
+      "home": "TOR",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910556",
+      "date": "2027-02-12",
+      "home": "BOS",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910557",
+      "date": "2027-02-12",
+      "home": "MEM",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910558",
+      "date": "2027-02-12",
+      "home": "NOP",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910559",
+      "date": "2027-02-12",
+      "home": "LAL",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910560",
+      "date": "2027-02-13",
+      "home": "IND",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910561",
+      "date": "2027-02-13",
+      "home": "CHA",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910562",
+      "date": "2027-02-13",
+      "home": "POR",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910563",
+      "date": "2027-02-13",
+      "home": "OKC",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910564",
+      "date": "2027-02-13",
+      "home": "ORL",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910565",
+      "date": "2027-02-13",
+      "home": "WAS",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910566",
+      "date": "2027-02-13",
+      "home": "NYK",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910567",
+      "date": "2027-02-14",
+      "home": "ATL",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910568",
+      "date": "2027-02-14",
+      "home": "BOS",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910569",
+      "date": "2027-02-14",
+      "home": "CLE",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910570",
+      "date": "2027-02-14",
+      "home": "MIA",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910571",
+      "date": "2027-02-14",
+      "home": "HOU",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910572",
+      "date": "2027-02-14",
+      "home": "NOP",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910573",
+      "date": "2027-02-14",
+      "home": "POR",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401909477",
+      "date": "2027-02-15",
+      "home": "CHA",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401909478",
+      "date": "2027-02-15",
+      "home": "DAL",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401909479",
+      "date": "2027-02-15",
+      "home": "MIA",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401909480",
+      "date": "2027-02-15",
+      "home": "GSW",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910574",
+      "date": "2027-02-15",
+      "home": "WAS",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910575",
+      "date": "2027-02-15",
+      "home": "MEM",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910576",
+      "date": "2027-02-15",
+      "home": "OKC",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910577",
+      "date": "2027-02-15",
+      "home": "UTA",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910578",
+      "date": "2027-02-16",
+      "home": "CLE",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910579",
+      "date": "2027-02-16",
+      "home": "ATL",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910580",
+      "date": "2027-02-16",
+      "home": "LAL",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910581",
+      "date": "2027-02-16",
+      "home": "POR",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910582",
+      "date": "2027-02-16",
+      "home": "LAC",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910583",
+      "date": "2027-02-17",
+      "home": "CHA",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910584",
+      "date": "2027-02-17",
+      "home": "CLE",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910585",
+      "date": "2027-02-17",
+      "home": "DET",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910586",
+      "date": "2027-02-17",
+      "home": "ORL",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910587",
+      "date": "2027-02-17",
+      "home": "PHI",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910588",
+      "date": "2027-02-17",
+      "home": "WAS",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910589",
+      "date": "2027-02-17",
+      "home": "BKN",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910590",
+      "date": "2027-02-17",
+      "home": "MEM",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910591",
+      "date": "2027-02-17",
+      "home": "DEN",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910592",
+      "date": "2027-02-17",
+      "home": "OKC",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910593",
+      "date": "2027-02-17",
+      "home": "GSW",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910594",
+      "date": "2027-02-17",
+      "home": "SAC",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910595",
+      "date": "2027-02-17",
+      "home": "LAC",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910596",
+      "date": "2027-02-18",
+      "home": "MIN",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910597",
+      "date": "2027-02-18",
+      "home": "MEM",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910598",
+      "date": "2027-02-18",
+      "home": "LAL",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910599",
+      "date": "2027-02-18",
+      "home": "POR",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910600",
+      "date": "2027-02-25",
+      "home": "CLE",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910601",
+      "date": "2027-02-25",
+      "home": "DET",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910602",
+      "date": "2027-02-25",
+      "home": "ORL",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910603",
+      "date": "2027-02-25",
+      "home": "BKN",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910604",
+      "date": "2027-02-25",
+      "home": "NYK",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910605",
+      "date": "2027-02-25",
+      "home": "CHI",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910606",
+      "date": "2027-02-25",
+      "home": "MIL",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910607",
+      "date": "2027-02-25",
+      "home": "NOP",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910608",
+      "date": "2027-02-25",
+      "home": "GSW",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910609",
+      "date": "2027-02-25",
+      "home": "LAC",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910610",
+      "date": "2027-02-26",
+      "home": "BOS",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910611",
+      "date": "2027-02-26",
+      "home": "TOR",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910612",
+      "date": "2027-02-26",
+      "home": "MIN",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910613",
+      "date": "2027-02-26",
+      "home": "SAS",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910614",
+      "date": "2027-02-26",
+      "home": "HOU",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910615",
+      "date": "2027-02-26",
+      "home": "DEN",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910616",
+      "date": "2027-02-26",
+      "home": "POR",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910617",
+      "date": "2027-02-27",
+      "home": "UTA",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910618",
+      "date": "2027-02-27",
+      "home": "DET",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910619",
+      "date": "2027-02-27",
+      "home": "CHI",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910620",
+      "date": "2027-02-27",
+      "home": "MEM",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910621",
+      "date": "2027-02-27",
+      "home": "NYK",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910622",
+      "date": "2027-02-27",
+      "home": "PHX",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910623",
+      "date": "2027-02-28",
+      "home": "SAS",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910624",
+      "date": "2027-02-28",
+      "home": "DAL",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910625",
+      "date": "2027-02-28",
+      "home": "IND",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910626",
+      "date": "2027-02-28",
+      "home": "ORL",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910627",
+      "date": "2027-02-28",
+      "home": "CHA",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910628",
+      "date": "2027-02-28",
+      "home": "MIN",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910629",
+      "date": "2027-02-28",
+      "home": "NYK",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910630",
+      "date": "2027-02-28",
+      "home": "HOU",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910631",
+      "date": "2027-02-28",
+      "home": "LAC",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910632",
+      "date": "2027-03-01",
+      "home": "CLE",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910633",
+      "date": "2027-03-01",
+      "home": "DET",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910634",
+      "date": "2027-03-01",
+      "home": "NOP",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910635",
+      "date": "2027-03-01",
+      "home": "HOU",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910636",
+      "date": "2027-03-01",
+      "home": "DEN",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910637",
+      "date": "2027-03-01",
+      "home": "PHX",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910638",
+      "date": "2027-03-02",
+      "home": "IND",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910639",
+      "date": "2027-03-02",
+      "home": "ORL",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910640",
+      "date": "2027-03-02",
+      "home": "MIA",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910641",
+      "date": "2027-03-02",
+      "home": "NYK",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910642",
+      "date": "2027-03-02",
+      "home": "DAL",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910643",
+      "date": "2027-03-02",
+      "home": "MIL",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910644",
+      "date": "2027-03-02",
+      "home": "OKC",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910645",
+      "date": "2027-03-02",
+      "home": "SAC",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910646",
+      "date": "2027-03-02",
+      "home": "POR",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910647",
+      "date": "2027-03-03",
+      "home": "ATL",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910648",
+      "date": "2027-03-03",
+      "home": "PHI",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910649",
+      "date": "2027-03-03",
+      "home": "MIA",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910650",
+      "date": "2027-03-03",
+      "home": "MIL",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910651",
+      "date": "2027-03-03",
+      "home": "HOU",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910652",
+      "date": "2027-03-03",
+      "home": "PHX",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910653",
+      "date": "2027-03-03",
+      "home": "DEN",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910654",
+      "date": "2027-03-04",
+      "home": "CLE",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910655",
+      "date": "2027-03-04",
+      "home": "ORL",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910656",
+      "date": "2027-03-04",
+      "home": "PHI",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910657",
+      "date": "2027-03-04",
+      "home": "ATL",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910658",
+      "date": "2027-03-04",
+      "home": "DAL",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910659",
+      "date": "2027-03-04",
+      "home": "GSW",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910660",
+      "date": "2027-03-04",
+      "home": "SAC",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910661",
+      "date": "2027-03-04",
+      "home": "LAC",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910662",
+      "date": "2027-03-05",
+      "home": "DET",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910663",
+      "date": "2027-03-05",
+      "home": "ORL",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910664",
+      "date": "2027-03-05",
+      "home": "TOR",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910665",
+      "date": "2027-03-05",
+      "home": "NOP",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910666",
+      "date": "2027-03-05",
+      "home": "PHX",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910667",
+      "date": "2027-03-05",
+      "home": "HOU",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910668",
+      "date": "2027-03-06",
+      "home": "MIA",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910669",
+      "date": "2027-03-06",
+      "home": "CHI",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910670",
+      "date": "2027-03-06",
+      "home": "CLE",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910671",
+      "date": "2027-03-06",
+      "home": "WAS",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910672",
+      "date": "2027-03-06",
+      "home": "MEM",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910673",
+      "date": "2027-03-06",
+      "home": "LAL",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910674",
+      "date": "2027-03-06",
+      "home": "SAC",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910675",
+      "date": "2027-03-07",
+      "home": "BOS",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910676",
+      "date": "2027-03-07",
+      "home": "DEN",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910677",
+      "date": "2027-03-07",
+      "home": "CHI",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910678",
+      "date": "2027-03-07",
+      "home": "SAS",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910679",
+      "date": "2027-03-07",
+      "home": "GSW",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910680",
+      "date": "2027-03-07",
+      "home": "LAL",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910681",
+      "date": "2027-03-08",
+      "home": "IND",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910682",
+      "date": "2027-03-08",
+      "home": "PHI",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910683",
+      "date": "2027-03-08",
+      "home": "MIA",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910684",
+      "date": "2027-03-08",
+      "home": "MEM",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910685",
+      "date": "2027-03-08",
+      "home": "MIN",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910686",
+      "date": "2027-03-08",
+      "home": "OKC",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910687",
+      "date": "2027-03-08",
+      "home": "SAC",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910688",
+      "date": "2027-03-08",
+      "home": "LAC",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910689",
+      "date": "2027-03-09",
+      "home": "ORL",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910690",
+      "date": "2027-03-09",
+      "home": "BKN",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910691",
+      "date": "2027-03-09",
+      "home": "DET",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910692",
+      "date": "2027-03-09",
+      "home": "CHI",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910693",
+      "date": "2027-03-09",
+      "home": "DAL",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910694",
+      "date": "2027-03-09",
+      "home": "SAS",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910695",
+      "date": "2027-03-09",
+      "home": "GSW",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910696",
+      "date": "2027-03-10",
+      "home": "CHA",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910697",
+      "date": "2027-03-10",
+      "home": "MIA",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910698",
+      "date": "2027-03-10",
+      "home": "TOR",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910699",
+      "date": "2027-03-10",
+      "home": "UTA",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910700",
+      "date": "2027-03-10",
+      "home": "MIN",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910701",
+      "date": "2027-03-10",
+      "home": "POR",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910702",
+      "date": "2027-03-10",
+      "home": "SAC",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910703",
+      "date": "2027-03-10",
+      "home": "LAC",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910704",
+      "date": "2027-03-11",
+      "home": "CHA",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910705",
+      "date": "2027-03-11",
+      "home": "DET",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910706",
+      "date": "2027-03-11",
+      "home": "BOS",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910707",
+      "date": "2027-03-11",
+      "home": "SAS",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910708",
+      "date": "2027-03-11",
+      "home": "ATL",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910709",
+      "date": "2027-03-11",
+      "home": "CHI",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910710",
+      "date": "2027-03-11",
+      "home": "DAL",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910711",
+      "date": "2027-03-11",
+      "home": "LAL",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910712",
+      "date": "2027-03-11",
+      "home": "LAC",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910713",
+      "date": "2027-03-12",
+      "home": "BOS",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910714",
+      "date": "2027-03-12",
+      "home": "MIL",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910715",
+      "date": "2027-03-12",
+      "home": "NOP",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910716",
+      "date": "2027-03-12",
+      "home": "UTA",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910717",
+      "date": "2027-03-12",
+      "home": "DEN",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910718",
+      "date": "2027-03-12",
+      "home": "LAL",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910719",
+      "date": "2027-03-13",
+      "home": "ATL",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910720",
+      "date": "2027-03-13",
+      "home": "DET",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910721",
+      "date": "2027-03-13",
+      "home": "HOU",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910722",
+      "date": "2027-03-13",
+      "home": "CHA",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910723",
+      "date": "2027-03-13",
+      "home": "CHI",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910724",
+      "date": "2027-03-13",
+      "home": "DAL",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910725",
+      "date": "2027-03-13",
+      "home": "MIN",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910726",
+      "date": "2027-03-13",
+      "home": "POR",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910727",
+      "date": "2027-03-14",
+      "home": "NYK",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910728",
+      "date": "2027-03-14",
+      "home": "OKC",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910729",
+      "date": "2027-03-14",
+      "home": "TOR",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910730",
+      "date": "2027-03-14",
+      "home": "SAC",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910731",
+      "date": "2027-03-14",
+      "home": "DEN",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910732",
+      "date": "2027-03-14",
+      "home": "MIN",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910733",
+      "date": "2027-03-14",
+      "home": "LAL",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910734",
+      "date": "2027-03-15",
+      "home": "PHI",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910735",
+      "date": "2027-03-15",
+      "home": "BKN",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910736",
+      "date": "2027-03-15",
+      "home": "CHI",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910737",
+      "date": "2027-03-15",
+      "home": "MEM",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910738",
+      "date": "2027-03-15",
+      "home": "DAL",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910739",
+      "date": "2027-03-16",
+      "home": "WAS",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910740",
+      "date": "2027-03-16",
+      "home": "BOS",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910741",
+      "date": "2027-03-16",
+      "home": "IND",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910742",
+      "date": "2027-03-16",
+      "home": "MIL",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910743",
+      "date": "2027-03-16",
+      "home": "NOP",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910744",
+      "date": "2027-03-16",
+      "home": "OKC",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910745",
+      "date": "2027-03-16",
+      "home": "HOU",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910746",
+      "date": "2027-03-16",
+      "home": "GSW",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910747",
+      "date": "2027-03-16",
+      "home": "POR",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910748",
+      "date": "2027-03-16",
+      "home": "LAC",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910749",
+      "date": "2027-03-17",
+      "home": "PHI",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910750",
+      "date": "2027-03-17",
+      "home": "NYK",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910751",
+      "date": "2027-03-17",
+      "home": "OKC",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910752",
+      "date": "2027-03-17",
+      "home": "HOU",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910753",
+      "date": "2027-03-17",
+      "home": "UTA",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910754",
+      "date": "2027-03-17",
+      "home": "GSW",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910755",
+      "date": "2027-03-17",
+      "home": "LAL",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910756",
+      "date": "2027-03-17",
+      "home": "POR",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910757",
+      "date": "2027-03-18",
+      "home": "IND",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910758",
+      "date": "2027-03-18",
+      "home": "WAS",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910759",
+      "date": "2027-03-18",
+      "home": "BOS",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910760",
+      "date": "2027-03-18",
+      "home": "MIL",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910761",
+      "date": "2027-03-18",
+      "home": "NOP",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910762",
+      "date": "2027-03-18",
+      "home": "SAS",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910763",
+      "date": "2027-03-18",
+      "home": "DEN",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910764",
+      "date": "2027-03-18",
+      "home": "UTA",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910765",
+      "date": "2027-03-18",
+      "home": "LAC",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910766",
+      "date": "2027-03-19",
+      "home": "TOR",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910767",
+      "date": "2027-03-19",
+      "home": "NOP",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910768",
+      "date": "2027-03-19",
+      "home": "SAS",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910769",
+      "date": "2027-03-19",
+      "home": "GSW",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910770",
+      "date": "2027-03-19",
+      "home": "LAL",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910771",
+      "date": "2027-03-19",
+      "home": "PHX",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910772",
+      "date": "2027-03-20",
+      "home": "NYK",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910773",
+      "date": "2027-03-20",
+      "home": "ORL",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910774",
+      "date": "2027-03-20",
+      "home": "CLE",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910775",
+      "date": "2027-03-20",
+      "home": "DET",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910776",
+      "date": "2027-03-20",
+      "home": "MEM",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910777",
+      "date": "2027-03-20",
+      "home": "MIL",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910778",
+      "date": "2027-03-20",
+      "home": "LAC",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910779",
+      "date": "2027-03-21",
+      "home": "BOS",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910780",
+      "date": "2027-03-21",
+      "home": "BKN",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910781",
+      "date": "2027-03-21",
+      "home": "UTA",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910782",
+      "date": "2027-03-21",
+      "home": "PHX",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910783",
+      "date": "2027-03-21",
+      "home": "MIA",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910784",
+      "date": "2027-03-21",
+      "home": "PHI",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910785",
+      "date": "2027-03-21",
+      "home": "LAL",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910786",
+      "date": "2027-03-22",
+      "home": "CLE",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910787",
+      "date": "2027-03-22",
+      "home": "ORL",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910788",
+      "date": "2027-03-22",
+      "home": "CHI",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910789",
+      "date": "2027-03-22",
+      "home": "MEM",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910790",
+      "date": "2027-03-22",
+      "home": "MIL",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910791",
+      "date": "2027-03-22",
+      "home": "MIN",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910792",
+      "date": "2027-03-22",
+      "home": "GSW",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910793",
+      "date": "2027-03-22",
+      "home": "LAC",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910794",
+      "date": "2027-03-23",
+      "home": "BKN",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910795",
+      "date": "2027-03-23",
+      "home": "NYK",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910796",
+      "date": "2027-03-23",
+      "home": "MIA",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910797",
+      "date": "2027-03-23",
+      "home": "UTA",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910798",
+      "date": "2027-03-23",
+      "home": "POR",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910799",
+      "date": "2027-03-23",
+      "home": "PHX",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910800",
+      "date": "2027-03-24",
+      "home": "CHA",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910801",
+      "date": "2027-03-24",
+      "home": "IND",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910802",
+      "date": "2027-03-24",
+      "home": "WAS",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910803",
+      "date": "2027-03-24",
+      "home": "BOS",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910804",
+      "date": "2027-03-24",
+      "home": "NYK",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910805",
+      "date": "2027-03-24",
+      "home": "CHI",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910806",
+      "date": "2027-03-24",
+      "home": "MIN",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910807",
+      "date": "2027-03-24",
+      "home": "GSW",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910808",
+      "date": "2027-03-24",
+      "home": "PHX",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910809",
+      "date": "2027-03-24",
+      "home": "SAC",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910810",
+      "date": "2027-03-24",
+      "home": "LAC",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910811",
+      "date": "2027-03-25",
+      "home": "CLE",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910812",
+      "date": "2027-03-25",
+      "home": "DET",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910813",
+      "date": "2027-03-25",
+      "home": "IND",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910814",
+      "date": "2027-03-25",
+      "home": "BKN",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910815",
+      "date": "2027-03-25",
+      "home": "MIA",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910816",
+      "date": "2027-03-25",
+      "home": "MEM",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910817",
+      "date": "2027-03-25",
+      "home": "GSW",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910818",
+      "date": "2027-03-26",
+      "home": "CHA",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910819",
+      "date": "2027-03-26",
+      "home": "DAL",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910820",
+      "date": "2027-03-26",
+      "home": "MIN",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910821",
+      "date": "2027-03-26",
+      "home": "OKC",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910822",
+      "date": "2027-03-26",
+      "home": "PHX",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910823",
+      "date": "2027-03-26",
+      "home": "POR",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910824",
+      "date": "2027-03-27",
+      "home": "DET",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910825",
+      "date": "2027-03-27",
+      "home": "ATL",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910826",
+      "date": "2027-03-27",
+      "home": "WAS",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910827",
+      "date": "2027-03-27",
+      "home": "MIA",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910828",
+      "date": "2027-03-27",
+      "home": "CHI",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910829",
+      "date": "2027-03-27",
+      "home": "POR",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910830",
+      "date": "2027-03-27",
+      "home": "SAC",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910831",
+      "date": "2027-03-28",
+      "home": "ORL",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910832",
+      "date": "2027-03-28",
+      "home": "BKN",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910833",
+      "date": "2027-03-28",
+      "home": "HOU",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910834",
+      "date": "2027-03-28",
+      "home": "CHA",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910835",
+      "date": "2027-03-28",
+      "home": "WAS",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910836",
+      "date": "2027-03-28",
+      "home": "NOP",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910837",
+      "date": "2027-03-28",
+      "home": "MIN",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910838",
+      "date": "2027-03-28",
+      "home": "PHX",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910839",
+      "date": "2027-03-28",
+      "home": "DEN",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910840",
+      "date": "2027-03-29",
+      "home": "ATL",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910841",
+      "date": "2027-03-29",
+      "home": "CLE",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910842",
+      "date": "2027-03-29",
+      "home": "DET",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910843",
+      "date": "2027-03-29",
+      "home": "BKN",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910844",
+      "date": "2027-03-29",
+      "home": "CHI",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910845",
+      "date": "2027-03-29",
+      "home": "MIL",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910846",
+      "date": "2027-03-29",
+      "home": "SAS",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910847",
+      "date": "2027-03-29",
+      "home": "SAC",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910848",
+      "date": "2027-03-30",
+      "home": "CHA",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910849",
+      "date": "2027-03-30",
+      "home": "IND",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910850",
+      "date": "2027-03-30",
+      "home": "ORL",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910851",
+      "date": "2027-03-30",
+      "home": "MEM",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910852",
+      "date": "2027-03-30",
+      "home": "UTA",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910853",
+      "date": "2027-03-30",
+      "home": "POR",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910854",
+      "date": "2027-03-31",
+      "home": "ATL",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910855",
+      "date": "2027-03-31",
+      "home": "DET",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910856",
+      "date": "2027-03-31",
+      "home": "PHI",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910857",
+      "date": "2027-03-31",
+      "home": "WAS",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910858",
+      "date": "2027-03-31",
+      "home": "BKN",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910859",
+      "date": "2027-03-31",
+      "home": "MIL",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910860",
+      "date": "2027-03-31",
+      "home": "MIN",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910861",
+      "date": "2027-03-31",
+      "home": "SAS",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910862",
+      "date": "2027-03-31",
+      "home": "DAL",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910863",
+      "date": "2027-03-31",
+      "home": "POR",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910864",
+      "date": "2027-04-01",
+      "home": "CLE",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910865",
+      "date": "2027-04-01",
+      "home": "IND",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910866",
+      "date": "2027-04-01",
+      "home": "NYK",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910867",
+      "date": "2027-04-01",
+      "home": "OKC",
+      "away": "LAL"
+    },
+    {
+      "espnEventId": "401910868",
+      "date": "2027-04-02",
+      "home": "WAS",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910869",
+      "date": "2027-04-02",
+      "home": "BOS",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910870",
+      "date": "2027-04-02",
+      "home": "BKN",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910871",
+      "date": "2027-04-02",
+      "home": "MIN",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910872",
+      "date": "2027-04-02",
+      "home": "CHI",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910873",
+      "date": "2027-04-02",
+      "home": "DAL",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910874",
+      "date": "2027-04-02",
+      "home": "MIL",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910875",
+      "date": "2027-04-02",
+      "home": "TOR",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910876",
+      "date": "2027-04-02",
+      "home": "HOU",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910877",
+      "date": "2027-04-02",
+      "home": "PHX",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910878",
+      "date": "2027-04-02",
+      "home": "POR",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910879",
+      "date": "2027-04-02",
+      "home": "LAC",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910880",
+      "date": "2027-04-03",
+      "home": "OKC",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910881",
+      "date": "2027-04-03",
+      "home": "ORL",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910882",
+      "date": "2027-04-04",
+      "home": "PHI",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910883",
+      "date": "2027-04-04",
+      "home": "MIL",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910884",
+      "date": "2027-04-04",
+      "home": "CLE",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910885",
+      "date": "2027-04-04",
+      "home": "DET",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910886",
+      "date": "2027-04-04",
+      "home": "DAL",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910887",
+      "date": "2027-04-04",
+      "home": "TOR",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910888",
+      "date": "2027-04-04",
+      "home": "HOU",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910889",
+      "date": "2027-04-04",
+      "home": "LAC",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910890",
+      "date": "2027-04-04",
+      "home": "DEN",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910891",
+      "date": "2027-04-04",
+      "home": "UTA",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910892",
+      "date": "2027-04-04",
+      "home": "SAC",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910893",
+      "date": "2027-04-04",
+      "home": "NYK",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910894",
+      "date": "2027-04-04",
+      "home": "LAL",
+      "away": "SAS"
+    },
+    {
+      "espnEventId": "401910895",
+      "date": "2027-04-05",
+      "home": "CLE",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910896",
+      "date": "2027-04-05",
+      "home": "ORL",
+      "away": "MIA"
+    },
+    {
+      "espnEventId": "401910897",
+      "date": "2027-04-05",
+      "home": "NOP",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910898",
+      "date": "2027-04-06",
+      "home": "CHA",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910899",
+      "date": "2027-04-06",
+      "home": "TOR",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910900",
+      "date": "2027-04-06",
+      "home": "ATL",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910901",
+      "date": "2027-04-06",
+      "home": "MEM",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910902",
+      "date": "2027-04-06",
+      "home": "MIL",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910903",
+      "date": "2027-04-06",
+      "home": "SAS",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910904",
+      "date": "2027-04-06",
+      "home": "DEN",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910905",
+      "date": "2027-04-06",
+      "home": "UTA",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910906",
+      "date": "2027-04-06",
+      "home": "LAL",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910907",
+      "date": "2027-04-06",
+      "home": "LAC",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910908",
+      "date": "2027-04-06",
+      "home": "GSW",
+      "away": "PHX"
+    },
+    {
+      "espnEventId": "401910909",
+      "date": "2027-04-07",
+      "home": "DET",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910910",
+      "date": "2027-04-07",
+      "home": "ORL",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910911",
+      "date": "2027-04-07",
+      "home": "TOR",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910912",
+      "date": "2027-04-07",
+      "home": "SAS",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910913",
+      "date": "2027-04-07",
+      "home": "CHI",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910914",
+      "date": "2027-04-07",
+      "home": "MEM",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910915",
+      "date": "2027-04-07",
+      "home": "HOU",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910916",
+      "date": "2027-04-07",
+      "home": "LAL",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910917",
+      "date": "2027-04-07",
+      "home": "POR",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910918",
+      "date": "2027-04-08",
+      "home": "MIA",
+      "away": "PHI"
+    },
+    {
+      "espnEventId": "401910919",
+      "date": "2027-04-08",
+      "home": "MIL",
+      "away": "NYK"
+    },
+    {
+      "espnEventId": "401910920",
+      "date": "2027-04-08",
+      "home": "DEN",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910921",
+      "date": "2027-04-08",
+      "home": "UTA",
+      "away": "NOP"
+    },
+    {
+      "espnEventId": "401910922",
+      "date": "2027-04-08",
+      "home": "OKC",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910923",
+      "date": "2027-04-09",
+      "home": "ATL",
+      "away": "BOS"
+    },
+    {
+      "espnEventId": "401910924",
+      "date": "2027-04-09",
+      "home": "CHA",
+      "away": "BKN"
+    },
+    {
+      "espnEventId": "401910925",
+      "date": "2027-04-09",
+      "home": "IND",
+      "away": "CLE"
+    },
+    {
+      "espnEventId": "401910926",
+      "date": "2027-04-09",
+      "home": "NYK",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910927",
+      "date": "2027-04-09",
+      "home": "ORL",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910928",
+      "date": "2027-04-09",
+      "home": "MIA",
+      "away": "WAS"
+    },
+    {
+      "espnEventId": "401910929",
+      "date": "2027-04-09",
+      "home": "CHI",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910930",
+      "date": "2027-04-09",
+      "home": "OKC",
+      "away": "GSW"
+    },
+    {
+      "espnEventId": "401910931",
+      "date": "2027-04-09",
+      "home": "HOU",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910932",
+      "date": "2027-04-09",
+      "home": "SAS",
+      "away": "DEN"
+    },
+    {
+      "espnEventId": "401910933",
+      "date": "2027-04-09",
+      "home": "UTA",
+      "away": "LAC"
+    },
+    {
+      "espnEventId": "401910934",
+      "date": "2027-04-09",
+      "home": "LAL",
+      "away": "MIN"
+    },
+    {
+      "espnEventId": "401910935",
+      "date": "2027-04-09",
+      "home": "PHX",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910936",
+      "date": "2027-04-09",
+      "home": "SAC",
+      "away": "DAL"
+    },
+    {
+      "espnEventId": "401910937",
+      "date": "2027-04-11",
+      "home": "BOS",
+      "away": "MIL"
+    },
+    {
+      "espnEventId": "401910938",
+      "date": "2027-04-11",
+      "home": "BKN",
+      "away": "TOR"
+    },
+    {
+      "espnEventId": "401910939",
+      "date": "2027-04-11",
+      "home": "CLE",
+      "away": "ATL"
+    },
+    {
+      "espnEventId": "401910940",
+      "date": "2027-04-11",
+      "home": "MIA",
+      "away": "ORL"
+    },
+    {
+      "espnEventId": "401910941",
+      "date": "2027-04-11",
+      "home": "NYK",
+      "away": "IND"
+    },
+    {
+      "espnEventId": "401910942",
+      "date": "2027-04-11",
+      "home": "PHI",
+      "away": "CHA"
+    },
+    {
+      "espnEventId": "401910943",
+      "date": "2027-04-11",
+      "home": "WAS",
+      "away": "DET"
+    },
+    {
+      "espnEventId": "401910944",
+      "date": "2027-04-11",
+      "home": "NOP",
+      "away": "CHI"
+    },
+    {
+      "espnEventId": "401910945",
+      "date": "2027-04-11",
+      "home": "DAL",
+      "away": "MEM"
+    },
+    {
+      "espnEventId": "401910946",
+      "date": "2027-04-11",
+      "home": "MIN",
+      "away": "HOU"
+    },
+    {
+      "espnEventId": "401910947",
+      "date": "2027-04-11",
+      "home": "SAS",
+      "away": "POR"
+    },
+    {
+      "espnEventId": "401910948",
+      "date": "2027-04-11",
+      "home": "DEN",
+      "away": "OKC"
+    },
+    {
+      "espnEventId": "401910949",
+      "date": "2027-04-11",
+      "home": "GSW",
+      "away": "UTA"
+    },
+    {
+      "espnEventId": "401910950",
+      "date": "2027-04-11",
+      "home": "LAC",
+      "away": "SAC"
+    },
+    {
+      "espnEventId": "401910951",
+      "date": "2027-04-11",
+      "home": "LAL",
+      "away": "PHX"
+    }
+  ]
+}

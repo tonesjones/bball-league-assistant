@@ -42,6 +42,86 @@ code-computed advice beats posting roster screenshots into a chatbot. See [`PLAN
 7. **Fixed chatbot prompt** in `docs/bakeoff-prompt.md`: what to screenshot (roster, matchup,
    free agents) and the exact prompt text. The same prompt every time.
 
+## Design for steps 2 and 3 (draft, 2026-10-19)
+
+Goal: score each (pickup, drop) pair by how many more categories Tony expects to win this week.
+One number, in "categories", that a person can read: +0.4 means the swap is worth about 0.4 of a
+category won this week.
+
+### 1. Project each team's week (pure, `src/engine/needs.mjs`)
+
+For each team (Tony's and the opponent's), per category:
+
+- **Banked:** `matchup.totals` and `matchup.volume` from the snapshot. Null (no games yet) counts as 0.
+- **Remaining:** for each day from `fromDate` (default tomorrow) to the end of the Yahoo week:
+  - Eligible players: those with a game that day (schedule, by their snapshot team), not in an IL
+    slot, and not status `O`, `INJ` or `SUSP`. Players with no prior are unscored and contribute
+    nothing; list them.
+  - Started players: if more eligible players than active slots (roster positions minus BN and IL
+    slots), keep the top N by prior minutes per game. v0 ignores positional eligibility; Task 03's
+    lineup model replaces this.
+  - Add each started player's per-game prior line: counting stats, plus FGM, FGA, FTM and FTA.
+  - If `settings.maxGamesPerWeek` is set, stop adding games once the team reaches it.
+- **Final projection** = banked + remaining. FG% and FT% are total makes over total attempts.
+
+### 2. Turn margins into win chances
+
+Per category, margin `m` = Tony minus opponent, with TO flipped (opponent minus Tony), and FG%/FT% as
+the difference in percentages.
+
+The spread `s` comes from the remaining games only (banked numbers are fixed):
+
+- Counting stats: variance per player-game = `phi[c] × mean per game`, summed over both teams'
+  remaining started games. Starting values for `phi`: PTS 4, REB 1.5, AST 1.5, 3PM 1.5, STL 1.2,
+  BLK 1.5, TO 1.2. Make `phi` a parameter. Task 01 step 5 replaces it with dispersion fitted from
+  2025-26 game logs.
+- FG% and FT%: each side's variance of the final percentage = remaining attempts × p(1 − p) / (total
+  attempts)², where p is that side's projected percentage. Then `s` = the square root of the sum
+  over both sides.
+
+P(Tony wins c) = Φ(m / s), where Φ is the normal cumulative distribution function. When `s` = 0 (no
+games left), the probability is 1, 0 or 0.5 by the sign of `m`.
+
+Expected categories won = the sum over the 9 categories of P(win).
+
+### 3. Value of a swap (`src/engine/v0-advice.mjs`)
+
+For a pair (pickup in, drop out), recompute Tony's remaining projection with the pickup's games and
+line in place of the drop's (same starting rule, same games cap), then:
+
+**score = expected categories won after the swap − expected categories won before.**
+
+Compute the difference directly, not with a linear weight times a change, so a big swap in a
+close category isn't overcounted.
+
+Per-category needs, for display only: P(win) per category, and a label. "Close" means P(win) is
+between 0.25 and 0.75. "Safe" means above 0.9, and "lost" means below 0.1. This is the "close
+categories weigh most" rule from the task spec: a category at 0.5 moves most per added stat, and one
+at 0.98 barely moves.
+
+### 4. Scoring type
+
+- **H2H each category:** expected categories won is the right target.
+- **H2H most categories:** v0 uses the same score. Task 03's simulator scores P(win matchup)
+  directly; until then, note this approximation in the output.
+
+### 5. Tests (synthetic snapshot)
+
+- Two identical teams give P(win) of 0.5 in every category, and a pickup equal to the drop scores 0.
+- A 40-point banked lead in REB with one game left gives P(win REB) above 0.99, and a REB-only
+  pickup scores near 0.
+- TO: more projected turnovers lower P(win TO).
+- FG%: a pickup with high volume and a low percentage lowers FG%, even with more makes.
+- No games left: every P(win) is 0, 0.5 or 1, and every swap scores 0.
+- The games cap stops counting games once the team reaches it.
+
+### Open questions for Tony
+
+1. Start counting remaining games from tomorrow, or include today when the refresh runs before tip-off?
+   Default: tomorrow. Yahoo locks a pickup's day, so an add made today usually plays from tomorrow.
+2. Should a pickup only count after Yahoo processes the move? FAAB waivers clear on a schedule. v0
+   assumes free agents play from tomorrow and waiver players from their `waiverClears` date.
+
 ## Done when
 
 - [ ] Unit tests on a synthetic snapshot in `tests/fixtures/` cover: games left across a week
