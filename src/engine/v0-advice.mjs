@@ -18,7 +18,22 @@ export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
   return [fromDate, clears, addsFrom].sort().at(-1);
 }
 
-export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
+export function normalizeRoles(roles = {}, protectedNames = []) {
+  if (!roles || typeof roles !== 'object' || Array.isArray(roles)) throw new Error('roles must be an object');
+  const { core = [], stream = [] } = roles;
+  for (const names of [core, stream, protectedNames]) {
+    if (!Array.isArray(names) || !names.every((n) => typeof n === 'string')) throw new Error('roles core and stream must be arrays of strings');
+  }
+  const unique = (names) => [...new Map(names.map((n) => [normalizeName(n), n])).values()];
+  const result = { core: unique([...core, ...protectedNames]), stream: unique(stream) };
+  const coreSet = new Set(result.core.map(normalizeName));
+  for (const name of result.stream) {
+    if (coreSet.has(normalizeName(name))) throw new Error(`name in both core and stream: ${name}`);
+  }
+  return result;
+}
+
+export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedNames = [],
   fromDate = tomorrow(snapshot.asOf), addsFrom = fromDate, top = 10, phi,
   seasonMargin = 0, protectRank = 120, poolSize = 150, volumeStatus = {}, holdBelow = 0.15 } = {}) {
   if (!Number.isFinite(holdBelow) || holdBelow < 0) throw new Error('holdBelow must be a nonnegative finite number');
@@ -56,22 +71,29 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
     snapshot.matchup.volume?.[side], snapshot.settings, schedule, fromDate, window.end, swap);
   const mine = project(roster, 'mine'), opponent = project(opponentRoster, 'opponent');
   const baseline = needs(mine, opponent, phi, scoring), pairs = [];
-  const protectedSet = new Set(protectedNames.map(normalizeName));
+  const roleNames = normalizeRoles(roles, protectedNames);
+  const coreSet = new Set(roleNames.core.map(normalizeName)), streamSet = new Set(roleNames.stream.map(normalizeName));
+  const isNormal = (p) => !coreSet.has(normalizeName(p.name)) && !streamSet.has(normalizeName(p.name));
   const guardrail = { seasonMargin, protectRank, poolSize, blockedPairs: 0,
-    protectedByRank: roster.filter((p) => p.season && p.season.rank <= protectRank)
+    ...roleNames, blockedByRule: { core: 0, noPrior: 0, rank: 0, seasonValue: 0 },
+    protectedByRank: roster.filter((p) => isNormal(p) && p.season && p.season.rank <= protectRank)
       .map((p) => ({ name: p.name, ...p.season })).sort((a, b) => a.rank - b.rank),
-    protectedNoPrior: roster.filter((p) => !p.season)
+    protectedNoPrior: roster.filter((p) => isNormal(p) && !p.season)
       .map((p) => ({ name: p.name, nbaTeam: p.nbaTeam, reason: p.unscoredReason })),
   };
   const describe = (p, from) => ({ name: p.name, nbaTeam: p.nbaTeam, status: p.status ?? null,
     espnId: p.espnId, games: gamesLeft(p, schedule, from, window.end),
-    seasonValue: p.season.value, seasonRank: p.season.rank });
+    seasonValue: p.season?.value ?? null, seasonRank: p.season?.rank ?? null });
   for (const pickup of freeAgents.filter((p) => p.prior && !BLOCKED.includes(p.status))) {
     const start = pickupStart(pickup, fromDate, window, addsFrom);
-    for (const drop of roster.filter((p) => !protectedSet.has(normalizeName(p.name)))) {
-      if (!drop.season || drop.season.rank <= protectRank
-        || pickup.season.value < drop.season.value + seasonMargin) {
+    for (const drop of roster) {
+      const name = normalizeName(drop.name), dropRole = streamSet.has(name) ? 'stream' : 'normal';
+      const blocked = coreSet.has(name) ? 'core' : dropRole === 'stream' ? null
+        : !drop.season ? 'noPrior' : drop.season.rank <= protectRank ? 'rank'
+          : pickup.season.value < drop.season.value + seasonMargin ? 'seasonValue' : null;
+      if (blocked) {
         guardrail.blockedPairs++;
+        guardrail.blockedByRule[blocked]++;
         continue;
       }
       const after = project(roster, 'mine', { pickup, drop, start });
@@ -79,7 +101,7 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
       const changes = Object.fromEntries(Object.keys(baseline.categories).filter((c) => baseline.categories[c].label !== 'unknown').map((c) => [c, {
         total: after.totals[c] - mine.totals[c], pWin: result.categories[c].pWin - baseline.categories[c].pWin,
       }]));
-      pairs.push({ pickup: describe(pickup, start), drop: describe(drop, fromDate), pickupStart: start,
+      pairs.push({ pickup: describe(pickup, start), drop: describe(drop, fromDate), dropRole, pickupStart: start,
         unknownGames: after.unknownGames, changes, score: result.expectedCategories - baseline.expectedCategories });
     }
   }
@@ -96,7 +118,7 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
     unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow,
     notes: [...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
       'After making the move, refresh the league and rerun; the other pairs were scored against the current roster.',
-      'Season guardrail: never drops a player with no prior or ranked within the protect rank, and a pickup needs season value at least the drop value plus the margin.',
+      'Season guardrail: core players are never dropped; stream players bypass season checks. Other players need a prior, rank outside the protect rank, and pickup season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
     baseline, decision, topPairs: pairs.slice(0, top), unscored, guardrail };
 }

@@ -9,7 +9,7 @@ import { tomorrow } from '../src/engine/weeks.mjs';
 import { gamesLeft } from '../src/engine/games-left.mjs';
 import { needs, projectTeam, UNKNOWN_MPG } from '../src/engine/needs.mjs';
 import { advise, pickupStart } from '../src/engine/v0-advice.mjs';
-import { formatAdvice, snapshotFreshness } from '../scripts/advise.mjs';
+import { formatAdvice, readRoles, snapshotFreshness } from '../scripts/advise.mjs';
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url), 'utf8'));
 const fresh = () => structuredClone(fixture);
@@ -60,7 +60,7 @@ test('hold below the default threshold, move at the threshold, and retain the be
   const move = run(f, { holdBelow: r.decision.best.score, top: 0 });
   assert.equal(move.decision.action, 'move');
   assert.deepEqual(move.topPairs, []);
-  assert.match(formatAdvice(move), /^Move: pick up Casey Fiction, drop Alex Sample\nUnknown games: mine 0 \| opponent 0/);
+  assert.match(formatAdvice(move), /^Move: pick up Casey Fiction, drop Alex Sample \[normal\]\nUnknown games: mine 0 \| opponent 0/);
   assert.match(move.notes.join(' '), /refresh the league and rerun/);
   assert.doesNotMatch(move.notes.join(' '), /Pairs are scored independently|ignores positional eligibility/);
   assert.equal(run(f, { holdBelow: 10 }).decision.action, 'hold');
@@ -324,19 +324,8 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     await writeFile(path.join(dir, 'local/snapshots/newest.json'), JSON.stringify(f.snapshot));
     const defaultOutput = execFileSync(process.execPath, [cli, '--allow-stale'], { cwd: dir, encoding: 'utf8' });
     assert.match(defaultOutput, /newest.json/);
-    assert.match(output, /Protected by Tony: 0 \(local\/protected.json\)/);
-    const args = ['snapshot.json', '--allow-stale', '--from', '2026-10-22', '--margin', '-0.25', '--protect-rank', '0'];
-    const drop = report.topPairs[0].drop.name;
-    await writeFile(path.join(dir, 'local/protected.json'), JSON.stringify({ protected: [drop] }));
-    const protectedOutput = execFileSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8' });
-    assert.match(protectedOutput, /Protected by Tony: 1 /);
-    const protectedReport = JSON.parse(await readFile(path.join(dir, 'local/advice/snapshot.json'), 'utf8'));
-    assert.ok(protectedReport.topPairs.every((pair) => pair.drop.name !== drop));
-    for (const bad of ['{"protected": "x"}', '{"protected": [1]}', 'not json']) {
-      await writeFile(path.join(dir, 'local/protected.json'), bad);
-      assert.throws(() => execFileSync(process.execPath, [cli, ...args], { cwd: dir, stdio: 'pipe' }), /local\/protected.json/);
-    }
-    await rm(path.join(dir, 'local/protected.json'));
+    assert.match(output, /Core players: None\./);
+    assert.match(output, /Stream players: None\./);
     for (const args of [['--from', '2026-02-30'], ['--top', '-1'], ['--margin', 'Infinity'], ['--margin', 'NaN'], ['--margin'], ['--protect-rank', '-1'], ['--protect-rank', '1.5'], ['--hold-below', '-1'], ['--hold-below', 'NaN'], ['--hold-below'], ['--max-age-hours', '-1'], ['--max-age-hours', 'Infinity'], ['--max-age-hours']]) {
       assert.throws(() => execFileSync(process.execPath, [cli, ...args], { cwd: dir, stdio: 'pipe' }));
     }
@@ -358,6 +347,7 @@ test('a weekly upgrade with lower season value is blocked and counted once', () 
   assert.equal(r.decision.action, 'hold');
   assert.deepEqual(r.topPairs, []);
   assert.equal(r.guardrail.blockedPairs, 1);
+  assert.equal(r.guardrail.blockedByRule.seasonValue, 1);
 });
 
 test('positive seasonMargin blocks a small upgrade; negative margin permits a small downgrade', () => {
@@ -390,6 +380,7 @@ test('rank protection blocks a drop even for a better pickup', () => {
   assert.deepEqual(r.topPairs, []);
   assert.equal(r.guardrail.blockedPairs, 1);
   assert.deepEqual(r.guardrail.protectedByRank, [{ name: pair.drop.name, value: pair.drop.seasonValue, rank: 2 }]);
+  assert.equal(r.guardrail.blockedByRule.rank, 1);
   assert.equal(advise(f.snapshot, f).guardrail.protectRank, 120);
   assert.match(formatAdvice(r), /Alex Sample: [+-][\d.]+ \(#2\)/);
 });
@@ -406,6 +397,7 @@ test('roster players without usable priors are protected and listed with lookup 
     assert.deepEqual(r.topPairs, []);
     assert.equal(r.decision.action, 'hold');
     assert.equal(r.guardrail.blockedPairs, 1);
+    assert.equal(r.guardrail.blockedByRule.noPrior, 1);
     assert.deepEqual(r.guardrail.protectedNoPrior, [{ name: 'Alex Sample', nbaTeam: 'AAA',
       reason: failure === 'ambiguous' ? 'ambiguous' : failure === 'unmapped' ? 'not found'
         : failure === 'zero-games' ? 'no games in prior' : 'no prior' }]);
@@ -424,4 +416,97 @@ test('decision and top pairs expose prior-name season values and ranks', () => {
     }
   }
   assert.match(r.notes.join(' '), /Season guardrail/);
+  assert.equal(r.decision.pair.dropRole, 'normal');
+});
+
+test('stream roles bypass season value and rank protection, but still require a weekly gain and hold threshold', () => {
+  const f = fresh();
+  f.priors[2].perGame.pts = 14;
+  f.snapshot.freeAgents[0].nbaTeam = 'BBB';
+  f.snapshot.team.roster[0].nbaTeam = 'CCC';
+  const roles = { stream: ['Álex Sample Jr.'] };
+  const r = run(f, { roles, protectRank: 120, seasonMargin: 100 });
+  assert.equal(r.decision.action, 'move');
+  const pair = r.decision.pair;
+  assert.ok(pair.drop.seasonValue > pair.pickup.seasonValue);
+  assert.ok(pair.score > 0);
+  assert.equal(pair.dropRole, 'stream');
+  assert.equal(r.guardrail.blockedPairs, 0);
+  assert.deepEqual(r.guardrail.protectedByRank, []);
+  assert.match(formatAdvice(r), /Drop Alex Sample \[stream\]/);
+  assert.match(formatAdvice(r), /Stream players: Álex Sample Jr\./);
+  assert.equal(run(f, { roles, holdBelow: pair.score + 0.01 }).decision.action, 'hold');
+  sameSchedule(f);
+  f.snapshot.team.roster[0].nbaTeam = 'AAA';
+  assert.equal(run(f, { roles, holdBelow: 0 }).decision.action, 'hold');
+  f.priors[2].perGame.pts = 15;
+  assert.equal(run(f, { roles, holdBelow: 0 }).decision.action, 'hold');
+  f.snapshot.freeAgents[0].status = 'O';
+  assert.deepEqual(run(f, { roles }).topPairs, []);
+});
+
+test('core roles and legacy protected names never drop and count blocked pairs', () => {
+  const f = fresh(); better(f);
+  for (const extra of [{ roles: { core: ['Álex Sample Jr.'] } }, { protectedNames: ['Alex Sample'] }]) {
+    const r = run(f, extra);
+    assert.equal(r.decision.action, 'hold');
+    assert.deepEqual(r.topPairs, []);
+    assert.equal(r.guardrail.blockedPairs, 1);
+    assert.deepEqual(r.guardrail.blockedByRule, { core: 1, noPrior: 0, rank: 0, seasonValue: 0 });
+    assert.match(formatAdvice(r), /Core players: /);
+    assert.match(formatAdvice(r), /core 1 \| noPrior 0 \| rank 0 \| seasonValue 0/);
+  }
+});
+
+test('stream players without a prior can drop and report unknown season value', () => {
+  const f = fresh(); better(f); f.priors[0].perGame = null;
+  const r = run(f, { roles: { stream: ['Alex Sample'] } });
+  assert.equal(r.decision.action, 'move');
+  assert.equal(r.decision.pair.drop.seasonValue, null);
+  assert.equal(r.decision.pair.drop.seasonRank, null);
+  assert.equal(r.decision.pair.dropRole, 'stream');
+  assert.deepEqual(r.guardrail.protectedNoPrior, []);
+  assert.match(formatAdvice(r), /vs drop unknown/);
+});
+
+test('normalized role conflicts, including legacy protected names, throw', () => {
+  const f = fresh();
+  assert.throws(() => run(f, { roles: { core: ['Alex Sample'], stream: ['Álex Sample Jr.'] } }), /both core and stream/);
+  assert.throws(() => run(f, { roles: { stream: ['Alex Sample'] }, protectedNames: ['Álex Sample Jr.'] }), /both core and stream/);
+});
+
+test('roles file helper defaults empty, reads legacy protection as core, merges, and validates', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'v0-roles-'));
+  const rolesFile = path.join(dir, 'roles.json'), protectedFile = path.join(dir, 'protected.json');
+  try {
+    assert.deepEqual(await readRoles(rolesFile, protectedFile), { core: [], stream: [] });
+    await writeFile(protectedFile, JSON.stringify({ protected: ['Alex Sample'] }));
+    const legacy = await readRoles(rolesFile, protectedFile);
+    assert.deepEqual(legacy, { core: ['Alex Sample'], stream: [] });
+    const f = fresh(); better(f);
+    assert.equal(run(f, { roles: legacy }).decision.action, 'hold');
+    await writeFile(rolesFile, JSON.stringify({ core: ['Blair Example'], stream: ['Casey Fiction'] }));
+    assert.deepEqual(await readRoles(rolesFile, protectedFile),
+      { core: ['Blair Example', 'Alex Sample'], stream: ['Casey Fiction'] });
+    await writeFile(rolesFile, JSON.stringify({ stream: ['Álex Sample Jr.'] }));
+    await assert.rejects(readRoles(rolesFile, protectedFile), /both core and stream/);
+    await rm(protectedFile);
+    for (const roles of [{}, { core: ['Alex Sample'] }, { stream: ['Alex Sample'] }]) {
+      await writeFile(rolesFile, JSON.stringify(roles));
+      assert.deepEqual(await readRoles(rolesFile, protectedFile), { core: [], stream: [], ...roles });
+    }
+    for (const bad of ['null', '[]', '{"core": "x"}', '{"stream": [1]}', '{"core": null}', 'not json',
+      '{"core": ["Alex Sample"], "stream": ["Álex Sample Jr."]}']) {
+      await writeFile(rolesFile, bad);
+      await assert.rejects(readRoles(rolesFile, protectedFile), (err) => err.message.startsWith(`${rolesFile}:`));
+    }
+    await rm(rolesFile);
+    for (const bad of ['{"protected": "x"}', '{"protected": [1]}', 'not json']) {
+      await writeFile(protectedFile, bad);
+      await assert.rejects(readRoles(rolesFile, protectedFile), (err) => err.message.startsWith(protectedFile));
+    }
+  } finally {
+    assert.ok(path.resolve(dir).startsWith(path.resolve(tmpdir()) + path.sep));
+    await rm(dir, { recursive: true, force: true });
+  }
 });
