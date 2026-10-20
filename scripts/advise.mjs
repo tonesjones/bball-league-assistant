@@ -1,7 +1,7 @@
 import { readFile, readdir, stat, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { advise } from '../src/engine/v0-advice.mjs';
+import { advise, normalizeRoles } from '../src/engine/v0-advice.mjs';
 import { estimateVolume } from '../src/engine/shooting-volume.mjs';
 import { findPlayer } from '../src/engine/names.mjs';
 import { addDays, tomorrow } from '../src/engine/weeks.mjs';
@@ -9,21 +9,37 @@ import { loadGameLogs } from '../src/sources/gamelogs.mjs';
 
 const readJson = async (file) => JSON.parse(await readFile(file, 'utf8'));
 const PROTECTED_FILE = 'local/protected.json';
+const ROLES_FILE = 'local/roles.json';
 
 // Tony's protected names are private, so they live in git-ignored local/. No file means none.
-async function readProtected() {
+async function readProtected(file) {
   let protection;
   try {
-    protection = await readJson(PROTECTED_FILE);
+    protection = await readJson(file);
   } catch (err) {
     if (err.code === 'ENOENT') return [];
-    throw new Error(`${PROTECTED_FILE}: ${err.message}`);
+    throw new Error(`${file}: ${err.message}`);
   }
   const names = protection?.protected;
   if (!Array.isArray(names) || !names.every((n) => typeof n === 'string')) {
-    throw new Error(`${PROTECTED_FILE} must be {"protected": ["Player Name", ...]}`);
+    throw new Error(`${file} must be {"protected": ["Player Name", ...]}`);
   }
   return names;
+}
+
+export async function readRoles(rolesFile = ROLES_FILE, protectedFile = PROTECTED_FILE) {
+  let roles = {};
+  try {
+    roles = await readJson(rolesFile);
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw new Error(`${rolesFile}: ${err.message}`);
+  }
+  const protectedNames = await readProtected(protectedFile);
+  try {
+    return normalizeRoles(roles, protectedNames);
+  } catch (err) {
+    throw new Error(`${rolesFile}: ${err.message}`);
+  }
 }
 const number = (n) => n == null ? 'unknown' : n.toFixed(3);
 const signed = (n) => `${n >= 0 ? '+' : ''}${number(n)}`;
@@ -40,7 +56,7 @@ export function snapshotFreshness(asOf, { maxAgeHours = 12, allowStale = false, 
 
 export function formatAdvice(report) {
   const d = report.decision;
-  const lines = [d.action === 'move' ? `Move: pick up ${d.pair.pickup.name}, drop ${d.pair.drop.name}` : `Hold: ${d.reason}`,
+  const lines = [d.action === 'move' ? `Move: pick up ${d.pair.pickup.name}, drop ${d.pair.drop.name} [${d.pair.dropRole}]` : `Hold: ${d.reason}`,
     `Unknown games: mine ${report.unknownGames.mine} | opponent ${report.unknownGames.opponent}`, '',
     `Snapshot: ${report.asOf}`, `Week ${report.week}: ${report.window.start} to ${report.window.end}`,
     `From: ${report.fromDate} | Adds from: ${report.addsFrom} | Adds left: ${report.addsLeft}`,
@@ -53,9 +69,10 @@ export function formatAdvice(report) {
   lines.push('', ...report.notes, '', 'Decision details:');
   const pairLines = (pair, i) => {
     lines.push(`${i + 1}. Pick up ${pair.pickup.name} (${pair.pickup.nbaTeam}, ${pair.pickup.status ?? 'healthy'}, ${pair.pickup.games} games from ${pair.pickupStart})`,
-      `   Drop ${pair.drop.name} (${pair.drop.games} games left) | Score: ${signed(pair.score)} categories`);
+      `   Drop ${pair.drop.name} [${pair.dropRole}] (${pair.drop.games} games left) | Score: ${signed(pair.score)} categories`);
     lines.push(`   Unknown games (mine after move): ${pair.unknownGames}`);
-    lines.push(`   Season value: pickup ${signed(pair.pickup.seasonValue)} (#${pair.pickup.seasonRank}) vs drop ${signed(pair.drop.seasonValue)} (#${pair.drop.seasonRank})`);
+    const season = (p) => p.seasonValue == null ? 'unknown' : `${signed(p.seasonValue)} (#${p.seasonRank})`;
+    lines.push(`   Season value: pickup ${season(pair.pickup)} vs drop ${season(pair.drop)}`);
     lines.push(`   ${Object.entries(pair.changes).map(([c, v]) => `${c}: total ${signed(v.total)}, P(win) ${signed(v.pWin)}`).join(' | ')}`);
   };
   if (d.action === 'move') pairLines(d.pair, 0);
@@ -65,6 +82,8 @@ export function formatAdvice(report) {
   if (!report.topPairs.length) lines.push('None.');
   const g = report.guardrail;
   lines.push('', 'Season guardrail:', `Margin: ${g.seasonMargin} | Protect rank: ${g.protectRank} | Blocked pairs: ${g.blockedPairs}`,
+    `Core players: ${g.core.join(', ') || 'None.'}`, `Stream players: ${g.stream.join(', ') || 'None.'}`,
+    `Blocked by rule (first match): ${Object.entries(g.blockedByRule).map(([rule, count]) => `${rule} ${count}`).join(' | ')}`,
     'Protected by rank:');
   for (const p of g.protectedByRank) lines.push(`${p.name}: ${signed(p.value)} (#${p.rank})`);
   if (!g.protectedByRank.length) lines.push('None.');
@@ -127,7 +146,7 @@ async function main(args) {
   const [ids, priors, schedule] = await Promise.all([
     'data/ids.json', 'data/priors/players.json', 'data/schedule-2026-27.json',
   ].map(readJson));
-  const protectedNames = await readProtected();
+  const roles = await readRoles();
   const fromDate = options.fromDate ?? tomorrow(snapshot.asOf);
   const from = snapshot.matchup.start, to = [addDays(fromDate, -1), snapshot.matchup.end].sort()[0];
   const missingVolume = (side) => !['fgm', 'fga', 'ftm', 'fta'].every((k) => Number.isFinite(snapshot.matchup.volume?.[side]?.[k]));
@@ -147,13 +166,12 @@ async function main(args) {
       }
     }
   }
-  const report = { ...advise(snapshot, { ...options, ids, priors, schedule, protectedNames }), freshness };
+  const report = { ...advise(snapshot, { ...options, ids, priors, schedule, roles }), freshness };
   const text = formatAdvice(report);
   const output = path.join('local/advice', path.basename(snapshotPath));
   await mkdir(path.dirname(output), { recursive: true });
   await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
   console.log(text);
-  console.log(`\nProtected by Tony: ${protectedNames.length} (${PROTECTED_FILE})`);
   console.log(`JSON: ${output}`);
 }
 
