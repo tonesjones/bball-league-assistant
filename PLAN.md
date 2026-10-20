@@ -109,10 +109,23 @@ Updated at the end of each session.
 **2026-10-19.** North star agreed. Scaffold only: Draft Lab priors in `data/priors/`, task specs,
 2 passing tests. Next: Phase 0, starting with the league read (Task 02) and the schedule.
 
+**2026-10-19, later.** Task 02 steps 1 and 2 done: [`docs/update-league.md`](docs/update-league.md)
+written, and the first real fetch saved all 9 pages to `local/raw/`. Page URLs and contents are in
+[`docs/sources.md`](docs/sources.md), real IDs in `.env`. Schedule source picked (ESPN, see
+`docs/sources.md`). Next: Task 02 steps 3 to 5 (schema, parsers, synthetic fixtures), then Task
+01 steps 2 and 3 (schedule and ID map).
+
 ## Open decisions
 
-- Which pages the league read needs, and their URLs: confirm on the first real fetch.
-- Whether a Haiku or Sonnet subagent can drive the browser tools. If not, the main session does the
-  fetch (about 5 to 8 page reads).
-- Schedule source for 2026-27 (Task 01, step 1).
+- ~~Which pages the league read needs, and their URLs.~~ Settled 2026-10-19: 9 pages, listed in
+  `docs/sources.md`.
+- ~~Whether a Haiku or Sonnet subagent can drive the browser tools.~~ Settled 2026-10-19: yes. A
+  Haiku subagent (general-purpose agent, `model: haiku`) used the built-in browser pane's tools
+  and fetched all 9 pages by following `docs/update-league.md` in about 2.5 minutes. It saves
+  pages by retyping the tool output, so a check compared two saved pages with the live page:
+  every player row and setting matched; only whitespace and button labels differed. Parsers must
+  still fail loudly on a malformed row. Tony is signed in to Yahoo in the browser pane, not in
+  Firefox, which the browser tools can't drive.
+- ~~Schedule source for 2026-27.~~ Settled 2026-10-19: ESPN's public site API, per team. See
+  `docs/sources.md`.
 - The chatbot used for the bakeoff baseline, and its fixed prompt.
