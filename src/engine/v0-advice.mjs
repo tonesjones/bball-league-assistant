@@ -18,6 +18,10 @@ export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
   return [fromDate, clears, addsFrom].sort().at(-1);
 }
 
+// The live matchup page shows banked FG% and FT% but not the makes and attempts behind them.
+const shootingWithoutAttempts = ({ totals, volume }) => ['mine', 'opponent'].some((side) =>
+  [['FG%', 'fga'], ['FT%', 'fta']].some(([c, attempts]) => totals?.[side]?.[c] != null && volume?.[side]?.[attempts] == null));
+
 export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
   fromDate = tomorrow(snapshot.asOf), addsFrom = fromDate, top = 10, phi,
   seasonMargin = 0, protectRank = 120, poolSize = 150 } = {}) {
@@ -81,6 +85,8 @@ export function advise(snapshot, { ids, priors, schedule, protectedNames = [],
     notes: ['v0 ignores positional eligibility; games already played toward the cap are unknown.',
       'Pairs are scored independently against the current roster.',
       'Season guardrail: never drops a player with no prior or ranked within the protect rank, and a pickup needs season value at least the drop value plus the margin.',
-      'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
+      'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.',
+      ...(shootingWithoutAttempts(snapshot.matchup)
+        ? ['Banked FG% and FT% makes and attempts are not on the live matchup page, so banked shooting is left out of the percentages.'] : [])],
     baseline, suggestions, topPairs: pairs.slice(0, top), unscored, guardrail };
 }

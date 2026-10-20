@@ -68,6 +68,53 @@ test('matchup: dashes are null', () => {
   assert.equal(m.totals.mine.PTS, null);
 });
 
+test('live matchup: totals without volume and abbreviated players in paired slots', () => {
+  const m = parseMatchup(page('matchup-live'));
+  assert.equal(m.week, 2);
+  assert.deepEqual(m.days, ['10/27', '10/28', '10/29', '10/30', '10/31', '11/1']);
+  assert.equal(m.teamName, 'Fixture Five');
+  assert.equal(m.opponentName, 'Rim Runners');
+  assert.equal(m.totals.mine.PTS, 38);
+  assert.equal(m.totals.mine['FG%'], 0.474);
+  assert.equal(m.totals.opponent['FT%'], null);
+  for (const side of ['mine', 'opponent']) assert.deepEqual(m.volume[side], { fgm: null, fga: null, ftm: null, fta: null });
+  assert.deepEqual(m.score, { mine: 6, opponent: 2 });
+  assert.equal(m.roster.length, 4);
+  assert.equal(m.opponentRoster.length, 4);
+  assert.deepEqual(m.roster[2], { name: 'C.J. McFakeum', nbaTeam: 'NOP', positions: ['SG'], status: null, slot: 'Util' });
+  assert.equal(m.opponentRoster[2].name, 'T. Tester III');
+  assert.equal(m.roster[1].status, 'Q');
+  assert.equal(m.opponentRoster[1].status, 'O');
+  assert.equal(m.roster[3].status, 'NA');
+  assert.equal(m.opponentRoster[0].slot, 'PG');
+});
+
+test('live matchup builds a valid snapshot with week dates', () => {
+  const s = buildSnapshot({ ...pages(), matchup: page('matchup-live') }, ASOF);
+  assert.deepEqual([s.matchup.start, s.matchup.end], ['2026-10-27', '2026-11-01']);
+  assert.doesNotThrow(() => validate(s));
+});
+
+test('live matchup rejects malformed headers, totals and player blocks with line numbers', () => {
+  const text = page('matchup-live');
+  const cases = [
+    text.replace('Team\tFG%\tFT%', 'Team\tFT%'),
+    text.replace('Team\tFG%\tFT%', 'Team\tFT%\tFG%'),
+    text.replace('Player\tFG%\tFT%', 'Player\tFT%'),
+    without(text, 'TOTAL'),
+    text.replace(/\n\.474\r?\n/, '\n'),
+    text.replace(/\n\.500\r?\n/, '\n'),
+    text.replace(/\n\.500\r?\n/, '\n.500\n1\n'),
+    text.replace(/\nQ\r?\n/, '\nXX\n'),
+    text.replace('J. TestwoodOKC - PG', 'J. Testwood - PG'),
+    text.replace(/Z\. ZedmanLAC - C[\s\S]*?TOTAL/, 'TOTAL'),
+    text.replace('J. TestwoodOKC - PG', 'TOTAL'),
+    text.slice(0, text.indexOf('\n\nFixture Five', text.indexOf('Team\t'))),
+    text.slice(0, text.indexOf('Rim Runners', text.indexOf('Team\t'))),
+  ];
+  for (const bad of cases) assert.throws(() => parseMatchup(bad), /matchup: line \d+: /);
+});
+
 test('free agents: team, positions, status, waiver clear date', () => {
   const fa = parseFreeAgents(page('fa-1'), 'fa-1');
   assert.equal(fa.length, 4);

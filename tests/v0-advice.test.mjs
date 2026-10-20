@@ -80,6 +80,24 @@ test('FG/FT percentages use banked plus remaining makes and attempts, not averag
   assert.ok(r.topPairs[0].changes['FT%'].total < 0);
 });
 
+test('notes explain banked shooting only when percentages lack attempts on either side', () => {
+  const note = 'Banked FG% and FT% makes and attempts are not on the live matchup page, so banked shooting is left out of the percentages.';
+  assert.ok(!run(fresh()).notes.includes(note));
+  for (const side of ['mine', 'opponent']) {
+    for (const [category, attempts] of [['FG%', 'fga'], ['FT%', 'fta']]) {
+      const f = fresh();
+      f.snapshot.matchup.totals[side][category] = 0.474;
+      f.snapshot.matchup.volume[side][attempts] = null;
+      assert.equal(run(f).notes.filter((n) => n === note).length, 1);
+      f.snapshot.matchup.volume[side][attempts] = 10;
+      assert.ok(!run(f).notes.includes(note));
+      f.snapshot.matchup.volume[side][attempts] = null;
+      f.snapshot.matchup.totals[side][category] = null;
+      assert.ok(!run(f).notes.includes(note));
+    }
+  }
+});
+
 test('zero games left produces deterministic probabilities and zero swap scores', () => {
   const f = fresh(); f.snapshot.matchup.totals.mine = { PTS: 3, TO: 2 };
   const r = run(f, { fromDate: '2026-11-02' });
