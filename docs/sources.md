@@ -1,0 +1,55 @@
+# Data sources
+
+Every outside source the tool reads, with its URL, terms and how we stay polite to it.
+
+## Yahoo league pages
+
+- **What:** Tony's league pages on Yahoo Fantasy Basketball, read in a browser he is signed in to.
+  No Yahoo API (see [`PLAN.md`](../PLAN.md)).
+- **Browser:** the built-in browser pane in the Claude desktop app. Tony signs in there himself;
+  the sign-in persists between sessions. Firefox can't be driven by the agent's browser tools.
+- **How:** [`update-league.md`](update-league.md). Read only, one read per page per refresh.
+- **Terms:** Yahoo Terms of Service. Personal use of Tony's own league data, read at human pace
+  from his own session. Nothing is submitted or changed.
+- **IDs:** `{L}` is `YAHOO_LEAGUE_ID` and `{T}` is `YAHOO_TEAM_ID` from `.env`. `{OPP}` is the
+  opponent's team number, read from the matchup page. Real IDs never go in git.
+
+Base URL: `https://basketball.fantasysports.yahoo.com/nba`
+
+| Page | URL pattern | What it has (checked on the first fetch, 2026-10-19) |
+|---|---|---|
+| Settings | `/{L}/settings` | Scoring type, roster positions, stat categories, max acquisitions per week, waiver type and time, playoff weeks, trade end date. A two-column `Setting<TAB>Value` table. |
+| Tony's team | `/{L}/{T}` | Record, this week's opponent, waiver (FAAB) budget, roster with slots, positions, status and stats. |
+| Matchup | `/{L}/matchup?mid1={T}` | Current week, category totals for both teams (live, and per day), both rosters' stats. |
+| Opponent | `/{L}/{OPP}` | The opponent's roster, same layout as Tony's team. Not read by default: the matchup page lists both rosters with slots. |
+| Free agents | `/{L}/players?status=A&pos=P&sort=AR&sdir=1&count={0,25,50,75}` | 25 available players per page, ranked, with team, positions, status and stats. Four pages cover the top 100. |
+| Transactions | `/{L}/transactions` | Adds, drops, trades and winning FAAB bids. Empty before the first move ("No recent transactions"). |
+
+Notes from the first fetch:
+
+- All pages had their data in the first render; no page needed an extra wait.
+- The page-text tool omits button labels that the DOM's `innerText` shows, and turns non-breaking
+  spaces into plain spaces. Parsers should normalize whitespace and not expect button text.
+- Adds used this week isn't shown on the team page. Count it from the transactions page.
+
+## NBA schedule, 2026-27
+
+- **Pick:** ESPN's public site API, one request per team:
+  `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{espnTeamId}/schedule?season=2027&seasontype=2`
+- **Why:** free, no key, JSON with date, home and away team abbreviations. 30 requests fetch the
+  whole regular season. Checked 2026-10-19: Golden State returned 80 games, Oct 22 to Apr 12. The
+  2 missing games are probably NBA Cup games whose opponents aren't set yet; Task 01 step 2 should
+  confirm and re-fetch after the Cup group stage.
+- **Terms:** undocumented and unofficial. ESPN publishes no terms or rate limit for this API, and
+  it can change without notice. Use it for personal, low-volume reads only: fetch the schedule
+  once, cache it in `local/cache/`, and re-fetch at most weekly. Back off on 429 and 5xx.
+- **ESPN team abbreviations** differ from the standard codes in places (`GS`, `SA`, `NY`, `NO`,
+  `UTAH`, `WSH`). Map them to `GSW`, `SAS`, `NYK`, `NOP`, `UTA`, `WAS`.
+
+Rejected:
+
+- **NBA CDN** (`cdn.nba.com/static/json/staticData/scheduleLeagueV2.json`): the official
+  schedule, but it returned HTTP 403 (Akamai "Access Denied") to a script, even with browser
+  headers. Could be read through the browser pane if ESPN breaks.
+- **balldontlie** (`api.balldontlie.io`): needs an API key (HTTP 401 without one), and the free
+  tier is rate-limited.

@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "deny": [
+      "mcp__Claude_Browser__computer",
+      "mcp__Claude_Browser__form_input",
+      "mcp__Claude_Browser__javascript_tool",
+      "mcp__Claude_Browser__browser_batch",
+      "mcp__claude-in-chrome__computer",
+      "mcp__claude-in-chrome__form_input",
+      "mcp__claude-in-chrome__javascript_tool",
+      "mcp__claude-in-chrome__browser_batch",
+      "mcp__claude-in-chrome__file_upload",
+      "mcp__claude-in-chrome__shortcuts_execute"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__Claude_Browser__navigate|mcp__Claude_Browser__preview_start|mcp__claude-in-chrome__navigate",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guard-yahoo-url.mjs\"",
+            "onFailure": "block",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

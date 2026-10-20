@@ -63,7 +63,7 @@ That's about 5 to 8 page reads per refresh.
 
 ## Done when
 
-- [ ] `docs/update-league.md` exists, and a refresh following it produces raw text for every page.
+- [x] `docs/update-league.md` exists, and a refresh following it produces raw text for every page.
 - [ ] Parsers build a valid snapshot from a real refresh (kept in `local/`) and from the synthetic
       pages in `tests/fixtures/yahoo-pages/`.
 - [ ] A changed or unknown page layout fails loudly with the page and line, never a partial snapshot.
