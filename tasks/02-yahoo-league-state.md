@@ -64,15 +64,36 @@ That's about 5 to 8 page reads per refresh.
 ## Done when
 
 - [x] `docs/update-league.md` exists, and a refresh following it produces raw text for every page.
-- [ ] Parsers build a valid snapshot from a real refresh (kept in `local/`) and from the synthetic
+- [x] Parsers build a valid snapshot from a real refresh (kept in `local/`) and from the synthetic
       pages in `tests/fixtures/yahoo-pages/`.
-- [ ] A changed or unknown page layout fails loudly with the page and line, never a partial snapshot.
-- [ ] `validate()` passes on the real and synthetic snapshots, and rejects one with a missing
+- [x] A changed or unknown page layout fails loudly with the page and line, never a partial snapshot.
+- [x] `validate()` passes on the real and synthetic snapshots, and rejects one with a missing
       roster or settings.
 - [ ] Rosters and matchup totals in the snapshot match what the Yahoo app shows at the same time.
 - [ ] Every rostered player maps to `data/ids.json`, or is listed as unmatched.
-- [ ] Nothing league-identifying is committed (`git grep` for the league ID and team names comes
+- [x] Nothing league-identifying is committed (`git grep` for the league ID and team names comes
       back empty).
+
+## Notes from steps 3 to 5 (2026-10-19)
+
+Built from the pre-season refresh `2026-10-19-2117`. The real snapshot has 13 players on each
+roster and 100 free agents, the same row counts as the raw pages. All totals are null because no
+games have been played. What's still open:
+
+- **Transactions layout is unseen.** The real page says "No recent transactions". The parser
+  returns `[]` for that and throws on anything else, so **the first refresh after any move in the
+  league will fail** until someone saves a real transactions page, writes a synthetic fixture from
+  it, and finishes `parseTransactions` and `countAdds` (whose `{type:'add', team}` shape is a
+  guess). Expect this in the first days of the season.
+- **Rosters and totals vs the Yahoo app** stays open: it needs a refresh with games played and
+  Tony comparing the snapshot with the app.
+- **Unseen layouts:** an IL player, an empty roster slot, a games-cap setting and a status code
+  outside INJ, GTD, DTD, SUSP, NA, O, Q. Each fails loudly with the line rather than guessing.
+  The IL case is covered only by the synthetic fixtures.
+- **Waiver clear times** on the free-agent page are a date only (`W (Oct 21)`), with no time or
+  year. They're stored as that string.
+- **Injury status** appears glued to the player name in the page text; the parser splits it off.
+- Step 6 (ID map) waits for `data/ids.json` from Task 01.
 
 Later (Phase 1): a replay test that rebuilds this week's category totals from box scores (Task 01)
 and matches the Yahoo matchup within rounding.

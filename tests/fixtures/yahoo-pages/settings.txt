@@ -1,0 +1,54 @@
+Title: Scoring & Settings | Fantasy Basketball | Yahoo! Sports
+URL: https://basketball.fantasysports.yahoo.com/nba/4242/settings
+Source element: <body>
+---
+Yahoo Sports
+Yahoo Sports
+Search query
+T
+ Fantasy Basketball
+Overview
+League
+My Team
+Matchups
+Players
+Research
+Draft
+StatTracker
+Fixture Hoops Test 4242 (ID# 4242)
+Yahoo Sports Fantasy Basketball
+Scoring & Settings
+Setting	Value
+League ID#:	4242
+League Name:	Fixture Hoops Test 4242 PRIZE 20
+Auto-renew Enabled:	No
+Draft Type:	Live Standard Draft
+Draft Time:	Sat Oct 10 6:30pm PDT
+Max Teams:	12
+Live Draft Pick Time:	1 Minute
+Scoring Type:	Head-to-Head - Categories
+Max Acquisitions for Entire Season:	No maximum
+Max Trades for Entire Season	No maximum
+Trade End Date:	March 4, 2027
+Allow Draft Pick Trades:	No
+Waiver Time:	2 days
+Waiver Type:	FAB w/ Continual rolling list tiebreak
+Waiver Mode:	Continuous
+Waiver Processing Days:	Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
+Max Acquisitions per Week:	4
+Weekly Deadline:	Daily - Today
+Start Scoring on:	Week 1
+Playoffs:	6 teams - Week 20, 21 and 22 (ends Sunday, Apr 4)
+Playoff Tie-Breaker:	Higher seed wins
+Divisions:	No
+Lock Benched Players:	No
+Roster Positions:	PG, SG, G, SF, PF, F, C, C, Util, Util, BN, BN, BN, IL, IL, IL
+Players Stat Categories:	Field Goal Percentage (FG%), Free Throw Percentage (FT%), 3-point Shots Made (3PTM), Points Scored (PTS), Total Rebounds (REB), Assists (AST), Steals (ST), Blocked Shots (BLK), Turnovers (TO)
+
+Yahoo Sports - NBC Sports Network - Paid Fantasy Terms - Feedback - Terms and Privacy Policy - Your Privacy Choices - CA Privacy Notice  - About Our Ads - Responsible Gaming - Help
+
+Certain Data by Sportradar and Rotowire
+
+The NBA identifications are the intellectual property of NBA Properties, Inc. © 2026 NBA Properties, Inc. All Rights Reserved.
+
+© 2026 Yahoo Fantasy Sports LLC. All rights reserved.
