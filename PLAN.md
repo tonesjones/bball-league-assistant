@@ -57,12 +57,44 @@ No UI. Run from Claude Code.
 3. v0 advice and bakeoff ([Task 05](tasks/05-v0-advice-and-bakeoff.md)): rank free agents against
    Tony's roster by games left times last season's per-game category value, weighted by this
    week's category needs, within the 4-add limit and the guardrails in [`AGENTS.md`](AGENTS.md).
-4. Run the bakeoff for 2 full weeks: at each decision, log the tool's suggestion and a chatbot's
-   suggestion from the same screenshots and a fixed prompt. Score both from real box scores.
+   Done (#7, #8, #9). Tony rejected every suggestion from the first runs, so step 4 makes the
+   advice trustworthy before the bakeoff starts.
+4. "Best next move, or hold." Each item is one PR:
+   - **4a. Live matchup and shooting volume** (PR #10). The live matchup page has no makes or
+     attempts. Estimate this week's banked FGM/A and FTM/A from NBA game logs for each roster,
+     checked against Yahoo's counting totals. If the estimate can't be checked, FG% and FT% are
+     marked unknown and left out of the score, and the report says so at the top.
+     *Done when:* a synthetic test shows the estimate on a checked roster, and a mismatch or
+     missing logs marks FG%/FT% unknown; the real week-1 pages produce a report.
+   - **4b. Legal lineups, one move or hold, fresh data.** Each day's starters fill the league's
+     position slots (PG, SG, G, SF, PF, F, C, Util) from each player's eligible positions, and a
+     games cap counts games already used when the league has one. The report gives one best move,
+     or "hold" when no move gains at least a set number of expected categories, then says to
+     refresh and rerun after the move. Players with no prior still take lineup slots and are
+     counted as unknown games. A snapshot older than a set age is refused unless overridden.
+     *Done when:* tests cover a player who can't fill a slot, hold below the threshold, unknown
+     games, and a stale snapshot.
+   - **4c. Roster roles.** Tony marks players in git-ignored `local/roles.json` as core (never
+     dropped) or stream (droppable for a weekly gain, with no season-value test). Everyone else
+     keeps the season guardrail.
+     *Done when:* tests show a stream player dropped for a weekly gain, a core player never
+     dropped, and `local/protected.json` still read as core.
+   - **4d. Bakeoff scoring.** Score every decision, including "hold", against making no move,
+     from the move's own effective date. Report categories helped and hurt separately, and each
+     category's gain on its own scale, never averaged across categories. Log why Tony rejected a
+     suggestion.
+     *Done when:* tests show a harmful flip counted as hurt, a hold scored as zero change, and a
+     move dated mid-week scored only from that date.
+   - **4e. Docs.** README status, and the phase of each requirement in `AGENTS.md`
+     (Δ P(win this week) arrives with Task 03, Δ P(title) later).
+5. Pilot bakeoff for 2 full weeks: freeze `docs/bakeoff-prompt.md` and the decision-time inputs,
+   log every suggestion (tool, chatbot, and "do nothing") before the outcome is known, and score
+   them from real box scores. Also track invalid suggestions and refresh time.
 
-**Gate.** Go to Phase 1 only if the tool's moves beat the chatbot's on realized category gain in
-most decisions and Tony rates them as more useful. Otherwise rethink or stop. Record the result
-here and as a decision note in the vault.
+**Gate.** Go to Phase 1 only if the tool's moves beat both the chatbot's and doing nothing on
+categories helped minus hurt, and Tony rates them as more useful. Two weeks is a small sample:
+"inconclusive, keep testing" is a valid result. Otherwise rethink or stop. Record the result here
+and as a decision note in the vault.
 
 ### Phase 1: better numbers
 
@@ -106,10 +138,12 @@ FAAB bid pricing, Δ P(title) from a season simulation, injury alerts
 
 Updated at the end of each session.
 
-**Checkpoint (2026-10-20).** Phase 0, step 3 of 4. League read, schedule and ID map, and v0 advice
-with the season guardrail are merged. Before the bakeoff can start: write
-`docs/bakeoff-prompt.md`, pick the chatbot, get Tony's OK on the advice output, and build the
-transactions parser once the league has a real move. Gate not yet run.
+**Checkpoint (2026-10-20, later).** Phase 0, step 4 of 5. An outside review found that the
+bakeoff could reward harmful moves, lineups ignored positions, and missing FG%/FT% volume was only
+a footnote. Phase 0 now ends with a "best next move, or hold" report (step 4a to 4e) before a
+2-week pilot bakeoff. Still needed before the pilot: write `docs/bakeoff-prompt.md`, pick the
+chatbot, get Tony's OK on the advice output, and build the transactions parser once the league
+has a real move. Gate not yet run.
 
 **2026-10-19.** North star agreed. Scaffold only: Draft Lab priors in `data/priors/`, task specs,
 2 passing tests. Next: Phase 0, starting with the league read (Task 02) and the schedule.
