@@ -87,6 +87,9 @@ No UI. Run from Claude Code.
      move dated mid-week scored only from that date.
    - **4e. Docs.** README status, and the phase of each requirement in `AGENTS.md`
      (Δ P(win this week) arrives with Task 03, Δ P(title) later).
+
+   Done (#10 to #14). One gap from 4b: when the league has a games cap, games already used this
+   week are still unknown, and the report says so. This league has no cap.
 5. Pilot bakeoff for 2 full weeks: freeze `docs/bakeoff-prompt.md` and the decision-time inputs,
    log every suggestion (tool, chatbot, and "do nothing") before the outcome is known, and score
    them from real box scores. Also track invalid suggestions and refresh time.
@@ -138,12 +141,15 @@ FAAB bid pricing, Δ P(title) from a season simulation, injury alerts
 
 Updated at the end of each session.
 
-**Checkpoint (2026-10-20, later).** Phase 0, step 4 of 5. An outside review found that the
-bakeoff could reward harmful moves, lineups ignored positions, and missing FG%/FT% volume was only
-a footnote. Phase 0 now ends with a "best next move, or hold" report (step 4a to 4e) before a
-2-week pilot bakeoff. Still needed before the pilot: write `docs/bakeoff-prompt.md`, pick the
-chatbot, get Tony's OK on the advice output, and build the transactions parser once the league
-has a real move. Gate not yet run.
+**Checkpoint (2026-10-20, step 4 done).** Phase 0, step 5 of 5. Step 4 merged (#10 to #14):
+the report now gives one best move or "hold", fills legal daily lineups, rebuilds banked FG%/FT%
+volume from game logs (or marks them unknown), refuses a stale snapshot, reads core and stream
+roles from `local/roles.json`, and the bakeoff scores helped and hurt against "no move". The
+first live run matched the opponent's volume. Mine came back unknown because the snapshot was
+taken mid-game; a refresh after the night's games should match. Still needed before the pilot:
+write `docs/bakeoff-prompt.md`, pick the chatbot, mark roles in `local/roles.json`, get Tony's OK
+on the advice output, and build the transactions parser once the league has a real move. Gate
+not yet run.
 
 **2026-10-19.** North star agreed. Scaffold only: Draft Lab priors in `data/priors/`, task specs,
 2 passing tests. Next: Phase 0, starting with the league read (Task 02) and the schedule.
