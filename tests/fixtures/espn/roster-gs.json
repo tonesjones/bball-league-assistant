@@ -1,0 +1,56 @@
+{
+ "team": {
+  "id": "9",
+  "abbreviation": "GS"
+ },
+ "athletes": [
+  {
+   "id": "4397886",
+   "fullName": "Charles Bassey",
+   "displayName": "Charles Bassey",
+   "position": {
+    "abbreviation": "C"
+   }
+  },
+  {
+   "id": "6430",
+   "fullName": "Jimmy Butler III",
+   "displayName": "Jimmy Butler III",
+   "position": {
+    "abbreviation": "F"
+   }
+  },
+  {
+   "id": "4433149",
+   "fullName": "LJ Cryer",
+   "displayName": "LJ Cryer",
+   "position": {
+    "abbreviation": "G"
+   }
+  },
+  {
+   "id": "3975",
+   "fullName": "Stephen Curry",
+   "displayName": "Stephen Curry",
+   "position": {
+    "abbreviation": "G"
+   }
+  },
+  {
+   "id": "6589",
+   "fullName": "Draymond Green",
+   "displayName": "Draymond Green",
+   "position": {
+    "abbreviation": "F"
+   }
+  },
+  {
+   "id": "3213",
+   "fullName": "Al Horford",
+   "displayName": "Al Horford",
+   "position": {
+    "abbreviation": "C"
+   }
+  }
+ ]
+}

@@ -70,7 +70,7 @@ That's about 5 to 8 page reads per refresh.
 - [x] `validate()` passes on the real and synthetic snapshots, and rejects one with a missing
       roster or settings.
 - [ ] Rosters and matchup totals in the snapshot match what the Yahoo app shows at the same time.
-- [ ] Every rostered player maps to `data/ids.json`, or is listed as unmatched.
+- [x] Every rostered player maps to `data/ids.json`, or is listed as unmatched.
 - [x] Nothing league-identifying is committed (`git grep` for the league ID and team names comes
       back empty).
 
@@ -93,7 +93,10 @@ games have been played. What's still open:
 - **Waiver clear times** on the free-agent page are a date only (`W (Oct 21)`), with no time or
   year. They're stored as that string.
 - **Injury status** appears glued to the player name in the page text; the parser splits it off.
-- Step 6 (ID map) waits for `data/ids.json` from Task 01.
+- Step 6 done: `npm run match:ids` maps 123 of 126 players and writes the rest to
+  `local/reports/ids-snapshot-unmatched.json`. Two of the three aren't on an ESPN roster. The third
+  shows a parser gap: Yahoo showed a status `P` glued to a free agent's name, and `NAME_RE` doesn't
+  know `P`, so the parser kept it as part of the name instead of failing.
 
 Later (Phase 1): a replay test that rebuilds this week's category totals from box scores (Task 01)
 and matches the Yahoo matchup within rounding.
