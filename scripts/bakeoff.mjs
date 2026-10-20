@@ -3,17 +3,20 @@ import { dirname } from 'node:path';
 import { validateEntry, realizedGain, flips, summarize } from '../src/engine/bakeoff.mjs';
 import { loadGameLogs } from '../src/sources/gamelogs.mjs';
 
-const [command, ...args] = process.argv.slice(2); const get = (k) => args[args.indexOf(k) + 1];
+const [command, ...args] = process.argv.slice(2); const get = (k) => args.includes(k) ? args[args.indexOf(k) + 1] : undefined;
 if (command === 'record') {
   const entries = JSON.parse(await readFile(args[0], 'utf8')); if (!Array.isArray(entries)) throw new Error('entries file must be an array');
-  entries.forEach(validateEntry); const path = 'local/bakeoff.jsonl'; await mkdir(dirname(path), { recursive: true });
-  await appendFile(path, entries.map((e) => JSON.stringify({ taken: false, ...e })).join('\n') + '\n');
+  const validated = entries.map(validateEntry); const path = 'local/bakeoff.jsonl'; await mkdir(dirname(path), { recursive: true });
+  await appendFile(path, validated.map((e) => JSON.stringify({ taken: false, ...e })).join('\n') + '\n');
 } else if (command === 'score') {
   const week = Number(get('--week')); const from = get('--from'); const to = get('--to');
-  const entries = (await readFile('local/bakeoff.jsonl', 'utf8')).trim().split(/\r?\n/).filter(Boolean).map(JSON.parse).filter((e) => e.week === week);
+  const entries = (await readFile('local/bakeoff.jsonl', 'utf8')).trim().split(/\r?\n/).filter(Boolean).map(JSON.parse).filter((e) => e.week === week).map(validateEntry);
   const logs = await loadGameLogs('2026-27', from, to); const final = get('--final') ? JSON.parse(await readFile(get('--final'), 'utf8')) : null;
-  const results = entries.map((entry) => { const { gain, gamesPlayed } = realizedGain(entry, logs, { from, to }); const flipped = final ? flips(gain, final.matchup.totals, final.matchup.volume, entry) : null; return { entry, gain, gamesPlayed, flips: flipped }; });
-  for (const r of results) console.log(`${r.entry.source}\t${r.entry.chatbot ?? '-'}\t${r.entry.add.name} for ${r.entry.drop.name}\tGP ${r.gamesPlayed.add}/${r.gamesPlayed.drop}\t${JSON.stringify(r.gain)}\t${r.flips?.join(',') ?? '-'}`);
-  console.log('source\tmoves\tmean counting gain\tflips\tmean rating');
-  for (const s of summarize(results)) console.log(`${s.source}\t${s.moves}\t${s.meanCountingCategoryGain.toFixed(2)}\t${s.categoriesFlipped}\t${s.meanRating ?? '-'}`);
-} else throw new Error('usage: bakeoff record <entries.json> | bakeoff score --week N --from YYYY-MM-DD --to YYYY-MM-DD [--final snapshot.json]');
+  const results = entries.map((entry) => { const { gain, gamesPlayed } = realizedGain(entry, logs, { to }); const flipped = final ? flips(gain, final.matchup.totals, final.matchup.volume, entry) : null; return { entry, gain, gamesPlayed, flips: flipped }; });
+  console.log('source\tchatbot\tdecision\tstart\tgames add/drop\tgain\thelped\thurt\treject reason\tnote');
+  for (const r of results) console.log(`${r.entry.source}\t${r.entry.chatbot ?? '-'}\t${r.entry.decision === 'hold' ? 'hold' : `${r.entry.add.name} for ${r.entry.drop.name}`}\t${r.entry.start}\t${r.gamesPlayed.add}/${r.gamesPlayed.drop}\t${JSON.stringify(r.gain)}\t${r.flips?.helped.join(',') ?? '-'}\t${r.flips?.hurt.join(',') ?? '-'}\t${r.entry.rejectReason ?? '-'}\t${JSON.stringify(r.entry.note ?? '')}`);
+  const summaries = summarize(results);
+  const cats = Object.keys(summaries[0]?.meanGain ?? {}); const reasons = Object.keys(summaries[0]?.rejectReasons ?? {});
+  console.log(['source', 'moves', 'holds', 'helped', 'hurt', 'net', ...cats.map((c) => `mean ${c}`), 'mean rating', ...reasons].join('\t'));
+  for (const s of summaries) console.log([s.source, s.moves, s.holds, s.helped, s.hurt, s.net, ...cats.map((c) => JSON.stringify(s.meanGain[c])), s.meanRating ?? '-', ...reasons.map((reason) => s.rejectReasons[reason])].join('\t'));
+} else throw new Error('usage: bakeoff record <entries.json> | bakeoff score --week N --from YYYY-MM-DD (week start for logs) --to YYYY-MM-DD [--final snapshot.json]');

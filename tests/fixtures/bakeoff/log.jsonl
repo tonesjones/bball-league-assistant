@@ -1,3 +1,3 @@
-{"week":1,"date":"2026-10-20","source":"tool","chatbot":null,"add":{"name":"Pickup One","espnId":"A"},"drop":{"name":"Drop One","espnId":"D"},"rating":4,"asOf":"2026-10-20T12:00:00Z"}
-{"week":1,"date":"2026-10-20","source":"chatbot","chatbot":"Bot A","add":{"name":"Pickup One","espnId":"A"},"drop":{"name":"Drop One","espnId":"D"},"rating":3,"asOf":"2026-10-20T12:00:00Z"}
-{"week":1,"date":"2026-10-20","source":"chatbot","chatbot":"Bot A","add":{"name":"Pickup One","espnId":"A"},"drop":{"name":"Drop One","espnId":"D"},"rating":5,"asOf":"2026-10-20T12:00:00Z"}
+{"week":1,"date":"2026-10-20","decision":"move","start":"2026-10-20","source":"tool","chatbot":null,"add":{"name":"Pickup One","espnId":"A"},"drop":{"name":"Drop One","espnId":"D"},"rating":4,"asOf":"2026-10-20T12:00:00Z"}
+{"week":1,"date":"2026-10-20","decision":"move","start":"2026-10-20","source":"chatbot","chatbot":"Bot A","add":{"name":"Pickup One","espnId":"A"},"drop":{"name":"Drop One","espnId":"D"},"rating":3,"asOf":"2026-10-20T12:00:00Z"}
+{"week":1,"date":"2026-10-20","decision":"move","start":"2026-10-21","source":"chatbot","chatbot":"Bot A","add":{"name":"Pickup One","espnId":"A"},"drop":{"name":"Drop One","espnId":"D"},"rating":5,"rejectReason":"timing","note":"Pickup cannot play until tomorrow.","asOf":"2026-10-20T12:00:00Z"}
