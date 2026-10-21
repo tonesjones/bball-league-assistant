@@ -3,7 +3,7 @@ import { addDays } from './weeks.mjs';
 
 export const STAT = { '3PM': 'fg3m', PTS: 'pts', REB: 'reb', AST: 'ast', STL: 'stl', BLK: 'blk', TO: 'to' };
 export const DEFAULT_PHI = { PTS: 4, REB: 1.5, AST: 1.5, '3PM': 1.5, STL: 1.2, BLK: 1.5, TO: 1.2 };
-export const BLOCKED = ['O', 'INJ', 'SUSP', 'NA'];
+export const BLOCKED = ['O', 'D', 'INJ', 'SUSP', 'NA'];
 export const UNKNOWN_MPG = 24;
 const priority = (p) => p.prior ? p.prior.mpg ?? 0 : UNKNOWN_MPG;
 const active = (slot) => !['BN', 'IL', 'IL+'].includes(slot);

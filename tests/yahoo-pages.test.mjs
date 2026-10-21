@@ -221,6 +221,10 @@ test('validate lists every problem', () => {
 test('free agents: status P is read, an unknown status code throws with the line', () => {
   const fa = parseFreeAgents(page('fa-1').replace('Rico ValemontPlayer Note', 'Rico ValemontPPlayer Note'), 'fa-1');
   assert.deepEqual(fa.find((p) => p.name === 'Rico Valemont').status, 'P');
+  const d = parseFreeAgents(page('fa-1').replace('Rico ValemontPlayer Note', 'Rico ValemontDNew Player Note'), 'fa-1');
+  assert.deepEqual(d.find((p) => p.name === 'Rico Valemont').status, 'D');
+  const dtd = parseFreeAgents(page('fa-1').replace('Rico ValemontPlayer Note', 'Rico ValemontDTDPlayer Note'), 'fa-1');
+  assert.deepEqual(dtd.find((p) => p.name === 'Rico Valemont').status, 'DTD');
   assert.throws(
     () => parseFreeAgents(page('fa-1').replace('Rico ValemontPlayer Note', 'Rico ValemontXPlayer Note'), 'fa-1'),
     /fa-1: line \d+: unknown injury status code.*"Rico ValemontXPlayer Note"/,

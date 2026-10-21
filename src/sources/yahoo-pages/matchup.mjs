@@ -4,7 +4,7 @@ const DAY_RE = /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (\d{1,2}\/\d{1,2})$/;
 const HEADER = ['Team', 'FGM/A*', 'FG%', 'FTM/A*', 'FT%', '3PTM', 'PTS', 'REB', 'AST', 'ST', 'BLK', 'TO'];
 const LIVE_STATS = ['FG%', 'FT%', '3PTM', 'PTS', 'REB', 'AST', 'ST', 'BLK', 'TO'];
 const LIVE_NAME_RE = /^(.+)([A-Z]{3}) - ([A-Z]{1,2}(?:,[A-Z]{1,2})*)$/;
-const STATUS_RE = /^(INJ|GTD|DTD|SUSP|NA|O|P|Q)$/;
+const STATUS_RE = /^(INJ|GTD|DTD|SUSP|NA|O|P|Q|D)$/;
 const CELL_RE = /^(?:-|-?(?:\d+(?:\.\d+)?|\.\d+))$/;
 
 function liveHeader(page, line, columns) {

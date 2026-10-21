@@ -87,7 +87,7 @@ test('no-prior starts consume slots and the cap, contribute zero, and are report
   f.snapshot.settings.maxGamesPerWeek = 1;
   assert.equal(project(f, [unknown]).unknownGames, 1);
   for (const slot of ['IL', 'IL+']) assert.equal(project(f, [{ ...unknown, slot }]).unknownGames, 0);
-  for (const status of ['O', 'INJ', 'SUSP', 'NA']) assert.equal(project(f, [{ ...unknown, status }]).unknownGames, 0);
+  for (const status of ['O', 'D', 'INJ', 'SUSP', 'NA']) assert.equal(project(f, [{ ...unknown, status }]).unknownGames, 0);
   assert.equal(project(f, [{ ...unknown, nbaTeam: 'ZZZ' }]).unknownGames, 0);
 });
 
@@ -197,7 +197,7 @@ test('daily starts use mpg, allow BN, exclude IL/IL+ and every blocked status', 
   const low = scored(f); low.prior.mpg = null;
   const high = { ...scored(f, 2), name: 'High', slot: 'BN' };
   const roster = [low, high, ...['IL', 'IL+'].map((slot) => ({ ...high, slot })),
-    ...['O', 'INJ', 'SUSP', 'NA'].map((status) => ({ ...high, status }))];
+    ...['O', 'D', 'INJ', 'SUSP', 'NA'].map((status) => ({ ...high, status }))];
   const p = project(f, roster);
   assert.equal(p.started.length, 3);
   assert.ok(p.started.every((g) => g.name === 'High'));
@@ -240,7 +240,7 @@ test('protected names are normalized before excluding drops', () => {
 });
 
 test('each unavailable pickup status is excluded', () => {
-  for (const status of ['O', 'INJ', 'SUSP', 'NA']) {
+  for (const status of ['O', 'D', 'INJ', 'SUSP', 'NA']) {
     const f = fresh(); better(f); f.snapshot.freeAgents[0].status = status;
     assert.deepEqual(run(f).topPairs, []);
   }
