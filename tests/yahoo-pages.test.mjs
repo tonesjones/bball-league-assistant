@@ -44,6 +44,11 @@ test('team: name, record, budget, roster with slots and statuses', () => {
   assert.equal(t.roster[0].status, null);
 });
 
+test('signed-out team and matchup pages fail before parsing', () => {
+  assert.throws(() => parseTeam(page('team-signed-out')), /^Error: signed out of Yahoo: team page; sign in to Yahoo in the browser pane and refresh$/);
+  assert.throws(() => parseMatchup(page('matchup-signed-out')), /^Error: signed out of Yahoo: matchup page; sign in to Yahoo in the browser pane and refresh$/);
+});
+
 test('matchup: totals, volume, both rosters', () => {
   const m = parseMatchup(page('matchup'));
   assert.equal(m.week, 2);
@@ -180,7 +185,10 @@ test('buildSnapshot never returns a partial snapshot', () => {
   assert.throws(() => buildSnapshot(q, ASOF), /missing page text: settings/);
   const r = pages();
   r.matchup = r.matchup.replaceAll('Fixture Five', 'Someone Else');
-  assert.throws(() => buildSnapshot(r, ASOF), /not the team page's team/);
+  assert.throws(() => buildSnapshot(r, ASOF), /matchup page is not my team's matchup:/);
+  const mismatch = pages();
+  mismatch.matchup = page('matchup-different-team');
+  assert.throws(() => buildSnapshot(mismatch, ASOF), /matchup page is not my team's matchup:/);
 });
 
 test('validate rejects a missing or empty roster and missing settings', () => {

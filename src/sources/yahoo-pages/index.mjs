@@ -29,7 +29,7 @@ export function buildSnapshot(pages, asOf) {
   const team = parseTeam(pages.team);
   const m = parseMatchup(pages.matchup);
   if (m.teamName !== team.name) {
-    throw new Error(`matchup: first team "${m.teamName}" is not the team page's team "${team.name}"`);
+    throw new Error(`matchup page is not my team's matchup: "${m.teamName}" does not match "${team.name}"`);
   }
   const transactions = parseTransactions(pages.transactions);
   const freeAgents = faKeys

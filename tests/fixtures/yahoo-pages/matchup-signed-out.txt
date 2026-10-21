@@ -1,0 +1,606 @@
+Title: Matchup | Fantasy Basketball | Yahoo! Sports
+URL: https://basketball.fantasysports.yahoo.com/nba/4242/matchup?mid1=7
+Source element: <body>
+---
+Yahoo Sports
+Yahoo Sports
+Search query
+Sign in
+T
+ Fantasy Basketball
+Overview
+League
+My Team
+Matchups
+Players
+Research
+Draft
+StatTracker
+Fixture Hoops Test 4242 (ID# 4242)
+Yahoo Sports Fantasy Basketball
+
+Week 2
+
+Live
+
+Totals
+
+Tue 10/27
+
+Wed 10/28
+
+Thu 10/29
+
+Fri 10/30
+
+Sat 10/31
+
+Sun 11/1
+Fixture Five
+PAT
+2-1-0
+
+
+Compare Managers
+
+5
+vs
+	4
+Rim Runners
+Sam
+1-2-0
+33 Remaining 0/33 Games Played 0/31 Remaining 31
+
+Team
+
+FGM/A*
+
+FG%
+
+FTM/A*
+
+FT%
+
+3PTM
+
+PTS
+
+REB
+
+AST
+
+ST
+
+BLK
+
+TO
+
+
+Fixture Five
+
+120/250
+
+.480
+
+60/75
+
+.800
+
+25
+
+410
+
+150
+
+95
+
+30
+
+18
+
+55
+
+5
+
+Rim Runners
+
+118/260
+
+.454
+
+71/90
+
+.789
+
+28
+
+395.5
+
+160
+
+88
+
+27
+
+22
+
+48
+
+4
+
+*Non-scoring stats
+
+Player
+
+FG%
+
+FT%
+
+3PTM
+
+PTS
+
+REB
+
+AST
+
+ST
+
+BLK
+
+TO
+
+
+Pos
+
+Player
+
+FG%
+
+FT%
+
+3PTM
+
+PTS
+
+REB
+
+AST
+
+ST
+
+BLK
+
+TO
+
+
+Jalen TestwoodPlayer Note
+OKC - PG
+.553
+
+.879
+
+1.7
+
+31.1
+
+4.3
+
+6.6
+
+1.4
+
+0.8
+
+2.2
+
+PG
+
+Devin SamplebookPlayer Note
+PHX - PG,SG
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+Marcus Mockwell Jr.QPlayer Note
+TOR - SG,SF,PF
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+SG
+
+Tyler HerringtonPlayer Note
+MIL - PG,SG
+.481
+
+.900
+
+2.0
+
+18.0
+
+5.0
+
+3.0
+
+1.0
+
+0.0
+
+2.0
+
+Dae'Ron FakemanPlayer Note
+DEN - PG
+.481
+
+.900
+
+2.0
+
+18.0
+
+5.0
+
+3.0
+
+1.0
+
+0.0
+
+2.0
+
+G
+
+Darius GarfieldPlayer Note
+LAC - PG
+.553
+
+.879
+
+1.7
+
+31.1
+
+4.3
+
+6.6
+
+1.4
+
+0.8
+
+2.2
+
+Tobias SamplefieldNew Player Note
+NYK - SF,PF
+.553
+
+.879
+
+1.7
+
+31.1
+
+4.3
+
+6.6
+
+1.4
+
+0.8
+
+2.2
+
+SF
+
+Jalen JohnstonPlayer Note
+ATL - SF,PF
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+Ellis DummytonNo new player Notes
+HOU - PF,C
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+PF
+
+Alperen SengstockPlayer Note
+HOU - PF,C
+.481
+
+.900
+
+2.0
+
+18.0
+
+5.0
+
+3.0
+
+1.0
+
+0.0
+
+2.0
+
+Ivan PlaceholderPlayer Note
+DET - C
+.481
+
+.900
+
+2.0
+
+18.0
+
+5.0
+
+3.0
+
+1.0
+
+0.0
+
+2.0
+
+C
+
+Day’Ron SharplessPlayer Note
+BKN - C
+.553
+
+.879
+
+1.7
+
+31.1
+
+4.3
+
+6.6
+
+1.4
+
+0.8
+
+2.2
+
+Reggie MocksonOPlayer Note
+DAL - PG
+.553
+
+.879
+
+1.7
+
+31.1
+
+4.3
+
+6.6
+
+1.4
+
+0.8
+
+2.2
+
+Util
+
+P.J. WashburnQNew Player Note
+DAL - PF,C
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+Fred FakeleyPlayer Note
+HOU - PG
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+BN
+
+Cedric CowherdPlayer Note
+MEM - SG,SF
+.481
+
+.900
+
+2.0
+
+18.0
+
+5.0
+
+3.0
+
+1.0
+
+0.0
+
+2.0
+
+Kevin Stubbs Jr.NANew Player Note
+MIL - PG,SG
+.481
+
+.900
+
+2.0
+
+18.0
+
+5.0
+
+3.0
+
+1.0
+
+0.0
+
+2.0
+
+BN
+
+Quentin GrimsbyPlayer Note
+LAL - SG,SF
+.553
+
+.879
+
+1.7
+
+31.1
+
+4.3
+
+6.6
+
+1.4
+
+0.8
+
+2.2
+
+Wendell BenchmarkINJPlayer Note
+BOS - C
+.553
+
+.879
+
+1.7
+
+31.1
+
+4.3
+
+6.6
+
+1.4
+
+0.8
+
+2.2
+
+IL
+
+Tobias RenfroOPlayer Note
+ORL - PG,SG,SF
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+
+Stats associated with players currently on the bench were accumulated earlier in the week when that player occupied an active position.
+
+Yahoo Sports - NBC Sports Network - Paid Fantasy Terms - Feedback - Terms and Privacy Policy - Your Privacy Choices - CA Privacy Notice  - About Our Ads - Responsible Gaming - Help
+
+Certain Data by Sportradar and Rotowire
+
+The NBA identifications are the intellectual property of NBA Properties, Inc. © 2026 NBA Properties, Inc. All Rights Reserved.
+
+© 2026 Yahoo Fantasy Sports LLC. All rights reserved.

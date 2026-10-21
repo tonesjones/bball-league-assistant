@@ -1,4 +1,4 @@
-import { load, end, fail, indexOf, stopIndex, player, num, SLOT_RE, NAME_RE, CATEGORIES } from './common.mjs';
+import { load, end, fail, indexOf, stopIndex, player, num, SLOT_RE, NAME_RE, CATEGORIES, rejectSignedOut } from './common.mjs';
 
 const DAY_RE = /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (\d{1,2}\/\d{1,2})$/;
 const HEADER = ['Team', 'FGM/A*', 'FG%', 'FTM/A*', 'FT%', '3PTM', 'PTS', 'REB', 'AST', 'ST', 'BLK', 'TO'];
@@ -89,6 +89,7 @@ function totalsRow(page, L, i) {
 }
 
 export function parseMatchup(text, page = 'matchup') {
+  rejectSignedOut(text, page);
   const L = load(text);
   const w = indexOf(page, L, (s) => /^Week \d+$/.test(s), 'the "Week N" heading');
   const live = L.findIndex((l) => l.s.startsWith('Team\t'));

@@ -1,7 +1,8 @@
-import { load, fail, indexOf } from './common.mjs';
+import { load, fail, indexOf, rejectSignedOut } from './common.mjs';
 
 // Only the empty page has been seen. Anything else fails until a real example exists.
 export function parseTransactions(text, page = 'transactions') {
+  rejectSignedOut(text, page);
   const L = load(text);
   const h = indexOf(page, L, (s) => s === 'Recent Transactions', 'the "Recent Transactions" heading');
   const f = indexOf(page, L, (s) => s === 'FAB Offers', 'the "FAB Offers" tab', h);

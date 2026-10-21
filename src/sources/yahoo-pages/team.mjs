@@ -1,6 +1,7 @@
-import { load, fail, indexOf, stopIndex, player, SLOT_RE, NAME_RE } from './common.mjs';
+import { load, fail, indexOf, stopIndex, player, SLOT_RE, NAME_RE, rejectSignedOut } from './common.mjs';
 
 export function parseTeam(text, page = 'team') {
+  rejectSignedOut(text, page);
   const L = load(text);
   const t = indexOf(page, L, (s) => s === 'Yahoo Sports Fantasy Basketball', 'the "Yahoo Sports Fantasy Basketball" heading');
   const name = L[t + 1]?.s;
