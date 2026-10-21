@@ -1,9 +1,10 @@
-import { load, fail, indexOf } from './common.mjs';
+import { load, fail, indexOf, rejectSignedOut } from './common.mjs';
 
 const CAT = { 'FG%': 'FG%', 'FT%': 'FT%', '3PTM': '3PM', '3PM': '3PM', PTS: 'PTS', REB: 'REB', AST: 'AST', ST: 'STL', STL: 'STL', BLK: 'BLK', TO: 'TO' };
 const SCORING = { 'Head-to-Head - Categories': 'h2h-each-category', 'Head-to-Head - Most Categories': 'h2h-most-categories' };
 
 export function parseSettings(text, page = 'settings') {
+  rejectSignedOut(text, page);
   const L = load(text);
   const h = indexOf(page, L, (s) => s === 'Setting\tValue', 'the "Setting<TAB>Value" table');
   const raw = {};
