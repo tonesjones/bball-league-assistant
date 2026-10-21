@@ -31,7 +31,7 @@ Use the following text as `prompt.md`. Replace `<N>` with the adds left this wee
 ```text
 You are advising on a fantasy basketball roster. The league is head-to-head, 9-category: PTS, REB, AST, STL, BLK, 3PM, FG%, FT%, TO (fewer TO is better); 12 teams; 4 adds per week; daily lineups. Adds left this week: <N>.
 
-Using only the files in this folder (team.txt is my roster, matchup.txt is this week's matchup, fa-*.txt are available players), recommend ONE best add/drop for the rest of this week, or say hold. Name the categories you expect the move to help and hurt. Do not invent players, availability, games, or statistics. If the files do not support a legal add/drop, say hold.
+Using only the files in this folder (team.txt is my roster, matchup.txt is this week's matchup, fa-*.txt are available players), recommend ONE best add/drop for the rest of this week, or say hold. Name the categories you expect the move to help and hurt. You may use your own knowledge of the players' skills and stats. Take availability, rosters and games this week only from the files; do not invent them. If the files do not support a legal add/drop, say hold.
 
 Reply in exactly one of these formats:
 ADD: <player> | DROP: <player> | HELPS: <cats> | HURTS: <cats> | WHY: <one sentence>
