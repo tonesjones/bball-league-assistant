@@ -15,6 +15,24 @@ const pages = () => Object.fromEntries(['settings', 'team', 'matchup', 'fa-1', '
 const without = (text, line) => text.split('\n').filter((l) => l.trim() !== line).join('\n');
 const ASOF = '2026-10-27T16:00:00.000Z';
 
+test('completed matchup handles parenthesized empty and departed player pairs', () => {
+  const original = parseMatchup(page('matchup'));
+  const text = page('matchup')
+    .replace(/Jalen TestwoodPlayer Note\r?\nOKC - PG\r?\n/, '(Empty)\n')
+    .replace(/TOR - SG,SF,PF/, '$&\nW, 110-100 vs BOS')
+    .replace('Stats associated with players', [
+      'Departed FixturePlayer Note', 'BOS - C', ...Array(9).fill('1'), '--',
+      '(Empty)', ...Array(9).fill('-'), 'Stats associated with players',
+    ].join('\n'));
+  const parsed = parseMatchup(text);
+  assert.equal(parsed.roster.length, original.roster.length - 1);
+  assert.deepEqual(parsed.totals, original.totals);
+  assert.deepEqual(parsed.volume, original.volume);
+  assert.deepEqual(parsed.opponentRoster, original.opponentRoster);
+  assert.equal(parsed.roster.some((p) => p.name === 'Departed Fixture'), false);
+  assert.throws(() => parseMatchup(text.replace('W, 110-100 vs BOS', 'garbled game')), /expected a number/);
+});
+
 test('settings: categories, slots, limits, playoffs', () => {
   const s = parseSettings(page('settings'));
   assert.equal(s.scoringType, 'h2h-each-category');
