@@ -6,6 +6,7 @@ const LIVE_STATS = ['FG%', 'FT%', '3PTM', 'PTS', 'REB', 'AST', 'ST', 'BLK', 'TO'
 const LIVE_NAME_RE = /^(.+)([A-Z]{3}) - ([A-Z]{1,2}(?:,[A-Z]{1,2})*)$/;
 const STATUS_RE = /^(INJ|GTD|DTD|SUSP|NA|O|P|Q|D)$/;
 const CELL_RE = /^(?:-|-?(?:\d+(?:\.\d+)?|\.\d+))$/;
+const emptySlot = (s) => s === 'Empty' || s === '(Empty)';
 
 function liveHeader(page, line, columns) {
   if (line.s !== columns.join('\t')) throw fail(page, line, `expected columns "${columns.join(', ')}" in order`);
@@ -115,7 +116,7 @@ export function parseMatchup(text, page = 'matchup') {
   const from = h + HEADER.length + 26;
   const stop = stopIndex(L, from);
   const heads = [];
-  for (let i = from; i < stop; i++) if (NAME_RE.test(L[i].s) || L[i].s === 'Empty') heads.push(i);
+  for (let i = from; i < stop; i++) if (NAME_RE.test(L[i].s) || emptySlot(L[i].s)) heads.push(i);
   if (!heads.length) throw fail(page, L[from] ?? L[h], 'no player rows');
   if (heads.length % 2) throw fail(page, L[heads[heads.length - 1]], 'player rows come in pairs (yours, then the opponent)');
 
@@ -123,10 +124,10 @@ export function parseMatchup(text, page = 'matchup') {
   const opponentRoster = [];
   let mySlot = null;
   heads.forEach((at, k) => {
-    if (L[at].s === 'Empty') {
+    if (emptySlot(L[at].s)) {
       if (k % 2 === 0) {
         mySlot = null;
-        for (let i = at + 1; i < (heads[k + 1] ?? stop); i++) if (SLOT_RE.test(L[i].s)) mySlot = L[i].s;
+        for (let i = at + 1; i < (heads[k + 1] ?? stop); i++) if (SLOT_RE.test(L[i].s) || L[i].s === '--') mySlot = L[i].s;
         if (!mySlot) throw fail(page, L[at], 'no slot label after this empty roster slot');
       }
       return;
@@ -135,9 +136,11 @@ export function parseMatchup(text, page = 'matchup') {
     let slot = null;
     let cells = 0;
     for (let i = at + 2; i < next; i++) {
-      if (SLOT_RE.test(L[i].s)) {
+      if (SLOT_RE.test(L[i].s) || L[i].s === '--') {
         if (slot !== null || k % 2) throw fail(page, L[i], 'unexpected slot label');
         slot = L[i].s;
+      } else if (i === at + 2 && /^(?:W|L), \d+-\d+ (?:vs|@) [A-Z]{2,3}$/.test(L[i].s)) {
+        // Completed games appear between the team/positions and the stat cells.
       } else {
         num(page, L[i]);
         cells++;
@@ -147,8 +150,12 @@ export function parseMatchup(text, page = 'matchup') {
     if (k % 2 === 0) {
       if (slot === null) throw fail(page, L[at], 'no slot label after this player');
       mySlot = slot;
-      roster.push(player(page, L[at], L[at + 1], slot));
-    } else opponentRoster.push(player(page, L[at], L[at + 1], mySlot));
+      const parsed = player(page, L[at], L[at + 1], slot);
+      if (slot !== '--') roster.push(parsed);
+    } else {
+      const parsed = player(page, L[at], L[at + 1], mySlot);
+      if (mySlot !== '--') opponentRoster.push(parsed);
+    }
   });
 
   return {
