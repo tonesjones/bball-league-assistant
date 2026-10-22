@@ -71,6 +71,13 @@ export function formatAdvice(report) {
     lines.push(`${i + 1}. Pick up ${pair.pickup.name} (${pair.pickup.nbaTeam}, ${pair.pickup.status ?? 'healthy'}, ${pair.pickup.games} games from ${pair.pickupStart})`,
       `   Drop ${pair.drop.name} [${pair.dropRole}] (${pair.drop.games} games left) | Score: ${signed(pair.score)} categories`);
     lines.push(`   Unknown games (mine after move): ${pair.unknownGames}`);
+    if (pair.lineup.mode === 'start-pickup') {
+      const times = pair.lineup.pickupStarts === 1 ? 'once' : `${pair.lineup.pickupStarts} times`;
+      const displaced = pair.lineup.displaced.map((g) => `${g.name} on ${g.date}`).join(', ');
+      lines.push(displaced
+        ? `   Lineup: deliberately start ${pair.pickup.name} ${times}; displaces ${displaced}.`
+        : `   Lineup: deliberately start ${pair.pickup.name} ${times}; no other projected starter is displaced.`);
+    }
     const season = (p) => p.seasonValue == null ? 'unknown' : `${signed(p.seasonValue)} (#${p.seasonRank})`;
     lines.push(`   Season value: pickup ${season(pair.pickup)} vs drop ${season(pair.drop)}`);
     lines.push(`   ${Object.entries(pair.changes).map(([c, v]) => `${c}: total ${signed(v.total)}, P(win) ${signed(v.pWin)}`).join(' | ')}`);

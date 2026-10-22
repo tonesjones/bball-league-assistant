@@ -203,6 +203,55 @@ test('daily starts use mpg, allow BN, exclude IL/IL+ and every blocked status', 
   assert.ok(p.started.every((g) => g.name === 'High'));
 });
 
+test('advice can deliberately start a lower-mpg pickup and reports the displaced starter', () => {
+  const f = fresh();
+  f.snapshot.matchup.start = '2026-10-21';
+  f.snapshot.matchup.end = '2026-10-21';
+  f.snapshot.settings.rosterPositions = [{ slot: 'C', count: 1 }, { slot: 'PG', count: 1 }];
+  f.snapshot.team.roster[0].positions = ['C'];
+  f.snapshot.team.roster.push({ name: 'Guard Stream', nbaTeam: 'DDD', positions: ['PG'], status: 'NA', slot: 'PG' });
+  f.snapshot.freeAgents[0].positions = ['C'];
+  f.priors[2].mpg = 10;
+  f.priors[2].perGame.pts = 60;
+  f.schedule.games = [{ date: '2026-10-21', home: 'AAA', away: 'CCC' }];
+
+  const r = run(f, { fromDate: '2026-10-21', roles: { core: ['Alex Sample'], stream: ['Guard Stream'] } });
+  const pair = r.topPairs[0];
+  assert.equal(pair.pickup.name, 'Casey Fiction');
+  assert.equal(pair.drop.name, 'Guard Stream');
+  assert.ok(pair.score > 0);
+  assert.deepEqual(pair.lineup, {
+    mode: 'start-pickup',
+    automaticPickupStarts: 0,
+    pickupStarts: 1,
+    displaced: [{ name: 'Alex Sample', date: '2026-10-21' }],
+  });
+  assert.match(formatAdvice(r), /Lineup: deliberately start Casey Fiction once; displaces Alex Sample on 2026-10-21\./);
+});
+
+test('a deliberately started pickup keeps its real tradeoff when the automatic bench scores better', () => {
+  const f = fresh();
+  f.snapshot.matchup.start = '2026-10-21';
+  f.snapshot.matchup.end = '2026-10-21';
+  f.snapshot.settings.rosterPositions = [{ slot: 'C', count: 1 }, { slot: 'PG', count: 1 }];
+  f.snapshot.team.roster[0].positions = ['C'];
+  f.snapshot.team.roster.push({ name: 'Guard Stream', nbaTeam: 'DDD', positions: ['PG'], status: 'NA', slot: 'PG' });
+  f.snapshot.freeAgents[0].positions = ['C'];
+  f.priors[2].mpg = 10;
+  Object.assign(f.priors[2].perGame, { fgm: 0, fga: 0, ftm: 0, fta: 0, pts: 0, reb: 0,
+    ast: 0, stl: 0, blk: 0, to: 10, fg3m: 0 });
+  f.schedule.games = [{ date: '2026-10-21', home: 'AAA', away: 'CCC' }];
+
+  const r = run(f, { fromDate: '2026-10-21', roles: { core: ['Alex Sample'], stream: ['Guard Stream'] } });
+  const pair = r.topPairs[0];
+  assert.equal(pair.lineup.mode, 'start-pickup');
+  assert.equal(pair.lineup.pickupStarts, 1);
+  assert.deepEqual(pair.lineup.displaced, [{ name: 'Alex Sample', date: '2026-10-21' }]);
+  assert.ok(pair.score < 0);
+  assert.equal(pair.changes.PTS.total, -15);
+  assert.equal(r.decision.action, 'hold');
+});
+
 test('remaining games cap stops both teams and is reapplied after each swap', () => {
   const f = fresh(); better(f); f.snapshot.settings.maxGamesPerWeek = 1;
   const r = run(f);

@@ -15,9 +15,10 @@ const categories = (line) => ({
   'FT%': line.fta ? line.ftm / line.fta : 0,
 });
 
-export function assignLineup(players, slots) {
+export function assignLineup(players, slots, preferredNames = []) {
   const positions = slots.filter((p) => active(p.slot)).flatMap((p) => Array(p.count).fill(p.slot));
   const placed = Array(positions.length).fill(null);
+  const preferred = new Set(preferredNames);
   const fits = (p, slot) => slot === 'Util' || (p.positions ?? []).some((pos) =>
     pos === slot || slot === 'G' && ['PG', 'SG'].includes(pos) || slot === 'F' && ['SF', 'PF'].includes(pos));
   const place = (player, seen) => {
@@ -31,7 +32,8 @@ export function assignLineup(players, slots) {
     }
     return false;
   };
-  const selected = [...players].sort((a, b) => priority(b) - priority(a))
+  const selected = [...players].sort((a, b) => Number(preferred.has(b.name)) - Number(preferred.has(a.name))
+      || priority(b) - priority(a))
     .filter((p) => place(p, new Set()));
   return selected.map((player) => ({ player, slot: positions[placed.indexOf(player)] }));
 }
@@ -53,7 +55,8 @@ export function projectTeam(roster, totals, volume, settings, schedule, fromDate
       ? roster.map((p) => p === swap.drop ? { ...swap.pickup, slot: 'BN' } : p) : roster;
     const eligible = players.filter((p) => !['IL', 'IL+'].includes(p.slot)
       && !BLOCKED.includes(p.status) && teamsByDate.get(date)?.has(p.nbaTeam));
-    for (const { player: p, slot } of assignLineup(eligible, settings.rosterPositions)) {
+    const preferred = swap?.startPickup && date >= swap.start ? [swap.pickup.name] : [];
+    for (const { player: p, slot } of assignLineup(eligible, settings.rosterPositions, preferred)) {
       if (started.length >= cap) break;
       started.push({ name: p.name, date, slot });
       if (!p.prior) { unknownGames++; continue; }

@@ -96,13 +96,25 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
         guardrail.blockedByRule[blocked]++;
         continue;
       }
-      const after = project(roster, 'mine', { pickup, drop, start });
+      const swap = { pickup, drop, start };
+      const automatic = project(roster, 'mine', swap);
+      const startedPickup = project(roster, 'mine', { ...swap, startPickup: true });
+      const pickupStarts = (lineup) => lineup.started.filter((g) => g.name === pickup.name).length;
+      const automaticPickupStarts = pickupStarts(automatic);
+      const deliberatelyStart = pickupStarts(startedPickup) > automaticPickupStarts;
+      const after = deliberatelyStart ? startedPickup : automatic;
       const result = needs(after, opponent, phi, scoring);
+      const startedKeys = new Set(startedPickup.started.map((g) => `${g.date}\0${g.name}`));
+      const displaced = deliberatelyStart ? automatic.started.filter((g) => !startedKeys.has(`${g.date}\0${g.name}`))
+        .map(({ name, date }) => ({ name, date })) : [];
       const changes = Object.fromEntries(Object.keys(baseline.categories).filter((c) => baseline.categories[c].label !== 'unknown').map((c) => [c, {
         total: after.totals[c] - mine.totals[c], pWin: result.categories[c].pWin - baseline.categories[c].pWin,
       }]));
       pairs.push({ pickup: describe(pickup, start), drop: describe(drop, fromDate), dropRole, pickupStart: start,
-        unknownGames: after.unknownGames, changes, score: result.expectedCategories - baseline.expectedCategories });
+        unknownGames: after.unknownGames, lineup: { mode: deliberatelyStart ? 'start-pickup' : 'automatic',
+          automaticPickupStarts, pickupStarts: pickupStarts(after),
+          displaced },
+        changes, score: result.expectedCategories - baseline.expectedCategories });
     }
   }
   pairs.sort((a, b) => b.score - a.score);
@@ -118,6 +130,8 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow,
     notes: [...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
       'After making the move, refresh the league and rerun; the other pairs were scored against the current roster.',
+      'When the default prior-MPG lineup would bench a pickup, the advice evaluates legally starting that pickup instead; displaced starts are shown.',
+      'Projections use prior-season production and do not capture current role changes or breakout upside.',
       'Season guardrail: core players are never dropped; stream players bypass season checks. Other players need a prior, rank outside the protect rank, and pickup season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
     baseline, decision, topPairs: pairs.slice(0, top), unscored, guardrail };
