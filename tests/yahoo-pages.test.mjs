@@ -6,7 +6,7 @@ import { parseTeam } from '../src/sources/yahoo-pages/team.mjs';
 import { parseMatchup } from '../src/sources/yahoo-pages/matchup.mjs';
 import { parseFreeAgents } from '../src/sources/yahoo-pages/free-agents.mjs';
 import { parseTransactions } from '../src/sources/yahoo-pages/transactions.mjs';
-import { buildSnapshot, countAdds } from '../src/sources/yahoo-pages/index.mjs';
+import { buildSnapshot } from '../src/sources/yahoo-pages/index.mjs';
 import { validate } from '../src/sources/league-state.mjs';
 
 const dir = new URL('./fixtures/yahoo-pages/', import.meta.url);
@@ -38,10 +38,21 @@ test('team: name, record, budget, roster with slots and statuses', () => {
   assert.equal(t.name, 'Fixture Five');
   assert.deepEqual(t.record, { wins: 2, losses: 1, ties: 0 });
   assert.equal(t.faabBalance, 91);
+  assert.equal(t.rank, null);
+  assert.equal(t.addsUsedThisWeek, 0);
   assert.equal(t.roster.length, 10);
   assert.deepEqual(t.roster[1], { name: 'Marcus Mockwell Jr.', nbaTeam: 'TOR', positions: ['SG', 'SF', 'PF'], status: 'Q', slot: 'SG' });
   assert.deepEqual(t.roster.at(-1), { name: 'Wendell Benchmark', nbaTeam: 'BOS', positions: ['C'], status: 'INJ', slot: 'IL' });
   assert.equal(t.roster[0].status, null);
+});
+
+test('live team: standing, adds used, and empty roster slot', () => {
+  const t = parseTeam(page('team-live'));
+  assert.equal(t.rank, 12);
+  assert.equal(t.addsUsedThisWeek, 1);
+  assert.equal(t.roster.some((p) => p.name === 'Fred Fakeley'), false);
+  assert.equal(t.roster.length, 9);
+  assert.throws(() => parseTeam(without(page('team-live'), 'You have used 1 of your 4 player adds for this week.')), /team: line \d+: the weekly player adds line not found/);
 });
 
 test('signed-out team and matchup pages fail before parsing', () => {
@@ -100,6 +111,27 @@ test('live matchup builds a valid snapshot with week dates', () => {
   assert.doesNotThrow(() => validate(s));
 });
 
+test('live matchup skips empty slots without shifting paired rows', () => {
+  const m = parseMatchup(page('matchup-empty'));
+  assert.equal(m.roster.length, 3);
+  assert.equal(m.opponentRoster.length, 4);
+  assert.equal(m.roster.some((p) => p.name === 'D. Benchley'), false);
+  assert.equal(m.opponentRoster[3].name, 'Z. Zedman');
+});
+
+test('matchup: an empty slot of mine still gives the opponent row its slot', () => {
+  const full = parseMatchup(page('matchup'));
+  const m = parseMatchup(page('matchup').replace(/Jalen TestwoodPlayer Note\r?\nOKC - PG\r?\n/, 'Empty\n'));
+  assert.equal(m.roster.length, full.roster.length - 1);
+  assert.equal(m.roster.some((p) => p.name === 'Jalen Testwood'), false);
+  assert.deepEqual(m.opponentRoster, full.opponentRoster);
+});
+
+test('icon-font glyphs are dropped before parsing', () => {
+  const text = page('transactions-live').replace('FAB Offers', 'FAB Offers\n\n');
+  assert.deepEqual(parseTransactions(text), parseTransactions(page('transactions-live')));
+});
+
 test('live matchup rejects malformed headers, totals and player blocks with line numbers', () => {
   const text = page('matchup-live');
   const cases = [
@@ -132,17 +164,24 @@ test('transactions: the empty page is []', () => {
   assert.deepEqual(parseTransactions(page('transactions')), []);
 });
 
-test('transactions: any other content throws with the line', () => {
+test('transactions: live moves are grouped and classified', () => {
+  assert.deepEqual(parseTransactions(page('transactions-live')), [
+    { team: 'Fixture Five', time: 'Oct 21, 1:11 am', moves: [
+      { player: 'Test Player One', nbaTeam: 'OKC', type: 'add', faab: 7 },
+      { player: 'Test Player Two', nbaTeam: 'TOR', type: 'drop', faab: null },
+    ] },
+    { team: 'Rim Runners', time: 'Oct 20, 8:04 pm', moves: [{ player: 'Test Player Three', nbaTeam: 'BOS', type: 'add', faab: 3 }] },
+    { team: 'Fixture Five', time: 'Oct 20, 7:30 pm', moves: [{ player: 'Test Player Four', nbaTeam: 'LAL', type: 'add', faab: 0 }] },
+  ]);
+  const bad = page('transactions-live').replace('$3 Waiver', 'Free Agent');
+  assert.throws(() => parseTransactions(bad), /transactions: line \d+: transactions layout not seen yet: "Free Agent"/);
+});
+
+test('transactions: unclassified content throws with the line', () => {
   const text = page('transactions').replace('No recent transactions', 'Added Some Player to Fixture Five');
   assert.throws(() => parseTransactions(text), /transactions: line \d+: transactions layout not seen yet: "Added Some Player/);
   const extra = page('transactions').replace('No recent transactions', 'No recent transactions\nSomething else');
   assert.throws(() => parseTransactions(extra), /transactions layout not seen yet: "Something else"/);
-});
-
-test('countAdds counts only this team\'s adds', () => {
-  const t = [{ type: 'add', team: 'A' }, { type: 'drop', team: 'A' }, { type: 'add', team: 'B' }];
-  assert.equal(countAdds(t, 'A'), 1);
-  assert.equal(countAdds([], 'A'), 0);
 });
 
 test('fixture pages build a snapshot that validates', () => {
@@ -154,6 +193,15 @@ test('fixture pages build a snapshot that validates', () => {
   assert.deepEqual(s.freeAgents.map((p) => p.rank), [1, 2, 3, 4, 5, 6]);
   assert.equal(s.matchup.opponentName, 'Rim Runners');
   assert.doesNotThrow(() => validate(JSON.parse(JSON.stringify(s))));
+});
+
+test('live fixtures build a valid snapshot and use the team page add count', () => {
+  const p = { ...pages(), team: page('team-live'), matchup: page('matchup-empty'), transactions: page('transactions-live') };
+  const s = buildSnapshot(p, ASOF);
+  assert.equal(s.team.rank, 12);
+  assert.equal(s.team.addsUsedThisWeek, 1);
+  assert.equal(s.transactions.length, 3);
+  assert.doesNotThrow(() => validate(s));
 });
 
 test('a mangled layout throws with the page and the line', () => {

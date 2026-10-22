@@ -4,11 +4,11 @@
 //   asOf,                              ISO time of the refresh
 //   settings: { scoringType, categories, rosterPositions: [{slot, count}], maxAddsPerWeek|null,
 //               maxGamesPerWeek|null, waiverType, playoffs: {teams, weeks, endsOn}, raw },
-//   team: { name, record: {wins, losses, ties}, faabBalance, addsUsedThisWeek, roster: [player] },
+//   team: { name, rank: integer|null, record: {wins, losses, ties}, faabBalance, addsUsedThisWeek, roster: [player] },
 //   matchup: { week, start, end (YYYY-MM-DD), opponentName, totals: {mine, opponent}, volume: {mine, opponent},
 //              score: {mine, opponent}, opponentRoster: [player] },
 //   freeAgents: [{ rank, name, nbaTeam, positions, status, waiverClears|null }],
-//   transactions: []
+//   transactions: [{ team, time, moves: [{ player, nbaTeam, type: add|drop|trade, faab: number|null }] }]
 // }
 // player = { name, nbaTeam, positions: [], status|null, slot }
 
@@ -59,6 +59,7 @@ export function validate(s) {
   if (!isObj(t)) need(false, 'team is missing');
   else {
     need(isStr(t.name), 'team.name is missing');
+    need(t.rank === undefined || t.rank === null || Number.isInteger(t.rank), 'team.rank must be an integer or null');
     need(isObj(t.record), 'team.record is missing');
     need(isNum(t.faabBalance), 'team.faabBalance must be a number');
     need(Number.isInteger(t.addsUsedThisWeek) && t.addsUsedThisWeek >= 0, 'team.addsUsedThisWeek must be a count');
@@ -85,6 +86,10 @@ export function validate(s) {
     need(isStr(p?.name) && isStr(p?.nbaTeam), `freeAgents[${i}] needs name and nbaTeam`);
   });
   need(Array.isArray(s.transactions), 'transactions is missing');
+  (s.transactions ?? []).forEach((t, i) => {
+    need(isObj(t) && isStr(t.team) && isStr(t.time) && Array.isArray(t.moves) && t.moves.length > 0, `transactions[${i}] has a bad shape`);
+    for (const m of t.moves ?? []) need(isObj(m) && isStr(m.player) && isStr(m.nbaTeam) && ['add', 'drop', 'trade'].includes(m.type) && (m.faab === null || isNum(m.faab)), `transactions[${i}] has a bad move`);
+  });
 
   if (bad.length) throw new Error(`invalid snapshot:\n- ${bad.join('\n- ')}`);
   return s;

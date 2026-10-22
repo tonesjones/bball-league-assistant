@@ -34,15 +34,21 @@ function liveMatchup(page, L, h) {
   liveHeader(page, L[i] ?? L[h], ['Player', ...LIVE_STATS, 'Pos', 'Player', ...LIVE_STATS]);
   const stop = indexOf(page, L, (s) => s === 'TOTAL', 'the "TOTAL" line', ++i);
   const roster = [], opponentRoster = [];
+  let rows = 0, slot = null;
   while (i < stop) {
-    const line = L[i++], m = LIVE_NAME_RE.exec(line.s);
-    if (!m) throw fail(page, line, 'expected a player name glued to "TEAM - POS,POS"');
+    const mineNext = rows++ % 2 === 0;
+    const line = L[i++];
+    const empty = line.s === 'Empty';
+    const m = LIVE_NAME_RE.exec(line.s);
+    if (!empty && !m) throw fail(page, line, 'expected a player name glued to "TEAM - POS,POS"');
     let status = null;
-    if (STATUS_RE.test(L[i]?.s)) status = L[i++].s;
-    else if (/^[A-Z]+$/.test(L[i]?.s ?? '')) throw fail(page, L[i], 'unknown injury status code');
-    const game = L[i++];
-    if (!game || i > stop || LIVE_NAME_RE.test(game.s) || CELL_RE.test(game.s)) {
-      throw fail(page, game ?? line, 'expected a game line');
+    if (!empty) {
+      if (STATUS_RE.test(L[i]?.s)) status = L[i++].s;
+      else if (/^[A-Z]+$/.test(L[i]?.s ?? '')) throw fail(page, L[i], 'unknown injury status code');
+      const game = L[i++];
+      if (!game || i > stop || LIVE_NAME_RE.test(game.s) || CELL_RE.test(game.s)) {
+        throw fail(page, game ?? line, 'expected a game line');
+      }
     }
     let cells = 0;
     while (i < stop && CELL_RE.test(L[i].s)) {
@@ -50,16 +56,14 @@ function liveMatchup(page, L, h) {
       cells++;
     }
     if (cells !== 9) throw fail(page, line, `expected 9 stat cells, found ${cells}`);
-    const mineNext = roster.length === opponentRoster.length;
-    let slot = roster.at(-1)?.slot;
     if (mineNext) {
       if (i >= stop || !SLOT_RE.test(L[i].s)) throw fail(page, L[i] ?? line, 'expected a slot label');
       slot = L[i++].s;
     }
-    (mineNext ? roster : opponentRoster).push({ name: m[1], nbaTeam: m[2], positions: m[3].split(','), status, slot });
+    if (!empty) (mineNext ? roster : opponentRoster).push({ name: m[1], nbaTeam: m[2], positions: m[3].split(','), status, slot });
   }
   if (!roster.length) throw fail(page, L[stop], 'no player rows');
-  if (roster.length !== opponentRoster.length) throw fail(page, L[stop], 'player rows come in pairs (yours, then the opponent)');
+  if (rows % 2) throw fail(page, L[stop], 'player rows come in pairs (yours, then the opponent)');
   return { teamName: mine.name, opponentName: opp.name, totals: { mine: mine.totals, opponent: opp.totals },
     volume: { mine: mine.volume, opponent: opp.volume }, score: { mine: mine.score, opponent: opp.score }, roster, opponentRoster };
 }
@@ -111,13 +115,22 @@ export function parseMatchup(text, page = 'matchup') {
   const from = h + HEADER.length + 26;
   const stop = stopIndex(L, from);
   const heads = [];
-  for (let i = from; i < stop; i++) if (NAME_RE.test(L[i].s)) heads.push(i);
+  for (let i = from; i < stop; i++) if (NAME_RE.test(L[i].s) || L[i].s === 'Empty') heads.push(i);
   if (!heads.length) throw fail(page, L[from] ?? L[h], 'no player rows');
   if (heads.length % 2) throw fail(page, L[heads[heads.length - 1]], 'player rows come in pairs (yours, then the opponent)');
 
   const roster = [];
   const opponentRoster = [];
+  let mySlot = null;
   heads.forEach((at, k) => {
+    if (L[at].s === 'Empty') {
+      if (k % 2 === 0) {
+        mySlot = null;
+        for (let i = at + 1; i < (heads[k + 1] ?? stop); i++) if (SLOT_RE.test(L[i].s)) mySlot = L[i].s;
+        if (!mySlot) throw fail(page, L[at], 'no slot label after this empty roster slot');
+      }
+      return;
+    }
     const next = heads[k + 1] ?? stop;
     let slot = null;
     let cells = 0;
@@ -133,8 +146,9 @@ export function parseMatchup(text, page = 'matchup') {
     if (cells !== 9) throw fail(page, L[at], `expected 9 stat cells, found ${cells}`);
     if (k % 2 === 0) {
       if (slot === null) throw fail(page, L[at], 'no slot label after this player');
+      mySlot = slot;
       roster.push(player(page, L[at], L[at + 1], slot));
-    } else opponentRoster.push(player(page, L[at], L[at + 1], roster[roster.length - 1].slot));
+    } else opponentRoster.push(player(page, L[at], L[at + 1], mySlot));
   });
 
   return {
