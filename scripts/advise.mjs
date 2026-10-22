@@ -71,7 +71,7 @@ export function formatAdvice(report) {
     lines.push(`${i + 1}. Pick up ${pair.pickup.name} (${pair.pickup.nbaTeam}, ${pair.pickup.status ?? 'healthy'}, ${pair.pickup.games} games from ${pair.pickupStart})`,
       `   Drop ${pair.drop.name} [${pair.dropRole}] (${pair.drop.games} games left) | Score: ${signed(pair.score)} categories`);
     lines.push(`   Unknown games (mine after move): ${pair.unknownGames}`);
-    if (pair.lineup?.mode === 'start-pickup') {
+    if (pair.lineup.mode === 'start-pickup') {
       const times = pair.lineup.pickupStarts === 1 ? 'once' : `${pair.lineup.pickupStarts} times`;
       const displaced = pair.lineup.displaced.map((g) => `${g.name} on ${g.date}`).join(', ');
       lines.push(displaced

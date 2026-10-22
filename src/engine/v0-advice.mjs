@@ -98,25 +98,22 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       }
       const swap = { pickup, drop, start };
       const automatic = project(roster, 'mine', swap);
-      const automaticResult = needs(automatic, opponent, phi, scoring);
       const startedPickup = project(roster, 'mine', { ...swap, startPickup: true });
-      const startedResult = needs(startedPickup, opponent, phi, scoring);
       const pickupStarts = (lineup) => lineup.started.filter((g) => g.name === pickup.name).length;
       const automaticPickupStarts = pickupStarts(automatic);
-      const deliberatePickupStarts = pickupStarts(startedPickup);
-      const deliberatelyStart = deliberatePickupStarts > automaticPickupStarts;
+      const deliberatelyStart = pickupStarts(startedPickup) > automaticPickupStarts;
       const after = deliberatelyStart ? startedPickup : automatic;
-      const result = deliberatelyStart ? startedResult : automaticResult;
+      const result = needs(after, opponent, phi, scoring);
       const startedKeys = new Set(startedPickup.started.map((g) => `${g.date}\0${g.name}`));
-      const displaced = automatic.started.filter((g) => !startedKeys.has(`${g.date}\0${g.name}`))
-        .map(({ name, date }) => ({ name, date }));
+      const displaced = deliberatelyStart ? automatic.started.filter((g) => !startedKeys.has(`${g.date}\0${g.name}`))
+        .map(({ name, date }) => ({ name, date })) : [];
       const changes = Object.fromEntries(Object.keys(baseline.categories).filter((c) => baseline.categories[c].label !== 'unknown').map((c) => [c, {
         total: after.totals[c] - mine.totals[c], pWin: result.categories[c].pWin - baseline.categories[c].pWin,
       }]));
       pairs.push({ pickup: describe(pickup, start), drop: describe(drop, fromDate), dropRole, pickupStart: start,
         unknownGames: after.unknownGames, lineup: { mode: deliberatelyStart ? 'start-pickup' : 'automatic',
           automaticPickupStarts, pickupStarts: pickupStarts(after),
-          displaced: deliberatelyStart ? displaced : [] },
+          displaced },
         changes, score: result.expectedCategories - baseline.expectedCategories });
     }
   }
