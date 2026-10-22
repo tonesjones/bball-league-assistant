@@ -80,14 +80,13 @@ Built from the pre-season refresh `2026-10-19-2117`. The real snapshot has 13 pl
 roster and 100 free agents, the same row counts as the raw pages. All totals are null because no
 games have been played. What's still open:
 
-- **Transactions layout is unseen.** The real page says "No recent transactions". The parser
-  returns `[]` for that and throws on anything else, so **the first refresh after any move in the
-  league will fail** until someone saves a real transactions page, writes a synthetic fixture from
-  it, and finishes `parseTransactions` and `countAdds` (whose `{type:'add', team}` shape is a
-  guess). Expect this in the first days of the season.
+- **Transactions** are parsed from the first real page (2026-10-21): waiver adds (`$N Waiver`) and
+  drops (`To Waivers`). Free-agent adds and trades have not been seen and still fail loudly with
+  the line. Adds used this week now come from the team page's "You have used N of your M player
+  adds" line, since the transactions page is not limited to this week.
 - **Rosters and totals vs the Yahoo app** stays open: it needs a refresh with games played and
   Tony comparing the snapshot with the app.
-- **Unseen layouts:** an IL player, an empty roster slot, a games-cap setting and a status code
+- **Unseen layouts:** an IL player, a games-cap setting and a status code
   outside INJ, GTD, DTD, SUSP, NA, O, Q. Each fails loudly with the line rather than guessing.
   The IL case is covered only by the synthetic fixtures.
 - **Waiver clear times** on the free-agent page are a date only (`W (Oct 21)`), with no time or

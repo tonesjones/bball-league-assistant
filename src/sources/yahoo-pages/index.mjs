@@ -5,11 +5,6 @@ import { parseFreeAgents } from './free-agents.mjs';
 import { parseTransactions } from './transactions.mjs';
 import { validate } from '../league-state.mjs';
 
-// Tony's adds this week. Transactions are [] until a real example fixes their shape.
-export function countAdds(transactions, teamName) {
-  return transactions.filter((t) => t.type === 'add' && t.team === teamName).length;
-}
-
 // Day columns are M/D. The year is asOf's, moved by one when the dates cross New Year.
 function isoDay(md, asOf) {
   const [m, d] = md.split('/').map(Number);
@@ -39,7 +34,7 @@ export function buildSnapshot(pages, asOf) {
   const snapshot = {
     asOf,
     settings,
-    team: { ...team, addsUsedThisWeek: countAdds(transactions, team.name) },
+    team,
     matchup: {
       week: m.week,
       start: isoDay(m.days[0], asOf),

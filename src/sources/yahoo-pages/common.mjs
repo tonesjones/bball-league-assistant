@@ -5,10 +5,12 @@ export const NAME_RE = /^(.+?)(INJ|GTD|DTD|SUSP|NA|O|P|Q|D)?(?:New Player Note|P
 export const TEAMPOS_RE = /^([A-Z]{2,3}) - ([A-Z]{1,2}(?:,[A-Z]{1,2})*)$/;
 export const CATEGORIES = ['FG%', 'FT%', '3PM', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'TO'];
 
-// Non-blank lines with their 1-based line numbers; non-breaking spaces become plain spaces.
+// Non-blank lines with their 1-based line numbers; non-breaking spaces become plain spaces and
+// icon-font glyphs (Unicode private use area) are dropped.
 export function load(text) {
   return String(text)
     .replace(/ /g, ' ')
+    .replace(/[-]/g, '')
     .split(/\r?\n/)
     .map((s, i) => ({ n: i + 1, s: s.trim() }))
     .filter((l) => l.s !== '');
