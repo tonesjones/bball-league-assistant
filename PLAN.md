@@ -125,6 +125,10 @@ and as a decision note in the vault.
 FAAB bid pricing, Δ P(title) from a season simulation, injury alerts
 ([Task 04](tasks/04-injury-feed.md)), opponent and trade models.
 
+A `npm run check:raw <dir>` script that runs each page parser on a saved refresh on its own and
+prints ok or the error, without page text. It would replace the scratch script used on
+2026-10-21 to check parser changes against a real capture before opening a PR.
+
 ## How we prove it works
 
 | What | Proof |
