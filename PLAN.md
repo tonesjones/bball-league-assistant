@@ -90,9 +90,58 @@ No UI. Run from Claude Code.
 
    Done (#10 to #14). One gap from 4b: when the league has a games cap, games already used this
    week are still unknown, and the report says so. This league has no cap.
-5. Pilot bakeoff for 2 full weeks: freeze `docs/bakeoff-prompt.md` and the decision-time inputs,
-   log every suggestion (tool, chatbot, and "do nothing") before the outcome is known, and score
-   them from real box scores. Also track invalid suggestions and refresh time.
+5. Honest advice, then the pilot. Last season's priors set every projection and the season-value
+   guardrail, a start with no projection counts as zero, and the bakeoff counts every game a
+   player played, started or not. These items fix that before the scored pilot, in this order.
+   Each is one PR:
+   - **5a. Missing production.** Advice gets a third outcome, "insufficient evidence", beside move
+     and hold. A start with no projection, in either of Tony's lineups or in the opponent's, is
+     never counted as zero. When it could change the comparison or the category outlook, the
+     report withholds the move and names the players and what's missing. "Hold" stays for when
+     the known numbers support no move.
+     *Done when:* tests show that dropping an unprojected stream player can't look like a gain
+     because their production is missing, that unknown opponent production can't give a
+     complete category outlook, and that fully projected comparisons, core protection and
+     deliberate pickup starts work as before. Tony reviews a real example of each of the three
+     outcomes before 5b starts.
+   - **5b. Decision records.** Each advice run gets an ID and saves, under `local/`, its options,
+     the baseline and proposed daily lineups, the commit SHA, the snapshot path and the
+     projection version. Reruns add a record; none is overwritten. Tool, chatbot and "do nothing"
+     bakeoff entries point to the same decision. Schedule and priors are in git, so the SHA
+     covers them.
+     *Done when:* two runs on the same snapshot with different options are both kept, and every
+     bakeoff entry names its decision record.
+   - **5c. Minutes blend.** [Task 01](tasks/01-nba-data-and-projections.md) step 5, minutes only,
+     pulled forward. Projected minutes blend the prior MPG with this season's games from the
+     first game on, with weights set as parameters. Per-minute rates stay at the prior, so
+     counting stats scale with projected minutes. That's an interim assumption: a change in
+     usage or shots per minute waits for the rate model after the pilot. The same projection
+     feeds weekly scoring, lineup order and the season-value guardrail. Game logs keep DNP rows
+     with their reason: an injury or rest DNP is left out of the blend, and a coach's-decision
+     DNP counts as zero minutes. A player with no usable prior stays unknown, because minutes
+     alone can't give category rates.
+     *Done when:* tests cover a player with 1 or 2 games, a player whose minutes rose (projection
+     and guardrail rank both up), an injury DNP left out, a coach's-decision DNP counted, and a
+     player with no prior still unknown.
+   - **5d. Pilot, 2 full weeks.** Not a PR. Freeze the model settings,
+     `docs/bakeoff-prompt.md` and the decision rules. Log every suggestion (tool, chatbot and
+     "do nothing"), Tony's rating and any rejection reason before the outcome is known. Also
+     track invalid and unscorable decisions, refresh time and recurring data problems. Decisions
+     logged before the freeze are rehearsal data and don't count toward the gate. If a bug that
+     changes recommendations or scores (projections, lineups, scoring) is fixed mid-pilot,
+     restart the scored window. A parser fix that only lets a refresh succeed doesn't restart it.
+   - **5e. Lineup-aware scoring.** Built while the pilot runs, from the saved lineups. Replay the
+     baseline and proposed daily starts against real game logs: a pickup's benched game counts
+     for nothing, a displaced starter's production is subtracted, games before the effective
+     date are left out, and FG% and FT% come from makes and attempts. Missing results or
+     shooting volume make a decision unscorable, never zero. Each decision is reported on its
+     own, and totals are labeled so overlapping hypothetical moves don't read as a weekly plan.
+     *Done when:* tests show a benched pickup game adds nothing, a displaced starter subtracted,
+     a mid-week move scored from its date, a complete hold scored as zero, and missing evidence
+     shown as unscored.
+   - **5f. After the pilot.** Per-minute rate shrinkage and the rest of Task 01 (Phase 1).
+     Hand-entered role assumptions and two-scenario reports stay deferred unless the pilot shows
+     decisions going wrong in the first games after a role change.
 
 **Gate.** Go to Phase 1 only if the tool's moves beat both the chatbot's and doing nothing on
 categories helped minus hurt, and Tony rates them as more useful. Two weeks is a small sample:
@@ -102,8 +151,8 @@ and as a decision note in the vault.
 ### Phase 1: better numbers
 
 - Projections from this season's game logs, with the 2025-26 backtest
-  ([Task 01](tasks/01-nba-data-and-projections.md), remaining steps). v0 switches from priors to
-  these projections.
+  ([Task 01](tasks/01-nba-data-and-projections.md), remaining steps). Minutes arrive in Phase 0
+  (step 5c); this adds per-minute rates, spread and the backtest.
 - Matchup odds ([Task 03](tasks/03-matchup-odds.md)). Advice is ranked by Δ P(win this week).
 
 ### Phase 2: the app
@@ -144,6 +193,13 @@ prints ok or the error, without page text. It would replace the scratch script u
 ## Status
 
 Updated at the end of each session.
+
+**2026-10-22, plan for step 5.** Reviewed an outside plan (Astra) against the code. Two real gaps:
+a start with no projection counts as zero, so dropping an unprojected stream player looks like a
+gain, and the bakeoff counts every game the pickup and drop played instead of the games they
+started. Step 5 is now six items: missing production, decision records, a minutes blend that also
+feeds the guardrail, the frozen 2-week pilot, lineup-aware scoring built during the pilot, and
+per-minute rates after it. Next: 5a.
 
 **Checkpoint (2026-10-20, step 4 done).** Phase 0, step 5 of 5. Step 4 merged (#10 to #14):
 the report now gives one best move or "hold", fills legal daily lineups, rebuilds banked FG%/FT%
