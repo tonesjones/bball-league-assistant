@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { loadProjectionLogs, logHash, easternDate } from '../src/sources/gamelogs.mjs';
+
+test('projection logs require a fresh complete checked range, including off-days and file hashes', async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), 'bball-log-coverage-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const dir = path.join(root, '2026-27');
+  await mkdir(dir);
+  const opts = { root, asOf: '2026-10-22T20:00:00Z', from: '2026-10-21' };
+  const read = () => loadProjectionLogs('2026-27', opts);
+  await assert.rejects(read(), /coverage is missing/);
+  const data = { '2026-10-21': JSON.stringify([{ date: '2026-10-21', espnId: '1', min: 30, starter: true, didNotPlay: false }]), '2026-10-22': '[]' };
+  for (const [date, text] of Object.entries(data)) await writeFile(path.join(dir, `${date}.json`), text);
+  const coverage = { from: '2026-10-21', through: '2026-10-22', checkedAt: '2026-10-22T20:01:00Z', hashes: Object.fromEntries(Object.entries(data).map(([date, text]) => [date, logHash(text)])) };
+  const save = (value) => writeFile(path.join(dir, '_coverage.json'), JSON.stringify(value));
+  await save({ ...coverage, checkedAt: '2026-10-22T19:59:59Z' });
+  await assert.rejects(read(), /older than the snapshot/);
+  await save({ ...coverage, from: '2026-10-22' });
+  await assert.rejects(read(), /lack season coverage/);
+  await save(coverage);
+  assert.equal((await read()).logs.length, 1, 'a checked off-day is fresh despite having no player rows');
+  await writeFile(path.join(dir, '2026-10-22.json'), '[{}]');
+  await assert.rejects(read(), /hash mismatch/);
+  await rm(path.join(dir, '2026-10-22.json'));
+  await assert.rejects(read(), /Missing game-log day/);
+  assert.equal(easternDate('2026-10-23T04:36:00Z'), '2026-10-23');
+});

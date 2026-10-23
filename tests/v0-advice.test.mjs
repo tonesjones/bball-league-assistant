@@ -10,6 +10,8 @@ import { gamesLeft } from '../src/engine/games-left.mjs';
 import { needs, projectTeam, strongLine, UNKNOWN_MPG } from '../src/engine/needs.mjs';
 import { advise, pickupStart } from '../src/engine/v0-advice.mjs';
 import { formatAdvice, readRoles, snapshotFreshness } from '../scripts/advise.mjs';
+import { logHash, easternDate } from '../src/sources/gamelogs.mjs';
+import { projectPlayers } from '../src/engine/projections.mjs';
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url), 'utf8'));
 const fresh = () => structuredClone(fixture);
@@ -21,6 +23,48 @@ const better = (f) => { sameSchedule(f); f.priors[2].perGame.pts = 60; };
 const project = (f, roster, totals = {}, volume = {}, from = '2026-10-20', end = '2026-11-01') =>
   projectTeam(roster, totals, volume, f.snapshot.settings, f.schedule, from, end);
 const scored = (f, index = 0) => ({ ...f.snapshot.team.roster[0], prior: f.priors[index] });
+
+test('current starter versus bench regression withholds an apparent prior-only upgrade after one game', () => {
+  const f = fresh(); sameSchedule(f);
+  f.snapshot.matchup.end = '2026-10-22';
+  f.schedule.games = [{ date: '2026-10-22', home: 'AAA', away: 'BBB' }];
+  f.priors[0].mpg = 20;
+  f.priors[2].mpg = 30;
+  for (const key of Object.keys(f.priors[0].perGame)) if (key !== 'g') f.priors[0].perGame[key] *= 2 / 3;
+  const logs = [{ espnId: '1', date: '2026-10-21', espnEventId: 'game', min: 30, starter: true, didNotPlay: false },
+    { espnId: '3', date: '2026-10-21', espnEventId: 'game', min: 18, starter: false, didNotPlay: false }];
+  const opts = { fromDate: '2026-10-22', protectRank: 0, holdBelow: 0.01, seasonMargin: -100 };
+  assert.equal(run(f, opts).decision.action, 'move', 'reproduces the old prior-only recommendation');
+  const projections = projectPlayers(f.priors, f.ids, logs, { asOf: f.snapshot.asOf });
+  const r = run(f, { ...opts, projections });
+  assert.equal(r.decision.action, 'insufficient');
+  const best = r.decision.best;
+  assert.equal(best.minuteScenarios.length, 4);
+  assert.ok(best.scoreRange[0] < 0 && best.scoreRange[1] > opts.holdBelow);
+  assert.equal(best.drop.minutes.starts, 1);
+  assert.equal(best.pickup.minutes.starts, 0);
+  assert.match(formatAdvice(r), /Game logs checked:/);
+  const five = Array.from({ length: 5 }, (_, i) => logs.map((l) => ({ ...l, espnEventId: `game-${i}` }))).flat();
+  const later = projectPlayers(f.priors, f.ids, five);
+  assert.ok(later.players[0].mpg > projections.players[0].mpg);
+  assert.ok(later.players[2].mpg < projections.players[2].mpg);
+  assert.equal(run(f, { ...opts, projections: later }).decision.action, 'insufficient', 'fixed prior endpoint still blocks the move');
+});
+
+test('projected advice can still recommend robust moves and crosses missing production into every minutes case', () => {
+  const f = fresh(); better(f);
+  let projections = projectPlayers(f.priors, f.ids, []);
+  assert.equal(run(f, { projections }).decision.action, 'move');
+  f.priors[1].perGame = null;
+  projections = projectPlayers(f.priors, f.ids, []);
+  const report = run(f, { projections });
+  const pair = report.topPairs[0];
+  assert.equal(pair.minuteScenarios.length, 4);
+  assert.ok(pair.minuteScenarios.every((s) => s.scoreRange[0] < s.scoreRange[1]));
+  const core = run(f, { projections, protectedNames: [f.snapshot.team.roster[0].name] });
+  assert.equal(core.decision.action, 'hold');
+  assert.equal(core.topPairs.length, 0);
+});
 
 test('tomorrow uses Los Angeles calendar date, including DST', () => {
   assert.equal(tomorrow('2026-10-20T05:00:00Z'), '2026-10-20');
@@ -508,6 +552,11 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
       await writeFile(path.join(dir, name), JSON.stringify(value));
     }
     const cli = fileURLToPath(new URL('../scripts/advise.mjs', import.meta.url));
+    const logDir = path.join(dir, 'local/gamelogs/2026-27');
+    await mkdir(logDir, { recursive: true });
+    const through = easternDate(f.snapshot.asOf), text = '[]\n';
+    await writeFile(path.join(logDir, `${through}.json`), text);
+    await writeFile(path.join(logDir, '_coverage.json'), JSON.stringify({ from: through, through, checkedAt: f.snapshot.asOf, hashes: { [through]: logHash(text) } }));
     const output = execFileSync(process.execPath, [cli, 'snapshot.json', '--allow-stale', '--max-age-hours', '0', '--hold-below', '0.02', '--from', '2026-10-22', '--adds-from', '2026-11-01', '--top', '1', '--margin', '-0.25', '--protect-rank', '0'], { cwd: dir, encoding: 'utf8' });
     const report = JSON.parse(await readFile(path.join(dir, 'local/advice/snapshot.json'), 'utf8'));
     assert.equal(report.fromDate, '2026-10-22');
@@ -516,6 +565,11 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     assert.equal(report.guardrail.seasonMargin, -0.25);
     assert.equal(report.guardrail.protectRank, 0);
     assert.equal(report.holdBelow, 0.02);
+    const saved = JSON.parse(await readFile(path.join(dir, `local/decisions/${report.decisionId}.json`), 'utf8'));
+    assert.equal(saved.projections.version, 'minutes-pseudogames-v1');
+    assert.equal(saved.projections.k, 2);
+    assert.equal(saved.projections.players.length, f.priors.length);
+    assert.equal(saved.projections.players[0].original.mpg, f.priors[0].mpg);
     assert.equal(report.freshness.stale, true);
     assert.match(output, /^STALE:/);
     assert.throws(() => execFileSync(process.execPath, [cli, 'snapshot.json', '--max-age-hours', '0'], { cwd: dir, stdio: 'pipe' }), /hours old/);
@@ -527,9 +581,11 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     await writeFile(path.join(dir, 'local/snapshots/newest.json'), JSON.stringify(f.snapshot));
     const defaultOutput = execFileSync(process.execPath, [cli, '--allow-stale'], { cwd: dir, encoding: 'utf8' });
     assert.match(defaultOutput, /newest.json/);
+    await writeFile(path.join(logDir, '_coverage.json'), JSON.stringify({ from: through, through, checkedAt: new Date(Date.parse(f.snapshot.asOf) - 1).toISOString(), hashes: { [through]: logHash(text) } }));
+    assert.throws(() => execFileSync(process.execPath, [cli, 'snapshot.json', '--allow-stale'], { cwd: dir, stdio: 'pipe' }), /Game logs are older than the snapshot/);
     assert.match(output, /Core players: None\./);
     assert.match(output, /Stream players: None\./);
-    for (const args of [['--from', '2026-02-30'], ['--top', '-1'], ['--margin', 'Infinity'], ['--margin', 'NaN'], ['--margin'], ['--protect-rank', '-1'], ['--protect-rank', '1.5'], ['--hold-below', '-1'], ['--hold-below', 'NaN'], ['--hold-below'], ['--max-age-hours', '-1'], ['--max-age-hours', 'Infinity'], ['--max-age-hours']]) {
+    for (const args of [['--minutes-k', '0'], ['--minutes-k', '-1'], ['--minutes-k', 'NaN'], ['--minutes-k'], ['--from', '2026-02-30'], ['--top', '-1'], ['--margin', 'Infinity'], ['--margin', 'NaN'], ['--margin'], ['--protect-rank', '-1'], ['--protect-rank', '1.5'], ['--hold-below', '-1'], ['--hold-below', 'NaN'], ['--hold-below'], ['--max-age-hours', '-1'], ['--max-age-hours', 'Infinity'], ['--max-age-hours']]) {
       assert.throws(() => execFileSync(process.execPath, [cli, ...args], { cwd: dir, stdio: 'pipe' }));
     }
   } finally {

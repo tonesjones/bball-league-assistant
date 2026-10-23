@@ -60,3 +60,9 @@ Rejected:
 
 - **What:** ESPN scoreboard and game summary box scores: `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=YYYYMMDD` and `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={eventId}`.
 - **Terms:** undocumented and unofficial. Personal, low-volume requests only; cache responses and back off on 429 and 5xx. Final game summaries are cached for a year.
+
+For projection refreshes, check each scoreboard day once per requested refresh and reparse cached
+final summaries to retain DNP reasons and starter flags. A coverage record stores the source-check
+time, date range and daily file hashes only after every requested day succeeds. Empty checked
+days are valid coverage. Missing days, an older check than the Yahoo snapshot or changed files
+are refused by advice; a player's last appearance date alone is not a freshness measure.

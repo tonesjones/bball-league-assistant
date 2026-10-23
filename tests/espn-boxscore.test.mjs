@@ -9,13 +9,29 @@ test('scoreboard parses final events', async () => {
   const b = JSON.parse(await readFile(new URL('./fixtures/espn/scoreboard-20260115.json', import.meta.url)));
   assert.deepEqual(parseScoreboard(b)[0], { espnEventId: '401810433', status: 'STATUS_FINAL' });
 });
-test('box score makes and attempts, skips DNP, and follows labels', () => {
+test('box score makes and attempts, retains DNP, and follows labels', () => {
   const rows = parseBoxScore(summary, { date:'2026-01-15', standardCode:map });
-  assert.equal(rows.length, 8); assert.deepEqual([rows[0].fgm, rows[0].fga, rows[0].ftm, rows[0].fta], [12,22,3,3]);
-  assert.equal(rows.some((r) => r.name === 'Brandon Clarke'), false);
+  assert.equal(rows.length, 10); assert.deepEqual([rows[0].fgm, rows[0].fga, rows[0].ftm, rows[0].fta], [12,22,3,3]);
+  assert.equal(rows.filter((r) => r.didNotPlay).length, 2);
+  assert.ok(rows.every((r) => 'starter' in r && 'reason' in r));
   const copy = structuredClone(summary); const group = copy.boxscore.players[0].statistics[0];
-  const order = [3,1,0,4,2,5,6,7,8,9,10,11,12,13]; group.labels = order.map((i) => group.labels[i]); group.athletes[0].stats = order.map((i) => group.athletes[0].stats[i]);
+  const order = [3,1,0,4,2,5,6,7,8,9,10,11,12,13]; group.labels = order.map((i) => group.labels[i]);
+  for (const athlete of group.athletes) if (!athlete.didNotPlay) athlete.stats = order.map((i) => athlete.stats[i]);
   assert.equal(parseBoxScore(copy, { date:'2026-01-15', standardCode:map })[0].fgm, 12);
   const broken = structuredClone(summary); broken.boxscore.players[0].statistics[0].labels = ['MIN'];
   assert.throws(() => parseBoxScore(broken, { date:'x', standardCode:map }), /401810433.*missing label PTS/);
+});
+
+test('DNP reasons and starter flags are preserved without invented production', () => {
+  const athlete = (id, reason) => ({ athlete: { id, displayName: `Synthetic ${id}` }, starter: false, didNotPlay: true, reason, stats: [] });
+  const copy = structuredClone(summary);
+  copy.boxscore.players = [copy.boxscore.players[0]];
+  copy.boxscore.players[0].statistics[0].athletes = [athlete('coach', "COACH'S DECISION"), athlete('injury', 'RIGHT CALF'), athlete('rest', 'REST')];
+  const rows = parseBoxScore(copy, { date: '2026-01-15', standardCode: map });
+  assert.equal(rows[0].min, 0);
+  assert.equal(rows[1].min, null);
+  assert.equal(rows[2].min, null);
+  assert.equal(rows[0].reason, "COACH'S DECISION");
+  assert.equal(rows[0].starter, false);
+  assert.ok(rows.every((r) => r.pts === undefined));
 });

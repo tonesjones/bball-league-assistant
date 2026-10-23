@@ -10,6 +10,11 @@ test('gain counts categories, TO sign, percentage volume, and GP', () => {
   assert.equal(r.gain.PTS, 12); assert.equal(r.gain.TO, 2); assert.deepEqual(r.gain['FG%'], { makes:5, attempts:0 });
   assert.equal(r.gamesPlayed.add, 2);
 });
+
+test('retained DNP rows never count as played games or realized production', () => {
+  const result = realizedGain(entries[0], [...logs, { espnId: 'A', date: '2026-10-21', espnEventId: 'dnp', didNotPlay: true, min: 0 }], { to: '2026-10-21' });
+  assert.deepEqual(result, realizedGain(entries[0], logs, { to: '2026-10-21' }));
+});
 test('flips detects change and leaves distant result alone', () => {
   const gain = realizedGain(entries[0], logs, { from:'2026-10-20', to:'2026-10-21' }).gain;
   const totals = { mine:{'FG%':0.5,'FT%':0.75,'3PM':10,PTS:20,REB:10,AST:10,STL:3,BLK:2,TO:8}, opponent:{'FG%':0.49,'FT%':0.70,'3PM':0,PTS:25,REB:0,AST:0,STL:0,BLK:0,TO:20} };

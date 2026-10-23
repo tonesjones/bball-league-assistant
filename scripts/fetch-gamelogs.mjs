@@ -1,26 +1,41 @@
-import { mkdir, readFile, writeFile, access } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { BASE, getJson, standardCode } from '../src/sources/espn.mjs';
 import { parseScoreboard, parseBoxScore } from '../src/sources/espn-boxscore.mjs';
+import { easternDate, logHash } from '../src/sources/gamelogs.mjs';
 
-const args = process.argv.slice(2); const val = (k) => args[args.indexOf(k) + 1];
+const args = process.argv.slice(2); const val = (k) => args.includes(k) ? args[args.indexOf(k) + 1] : undefined;
 const season = val('--season');
 if (!['2026-27', '2025-26'].includes(season)) throw new Error('usage: --season 2026-27|2025-26');
+const snapshotFile = args.includes('--snapshot') ? val('--snapshot') : null;
+const snapshot = snapshotFile ? JSON.parse(await readFile(snapshotFile, 'utf8')) : null;
+const checkedAt = new Date().toISOString();
+if (snapshot && (!Number.isFinite(Date.parse(snapshot.asOf)) || Date.parse(snapshot.asOf) > Date.parse(checkedAt))) throw new Error('Snapshot asOf must be a valid past timestamp');
 const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 const from = val('--from') ?? (season === '2026-27' ? '2026-10-20' : '2025-10-21');
-const to = val('--to') ?? (season === '2026-27' ? yesterday : '2026-04-12');
+const to = val('--to') ?? (snapshot ? easternDate(snapshot.asOf) : season === '2026-27' ? yesterday : '2026-04-12');
+const validDate = (date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && Number.isFinite(Date.parse(date)) && new Date(date).toISOString().slice(0, 10) === date;
+if (!validDate(from) || !validDate(to) || from > to) throw new Error('invalid game-log date range');
+if (snapshot && to !== easternDate(snapshot.asOf)) throw new Error('--to must match the snapshot Eastern date');
 const dir = join('local', 'gamelogs', season); await mkdir(dir, { recursive: true });
+const hashes = {};
 for (let d = new Date(`${from}T00:00:00Z`); d <= new Date(`${to}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
   const date = d.toISOString().slice(0, 10); const file = join(dir, `${date}.json`);
-  let exists = false; try { await access(file); exists = true; } catch {}
   const day = date.replaceAll('-', '');
-  const board = await getJson(`${BASE}/scoreboard?dates=${day}`, { cacheFile: `local/cache/espn/scoreboard-${day}.json`, maxAgeHours: 1 });
+  const board = await getJson(`${BASE}/scoreboard?dates=${day}`, { cacheFile: `local/cache/espn/scoreboard-${day}.json`, maxAgeHours: 0 });
+  if (!Array.isArray(board.events)) throw new Error(`scoreboard ${date} has no events array`);
   const events = parseScoreboard(board);
-  if (exists && events.every((e) => e.status === 'STATUS_FINAL')) continue;
   const lines = [];
   for (const event of events) if (event.status === 'STATUS_FINAL') {
     const summary = await getJson(`${BASE}/summary?event=${event.espnEventId}`, { cacheFile: `local/cache/espn/summary-${event.espnEventId}.json`, maxAgeHours: 24 * 365 });
-    lines.push(...parseBoxScore(summary, { date, standardCode }));
+    const rows = parseBoxScore(summary, { date, standardCode });
+    if (!rows.length) throw new Error(`Final game ${event.espnEventId} has no box score`);
+    lines.push(...rows);
   }
-  await writeFile(file, `${JSON.stringify(lines, null, 2)}\n`);
+  const text = `${JSON.stringify(lines, null, 2)}\n`;
+  await writeFile(file, text);
+  hashes[date] = logHash(text);
 }
+// Publish coverage only after every requested day succeeds. A partial refresh never looks fresh.
+await writeFile(join(dir, '_coverage.json'), JSON.stringify({ checkedAt, from, through: to, hashes }, null, 2) + '\n');
+console.log(`Game logs checked at ${checkedAt}; coverage ${from} to ${to}`);

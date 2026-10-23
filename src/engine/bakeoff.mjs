@@ -34,7 +34,7 @@ export function realizedGain(entry, lines, { to }) {
   const from = entry.start ?? entry.date;
   const hold = entry.decision === 'hold';
   const sums = (id) => {
-    const a = hold ? [] : lines.filter((x) => String(x.espnId) === String(id) && x.date >= from && x.date <= to);
+    const a = hold ? [] : lines.filter((x) => !x.didNotPlay && String(x.espnId) === String(id) && x.date >= from && x.date <= to);
     const keys = ['fgm','fga','ftm','fta','fg3m','pts','reb','ast','stl','blk','to'];
     return { gp: new Set(a.map((x) => `${x.date}/${x.espnEventId}`)).size, ...Object.fromEntries(keys.map((k) => [k, a.reduce((s, x) => s + (x[k] ?? 0), 0)])) };
   };
