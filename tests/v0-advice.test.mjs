@@ -24,6 +24,19 @@ const project = (f, roster, totals = {}, volume = {}, from = '2026-10-20', end =
   projectTeam(roster, totals, volume, f.snapshot.settings, f.schedule, from, end);
 const scored = (f, index = 0) => ({ ...f.snapshot.team.roster[0], prior: f.priors[index] });
 
+test('strong observed production can withhold a drop even when every minutes-only case recommends it', () => {
+  const f = fresh(); better(f);
+  const logs = [{ ...f.priors[0].perGame, espnId: '1', date: '2026-10-21', espnEventId: 'game',
+    min: 30, starter: true, didNotPlay: false, pts: 100, reb: 20, ast: 20, stl: 5, blk: 5,
+    fgm: 40, fga: 60, ftm: 20, fta: 20, fg3m: 0, to: 0 }];
+  const projections = projectPlayers(f.priors, f.ids, logs);
+  const r = run(f, { projections, roles: { stream: ['Alex Sample'] } });
+  assert.equal(r.decision.action, 'insufficient');
+  assert.ok(r.decision.best.minuteScenarios.every((s) => s.scoreRange[0] >= r.holdBelow));
+  assert.ok(r.decision.best.rateScenarios.some((s) => s.scoreRange[0] < r.holdBelow));
+  assert.match(formatAdvice(r), /per-minute/);
+});
+
 test('current starter versus bench regression withholds an apparent prior-only upgrade after one game', () => {
   const f = fresh(); sameSchedule(f);
   f.snapshot.matchup.end = '2026-10-22';
@@ -566,7 +579,7 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     assert.equal(report.guardrail.protectRank, 0);
     assert.equal(report.holdBelow, 0.02);
     const saved = JSON.parse(await readFile(path.join(dir, `local/decisions/${report.decisionId}.json`), 'utf8'));
-    assert.equal(saved.projections.version, 'minutes-pseudogames-v1');
+    assert.equal(saved.projections.version, 'minutes-pseudogames-rate-check-v2');
     assert.equal(saved.projections.k, 2);
     assert.equal(saved.projections.players.length, f.priors.length);
     assert.equal(saved.projections.players[0].original.mpg, f.priors[0].mpg);

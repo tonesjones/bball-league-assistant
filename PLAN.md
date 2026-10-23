@@ -217,6 +217,15 @@ prints ok or the error, without page text. It would replace the scratch script u
 
 Updated at the end of each session.
 
+**2026-10-23, rate disagreement check.** Task 08 adds observed per-minute production as an
+additional sensitivity endpoint for both pickup and drop, crossed with minutes and missing
+production. Nominal rates remain prior-season rates; estimated usage stays descriptive. This
+chooses the conservative withholding option from the rejected 5a review. The saved October 22
+capture now yields insufficient evidence, not the rejected move (stale-data rehearsal only).
+149 tests pass, including the failing-before regression. The rate endpoints stay fixed and
+uncalibrated; a complete rate model remains later work. Real outcome review and pilot freeze
+are still pending. The pilot prompt also needs the ESPN evidence available to the tool.
+
 **2026-10-23, refresh workflow and limitations.** Added `docs/limitations.md` as the ongoing
 register of observed evidence, projection and workflow limits. `refresh:analyze` processes an
 explicit saved capture through snapshot, logs, transaction/evidence reporting and advice,

@@ -28,14 +28,24 @@ export function projectPlayers(priors, ids, logs, { k = 2, asOf = null } = {}) {
     const mpg = usable ? (k * prior.mpg + total) / (k + games) : null;
     const minutes = { games, starts: rows.filter((row) => row.starter && !row.didNotPlay).length,
       prior: prior.mpg ?? null, season: games ? total / games : null, projected: mpg, asOf };
-    return { ...prior, original: prior, mpg, minutes, perGame: usable ? scale(prior, mpg) : null };
+    const played = rows.filter((row) => !row.didNotPlay);
+    const playedMinutes = played.reduce((sum, row) => sum + row.min, 0);
+    const complete = playedMinutes > 0 && played.every((row) => STATS.every((stat) => Number.isFinite(row[stat]) && row[stat] >= 0));
+    const rates = { status: !played.length ? 'no-games' : complete ? 'observed' : 'unavailable',
+      games: played.length, minutes: playedMinutes, asOf,
+      perMinute: complete ? Object.fromEntries(STATS.map((stat) => [stat,
+        played.reduce((sum, row) => sum + row[stat], 0) / playedMinutes])) : null };
+    return { ...prior, original: prior, mpg, minutes, rates, perGame: usable ? scale(prior, mpg) : null };
   });
-  return { players, k, asOf, version: 'minutes-pseudogames-v1' };
+  return { players, k, asOf, version: 'minutes-pseudogames-rate-check-v2' };
 }
 
 // These endpoints deliberately stay fixed; more games update the blend, not the prior endpoint.
-export function minutesCase(player, mode) {
+export function minutesCase(player, mode, rateMode = 'prior') {
   if (!player?.original || !player.perGame) return player;
   const mpg = mode === 'prior' ? player.minutes.prior : player.minutes.season ?? player.minutes.prior;
-  return { ...player, mpg, perGame: scale(player.original, mpg) };
+  const perGame = rateMode === 'season' && player.rates?.perMinute
+    ? { ...player.perGame, ...Object.fromEntries(STATS.map((stat) => [stat, player.rates.perMinute[stat] * mpg])) }
+    : scale(player.original, mpg);
+  return { ...player, mpg, perGame };
 }

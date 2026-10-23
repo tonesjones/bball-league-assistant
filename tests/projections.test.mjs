@@ -67,3 +67,18 @@ test('lineup order uses projected minutes from the same player lines as the guar
   const roster = projected.map((p) => ({ name: p.name, positions: ['C'], prior: p }));
   assert.equal(assignLineup(roster, [{ slot: 'C', count: 1 }])[0].player.name, prior.name);
 });
+
+test('observed rates sum complete played production over minutes and leave nominal rates unchanged', () => {
+  const played = (min, fields = {}) => row(min, { ...prior.perGame, ...fields });
+  const p = project([played(30, { pts: 30 }), played(10, { pts: 20, espnEventId: 'second' }),
+    row(0, { espnEventId: 'coach', didNotPlay: true, reason: "COACH'S DECISION" }),
+    row(null, { espnEventId: 'injury', didNotPlay: true, reason: 'REST' })]);
+  assert.equal(p.rates.games, 2);
+  assert.equal(p.rates.minutes, 40);
+  assert.equal(p.rates.perMinute.pts, 50 / 40);
+  assert.equal(p.perGame.pts / p.mpg, prior.perGame.pts / prior.mpg);
+  assert.equal(minutesCase(p, 'prior', 'season').perGame.pts, 25);
+  assert.equal(minutesCase(p, 'season', 'season').perGame.pts, (40 / 3) * 50 / 40);
+  assert.equal(project([row(30)]).rates.status, 'unavailable');
+  assert.equal(project([]).rates.status, 'no-games');
+});

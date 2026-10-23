@@ -66,6 +66,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     if (!season) unscored.push({ ...p, where, reason: unscoredReason });
     return { ...p, espnId: player?.espnId ?? null, prior: season ? prior : null,
       minutes: prior?.minutes ?? null,
+      rates: prior?.rates ?? null,
       season: season ? { value: season.value, rank: season.rank } : null, unscoredReason };
   });
   const roster = match(snapshot.team.roster, 'roster');
@@ -100,6 +101,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   const describe = (p, from) => ({ name: p.name, nbaTeam: p.nbaTeam, status: p.status ?? null,
     espnId: p.espnId, games: gamesLeft(p, schedule, from, window.end),
     minutes: p.minutes,
+    rates: p.rates,
     seasonValue: p.season?.value ?? null, seasonRank: p.season?.rank ?? null });
   for (const pickup of freeAgents.filter((p) => p.prior && !BLOCKED.includes(p.status))) {
     const start = pickupStart(pickup, fromDate, window, addsFrom);
@@ -123,10 +125,13 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       const results = outlooks([after, filled(roster, 'mine', after, { ...swap, startPickup: deliberatelyStart })]);
       const result = results[0];
       const nominalScores = results.map((r, i) => r.expectedCategories - baselines[i].expectedCategories);
-      const minuteScenarios = [];
-      if (projections) for (const pickupMode of ['prior', 'season']) for (const dropMode of ['prior', 'season']) {
-        const casePickup = { ...pickup, prior: minutesCase(pickup.prior, pickupMode) };
-        const caseDrop = { ...drop, prior: minutesCase(drop.prior, dropMode) };
+      const minuteScenarios = [], rateScenarios = [];
+      const pickupRates = pickup.rates?.status === 'observed' ? ['prior', 'season'] : ['prior'];
+      const dropRates = drop.rates?.status === 'observed' ? ['prior', 'season'] : ['prior'];
+      if (projections) for (const pickupRate of pickupRates) for (const dropRate of dropRates)
+      for (const pickupMode of ['prior', 'season']) for (const dropMode of ['prior', 'season']) {
+        const casePickup = { ...pickup, prior: minutesCase(pickup.prior, pickupMode, pickupRate) };
+        const caseDrop = { ...drop, prior: minutesCase(drop.prior, dropMode, dropRate) };
         const caseRoster = roster.map((p) => p === drop ? caseDrop : p);
         const caseSwap = { pickup: casePickup, drop: caseDrop, start };
         const before = project(caseRoster, 'mine');
@@ -136,7 +141,8 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
         const force = pickupStarts(deliberate) > pickupStarts(auto);
         const proposed = force ? deliberate : auto;
         const caseResults = outlooks([proposed, filled(caseRoster, 'mine', proposed, { ...caseSwap, startPickup: force })]);
-        minuteScenarios.push({ pickupMode, dropMode, pickupMpg: casePickup.prior?.mpg ?? null,
+        const scenarios = pickupRate === 'prior' && dropRate === 'prior' ? minuteScenarios : rateScenarios;
+        scenarios.push({ pickupMode, dropMode, pickupRate, dropRate, pickupMpg: casePickup.prior?.mpg ?? null,
           dropMpg: caseDrop.prior?.mpg ?? null,
           scoreRange: range(caseResults.map((r, i) => r.expectedCategories - caseBaselines[i].expectedCategories)),
           baselineStarted: before.started, proposedStarted: proposed.started });
@@ -152,8 +158,9 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
           automaticPickupStarts, pickupStarts: pickupStarts(after),
           displaced, started: after.started },
         changes, score: result.expectedCategories - baseline.expectedCategories,
-        minuteScenarios,
-        scoreRange: range([...nominalScores, ...minuteScenarios.flatMap((s) => s.scoreRange)]) };
+        minuteScenarios, rateScenarios,
+        missingRates: [pickup, drop].filter((p) => p.rates?.status === 'unavailable').map((p) => p.name),
+        scoreRange: range([...nominalScores, ...minuteScenarios.flatMap((s) => s.scoreRange), ...rateScenarios.flatMap((s) => s.scoreRange)]) };
       pairs.push(pair);
       afterByPair.set(pair, after);
     }
@@ -161,7 +168,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   pairs.sort((a, b) => b.scoreRange[0] - a.scoreRange[0] || b.score - a.score);
   const addsLeft = Math.max(0, (snapshot.settings.maxAddsPerWeek ?? 4) - snapshot.team.addsUsedThisWeek);
   const best = [...pairs].sort((a, b) => b.scoreRange[1] - a.scoreRange[1])[0] ?? null;
-  const robust = pairs.find((p) => p.scoreRange[0] > 0 && p.scoreRange[0] >= holdBelow);
+  const robust = pairs.find((p) => !p.missingRates.length && p.scoreRange[0] > 0 && p.scoreRange[0] >= holdBelow);
   const missing = (pair) => ['mine', 'opponent'].flatMap((side) => {
     const players = side === 'mine' ? roster : opponentRoster;
     const lineups = side === 'mine' ? [mine, afterByPair.get(pair)] : [opponent];
@@ -177,7 +184,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     : !best ? { action: 'hold', reason: 'No eligible add/drop pairs.', best }
       : robust ? { action: 'move', pair: robust }
         : best.scoreRange[1] > 0 && best.scoreRange[1] >= holdBelow
-          ? { action: 'insufficient', reason: projections ? 'Minutes scenarios or missing projections can change whether the move clears the required gain.' : 'Missing projections can change whether the move clears the required gain.', best, missing: missing(best) }
+          ? { action: 'insufficient', reason: projections ? 'Minutes, current-season per-minute production, or missing evidence can change whether the move clears the required gain.' : 'Missing projections can change whether the move clears the required gain.', best, missing: missing(best) }
           : { action: 'hold', reason: `Best move gains ${best.scoreRange[1].toFixed(3)} expected categories; requires a positive gain of at least ${holdBelow}.`, best };
   return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft,
     options: { fromDate, addsFrom, top, phi: phi ?? null, seasonMargin, protectRank, poolSize, holdBelow, roles: roleNames,
@@ -192,6 +199,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       ...(projections ? [
         `Minutes blend: k=${projections.k} prior pseudo-games (starting value, not calibrated); equal weights. Per-minute rates remain at the prior.`,
         'Fixed prior-MPG and season-MPG cases are crossed for pickup/drop, alongside missing-production cases; every case must clear the move threshold. These endpoints do not converge with more games.',
+        'Current-season per-minute production is an additional sensitivity check for pickup and drop, crossed with minutes and missing-production cases. It can withhold a move; nominal projections still use prior rates. No games uses the prior; incomplete observed box scores withhold an otherwise supported move. Usage remains descriptive.',
       ] : ['Projections use prior-season production and do not capture current role changes or breakout upside.']),
       'Season guardrail: core players are never dropped; stream players bypass season checks. Other players need a prior, rank outside the protect rank, and pickup season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
