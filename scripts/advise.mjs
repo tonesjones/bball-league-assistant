@@ -56,7 +56,9 @@ export function snapshotFreshness(asOf, { maxAgeHours = 12, allowStale = false, 
 
 export function formatAdvice(report) {
   const d = report.decision;
-  const lines = [d.action === 'move' ? `Move: pick up ${d.pair.pickup.name}, drop ${d.pair.drop.name} [${d.pair.dropRole}]` : `Hold: ${d.reason}`,
+  const lines = [d.action === 'move' ? `Move: pick up ${d.pair.pickup.name}, drop ${d.pair.drop.name} [${d.pair.dropRole}]`
+    : `${d.action === 'insufficient' ? 'Insufficient evidence' : 'Hold'}: ${d.reason}`,
+    ...(d.missing ?? []).map((p) => `Missing: ${p.name} (${p.nbaTeam}, ${p.side}): ${p.starts} starts, ${p.reason}`),
     `Unknown games: mine ${report.unknownGames.mine} | opponent ${report.unknownGames.opponent}`, '',
     `Snapshot: ${report.asOf}`, `Week ${report.week}: ${report.window.start} to ${report.window.end}`,
     `From: ${report.fromDate} | Adds from: ${report.addsFrom} | Adds left: ${report.addsLeft}`,
@@ -64,13 +66,16 @@ export function formatAdvice(report) {
     'Category     Mine       Opponent   P(win)   Need'];
   if (report.freshness?.stale) lines.unshift(`STALE: snapshot is ${report.freshness.ageHours.toFixed(2)} hours old (maximum ${report.freshness.maxAgeHours}).`, '');
   for (const [c, v] of Object.entries(report.baseline.categories)) {
-    lines.push(`${c.padEnd(8)} ${number(v.mine).padStart(10)} ${number(v.opponent).padStart(10)} ${number(v.pWin).padStart(8)}   ${v.label}`);
+    const incomplete = v.pWinRange && !v.complete;
+    const probability = incomplete ? v.pWinRange.map((p) => p.toFixed(2)).join('-') : number(v.pWin);
+    lines.push(`${c.padEnd(8)} ${number(v.mine).padStart(10)} ${number(v.opponent).padStart(10)} ${probability.padStart(8)}   ${incomplete ? 'incomplete' : v.label}`);
   }
   lines.push('', ...report.notes, '', 'Decision details:');
   const pairLines = (pair, i) => {
     lines.push(`${i + 1}. Pick up ${pair.pickup.name} (${pair.pickup.nbaTeam}, ${pair.pickup.status ?? 'healthy'}, ${pair.pickup.games} games from ${pair.pickupStart})`,
       `   Drop ${pair.drop.name} [${pair.dropRole}] (${pair.drop.games} games left) | Score: ${signed(pair.score)} categories`);
     lines.push(`   Unknown games (mine after move): ${pair.unknownGames}`);
+    if (pair.scoreRange[0] !== pair.scoreRange[1]) lines.push(`   Score range: ${number(pair.scoreRange[0])} to ${number(pair.scoreRange[1])}`);
     if (pair.lineup.mode === 'start-pickup') {
       const times = pair.lineup.pickupStarts === 1 ? 'once' : `${pair.lineup.pickupStarts} times`;
       const displaced = pair.lineup.displaced.map((g) => `${g.name} on ${g.date}`).join(', ');

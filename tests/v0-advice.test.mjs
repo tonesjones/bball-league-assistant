@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { tomorrow } from '../src/engine/weeks.mjs';
 import { gamesLeft } from '../src/engine/games-left.mjs';
-import { needs, projectTeam, UNKNOWN_MPG } from '../src/engine/needs.mjs';
+import { needs, projectTeam, strongLine, UNKNOWN_MPG } from '../src/engine/needs.mjs';
 import { advise, pickupStart } from '../src/engine/v0-advice.mjs';
 import { formatAdvice, readRoles, snapshotFreshness } from '../scripts/advise.mjs';
 
@@ -47,6 +47,156 @@ test('identical teams give 0.5 everywhere and equal swap scores zero', () => {
   for (const c of Object.values(r.baseline.categories)) assert.equal(c.pWin, 0.5);
   assert.equal(r.topPairs[0].score, 0);
   assert.equal(r.decision.action, 'hold');
+});
+
+test('an unprojected stream drop needs evidence before its apparent gain is trusted', () => {
+  const f = fresh(); sameSchedule(f); f.priors[0].perGame = null;
+  f.priors[2].perGame.pts = 20;
+  for (let i = 0; i < 12; i++) f.priors.push({ name: `Anchor ${i}`, perGame: {
+    ...f.priors[1].perGame, pts: 40, reb: 10, ast: 10, stl: 2, blk: 2, fg3m: 3,
+    fga: 20, fgm: 12, fta: 10, ftm: 9, to: 1,
+  } });
+  const extra = { roles: { stream: ['Alex Sample'] } };
+  const r = run(f, extra);
+  assert.equal(r.decision.action, 'insufficient');
+  assert.ok(r.decision.best.score >= r.holdBelow);
+  assert.ok(r.decision.best.scoreRange[0] < r.holdBelow);
+  assert.deepEqual(r.decision.missing, [{ name: 'Alex Sample', nbaTeam: 'AAA', side: 'mine', starts: 3, reason: 'no prior' }]);
+  assert.match(formatAdvice(r), /^Insufficient evidence: /);
+  assert.match(formatAdvice(r), /Missing: Alex Sample \(AAA, mine\): 3 starts, no prior/);
+  assert.match(formatAdvice(r), /Score range: /);
+  Object.assign(f.priors[2].perGame, { pts: 80, reb: 20, ast: 20, stl: 4, blk: 4, fg3m: 6,
+    fga: 30, fgm: 27, fta: 20, ftm: 19, to: 0.1 });
+  assert.equal(run(f, extra).decision.action, 'move');
+});
+
+test('unknown opponent starts widen the outlook and can withhold a zero-fill upgrade', () => {
+  const f = fresh(); better(f); f.priors[1].perGame = null;
+  for (let i = 0; i < 12; i++) f.priors.push({ name: `Anchor ${i}`, perGame: {
+    ...f.priors[0].perGame, pts: 1000, reb: 1000, ast: 1000, stl: 1000, blk: 1000,
+    fg3m: 1000, fgm: 90, fga: 100, ftm: 90, fta: 100, to: 0.1,
+  } });
+  const r = run(f, { holdBelow: 0.0002 });
+  assert.equal(r.decision.action, 'insufficient');
+  assert.ok(r.decision.best.score >= r.holdBelow);
+  assert.ok(r.decision.best.scoreRange[0] < r.holdBelow);
+  for (const c of Object.values(r.baseline.categories)) {
+    assert.equal(c.complete, false);
+    assert.ok(c.pWinRange[0] < c.pWinRange[1]);
+  }
+  assert.ok(r.baseline.expectedRange[0] < r.baseline.expectedRange[1]);
+  assert.deepEqual(r.decision.missing, [{ name: 'Blair Example', nbaTeam: 'BBB', side: 'opponent', starts: 3, reason: 'no prior' }]);
+  assert.match(formatAdvice(r), /PTS\s+45\.000\s+0\.000\s+\d\.\d{2}-\d\.\d{2}\s+incomplete/);
+  assert.match(formatAdvice(r), /Missing: Blair Example \(BBB, opponent\): 3 starts, no prior/);
+  assert.equal(run(f, { holdBelow: r.decision.best.scoreRange[1] }).decision.action, 'insufficient');
+  const hold = run(f, { holdBelow: r.decision.best.scoreRange[1] + 0.01 });
+  assert.equal(hold.decision.action, 'hold');
+  assert.ok(hold.decision.reason.includes(r.decision.best.scoreRange[1].toFixed(3)));
+  f.snapshot.team.addsUsedThisWeek = 4;
+  assert.equal(run(f).decision.reason, 'No adds left this week.');
+});
+
+test('fully projected outlooks and pair ranges retain the zero-fill numbers and decisions', () => {
+  for (const improve of [false, true]) {
+    const f = fresh(); sameSchedule(f); if (improve) better(f);
+    const r = run(f);
+    for (const c of Object.values(r.baseline.categories)) {
+      assert.equal(c.complete, true);
+      assert.deepEqual(c.pWinRange, [c.pWin, c.pWin]);
+    }
+    assert.deepEqual(r.baseline.expectedRange, [r.baseline.expectedCategories, r.baseline.expectedCategories]);
+    for (const p of r.topPairs) assert.deepEqual(p.scoreRange, [p.score, p.score]);
+    assert.equal(r.decision.action, improve ? 'move' : 'hold');
+    assert.doesNotMatch(formatAdvice(r), /Score range: |incomplete/);
+  }
+});
+
+test('strong line uses nearest ranks, low TO, attempt-weighted shooting and the ranked pool', () => {
+  const priors = Array.from({ length: 11 }, (_, i) => {
+    const n = i + 1;
+    return { name: `Prior ${n}`, perGame: { g: 70, pts: n * 3, reb: n, ast: n * 2,
+      stl: n / 2, blk: n / 3, fg3m: n / 4, to: n, fga: n + 1, fgm: (n + 1) * n / 12,
+      fta: n * 2, ftm: n * 2 * n / 13 } };
+  });
+  const line = strongLine(priors);
+  const { fgm, ftm, ...counts } = line;
+  assert.deepEqual(counts, { pts: 30, reb: 10, ast: 20, stl: 5, blk: 10 / 3, fg3m: 2.5,
+    to: 2, fga: 11, fta: 20 });
+  near(fgm, 11 * (10 / 12));
+  near(ftm, 20 * (10 / 13));
+  assert.deepEqual(strongLine([...priors].reverse()), line);
+  const top = strongLine(priors, { poolSize: 1 });
+  assert.equal(top.pts, 3);
+  assert.equal(top.to, 1);
+  const noAttempts = structuredClone(priors[0]);
+  Object.assign(noAttempts.perGame, { fgm: 999, fga: 0, ftm: 999, fta: 0 });
+  const mixed = strongLine([noAttempts, priors[10]]);
+  near(mixed.fgm, priors[10].perGame.fgm);
+  near(mixed.ftm, priors[10].perGame.ftm);
+  assert.equal(strongLine([noAttempts]).fgm, 0);
+  assert.equal(strongLine([noAttempts]).ftm, 0);
+  assert.throws(() => strongLine([]), /empty|pool/);
+  assert.throws(() => strongLine([{ name: 'No games', perGame: { g: 0 } }]), /empty|pool/);
+});
+
+test('projectTeam fills unknown starts without changing slots, cap or start records', () => {
+  const f = fresh(), unknown = { name: 'Drew Placeholder', nbaTeam: 'AAA', slot: 'BN', prior: null };
+  const roster = [scored(f), unknown], fill = strongLine(f.priors);
+  const zero = project(f, roster);
+  const filled = projectTeam(roster, {}, {}, f.snapshot.settings, f.schedule, '2026-10-20', '2026-11-01', null, fill);
+  assert.equal(zero.unknownGames, 3);
+  assert.deepEqual(zero.unknownStarts, ['2026-10-20', '2026-10-22', '2026-11-01'].map((date) => ({ name: unknown.name, date })));
+  assert.deepEqual(filled.unknownStarts, zero.unknownStarts);
+  assert.deepEqual(filled.started, zero.started);
+  assert.equal(filled.unknownGames, zero.unknownGames);
+  for (const k of Object.keys(zero.line)) {
+    near(filled.line[k] - zero.line[k], fill[k] * zero.unknownGames);
+    near(filled.remaining[k] - zero.remaining[k], fill[k] * zero.unknownGames);
+  }
+});
+
+test('four crossed scenarios score the chosen lineup and missing starts count each date once', () => {
+  const f = fresh(); better(f);
+  f.priors[0].perGame = null;
+  f.priors[1].perGame = null;
+  f.snapshot.freeAgents[0].waiverClears = 'Oct 22';
+  const r = run(f, { roles: { stream: ['Alex Sample'] } });
+  assert.equal(r.decision.action, 'insufficient');
+  const fill = strongLine(f.priors), [drop] = f.snapshot.team.roster;
+  const pickup = { ...f.snapshot.freeAgents[0], prior: f.priors[2] };
+  const swap = { pickup, drop, start: '2026-10-22' };
+  const expected = [], gains = [];
+  for (const mineFill of [null, fill]) for (const opponentFill of [null, fill]) {
+    const project = (roster, swap, fill) => projectTeam(roster, {}, {}, f.snapshot.settings, f.schedule,
+      '2026-10-20', '2026-11-01', swap, fill);
+    const mine = project([drop], null, mineFill);
+    const opponent = project(f.snapshot.matchup.opponentRoster, null, opponentFill);
+    const baseline = needs(mine, opponent);
+    expected.push(baseline.expectedCategories);
+    gains.push(needs(project([drop], swap, mineFill), opponent).expectedCategories - baseline.expectedCategories);
+  }
+  assert.deepEqual(r.baseline.expectedRange, [Math.min(...expected), Math.max(...expected)]);
+  assert.deepEqual(r.decision.best.scoreRange, [Math.min(...gains), Math.max(...gains)]);
+  assert.deepEqual(r.decision.missing, [
+    { name: 'Alex Sample', nbaTeam: 'AAA', side: 'mine', starts: 3, reason: 'no prior' },
+    { name: 'Blair Example', nbaTeam: 'BBB', side: 'opponent', starts: 3, reason: 'no prior' },
+  ]);
+});
+
+test('pairs sort by the worst case and a robust move wins over a higher zero-fill score', () => {
+  const f = fresh(); better(f); f.priors[0].perGame = null;
+  f.snapshot.team.roster.push({ name: 'Drew Placeholder', nbaTeam: 'AAA', slot: 'BN' });
+  f.ids.players.push({ name: 'Drew Placeholder', team: 'AAA', priorName: 'Blair Old' });
+  const r = run(f, { roles: { stream: ['Alex Sample', 'Drew Placeholder'] }, holdBelow: 0 });
+  assert.equal(r.decision.action, 'move');
+  assert.equal(r.decision.pair.drop.name, 'Drew Placeholder');
+  const [robust, optimistic] = r.topPairs;
+  assert.ok(robust.scoreRange[0] > optimistic.scoreRange[0]);
+  assert.ok(robust.score < optimistic.score);
+  const uncertain = run(f, { roles: { stream: ['Alex Sample', 'Drew Placeholder'] }, holdBelow: 0.1, top: 0 });
+  assert.equal(uncertain.decision.action, 'insufficient');
+  assert.equal(uncertain.decision.best.drop.name, 'Alex Sample');
+  assert.deepEqual(uncertain.topPairs, []);
 });
 
 test('hold below the default threshold, move at the threshold, and retain the best pair with top zero', () => {
@@ -144,6 +294,9 @@ test('an unknown side removes both shooting categories from baseline and every p
     for (const c of ['FG%', 'FT%']) {
       assert.equal(r.baseline.categories[c].label, 'unknown');
       assert.equal(r.baseline.categories[c].pWin, null);
+      assert.equal(r.baseline.categories[c].pWinRange, null);
+      assert.equal(r.baseline.categories[c].complete, false);
+      assert.match(formatAdvice(r), new RegExp(`^${c}\\s.*\\sunknown$`, 'm'));
       assert.ok(r.topPairs.every((pair) => !(c in pair.changes)));
     }
     near(r.baseline.expectedCategories, 3.5);
@@ -507,13 +660,13 @@ test('core roles and legacy protected names never drop and count blocked pairs',
   }
 });
 
-test('stream players without a prior can drop and report unknown season value', () => {
+test('stream players without a prior stay eligible but need evidence and report unknown season value', () => {
   const f = fresh(); better(f); f.priors[0].perGame = null;
   const r = run(f, { roles: { stream: ['Alex Sample'] } });
-  assert.equal(r.decision.action, 'move');
-  assert.equal(r.decision.pair.drop.seasonValue, null);
-  assert.equal(r.decision.pair.drop.seasonRank, null);
-  assert.equal(r.decision.pair.dropRole, 'stream');
+  assert.equal(r.decision.action, 'insufficient');
+  assert.equal(r.decision.best.drop.seasonValue, null);
+  assert.equal(r.decision.best.drop.seasonRank, null);
+  assert.equal(r.decision.best.dropRole, 'stream');
   assert.deepEqual(r.guardrail.protectedNoPrior, []);
   assert.match(formatAdvice(r), /vs drop unknown/);
 });
