@@ -22,7 +22,7 @@ anything, rather than relying on the rules below alone.
 | Layer | Where | What it stops |
 |---|---|---|
 | Tool deny list | `.claude/settings.json`, `permissions.deny` | Clicking, typing, form filling, page scripts and batched browser actions, for every session and agent in this repo. |
-| URL allowlist | `.claude/settings.json` hook, `scripts/guard-yahoo-url.mjs` | Opening any yahoo.com page except the pages in the table below, in Tony's league, over https. |
+| URL allowlist | `.claude/settings.json` hook, `scripts/guard-yahoo-url.mjs` | Opening any yahoo.com page except the pages in this doc (the table below and the trade research pages), in Tony's league, over https. |
 | Agent tool list | `.claude/agents/yahoo-reader.md` | The fetch agent has only: open a tab, open a URL, read page text, read page structure, read and write files. |
 | Afterwards | Transactions page (Task 02 parser) | Flags any move on Tony's team that Tony didn't make. |
 
@@ -77,6 +77,14 @@ For each page:
 
 Write `local/raw/<timestamp>/_log.txt` with one line per page: file name, the URL you opened,
 and `ok`, `skipped` or `sign-in`. Then tell Tony the folder path and any page that wasn't `ok`.
+
+## Trade research pages (only when Tony asks)
+
+Not part of a routine refresh. For trade research, read each team page `/{L}/{1..12}` and the
+draft pages `/{L}/draft` and `/{L}/draftresults`, the same way as the pages above, and save
+their text unchanged under `local/raw/<timestamp>/` (`team-<n>.txt`, `draft.txt`,
+`draftresults.txt`). The draft pages accept no query parameters. Trade proposal, draft editing,
+lineup and transaction pages stay blocked, and no trade is submitted.
 
 ## Build current-season evidence
 

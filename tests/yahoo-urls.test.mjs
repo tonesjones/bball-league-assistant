@@ -12,6 +12,8 @@ test('allows every page in docs/update-league.md', () => {
     '/matchup?mid1=7',
     '/players?status=A&pos=P&sort=AR&sdir=1&count=75',
     '/transactions',
+    '/draft',
+    '/draftresults',
   ]) {
     assert.equal(checkUrl(base + path, '12345'), null, path);
   }
@@ -34,6 +36,8 @@ test('blocks pages that change a roster or account', () => {
     '/7/editroster',
     '/players?status=A&action=add',
     '/matchup?mid1=7&crumb=x',
+    '/draft?submit=1',
+    '/draftresults?edit=1',
   ]) {
     assert.match(checkUrl(base + path, '12345'), /./, path);
   }
