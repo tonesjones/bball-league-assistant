@@ -1,3 +1,4 @@
+import { replayLineups } from './lineup-replay.mjs';
 import { CATEGORIES } from '../sources/yahoo-pages/common.mjs';
 
 const REJECT_REASONS = ['wrong-role', 'core-player', 'bad-data', 'injury', 'timing', 'other'];
@@ -13,6 +14,8 @@ export function validateEntry(e) {
   if (!['move', 'hold'].includes(e.decision)) bad.push('decision must be move or hold');
   if (e.decision === 'move' && !isDate(e.start)) bad.push('start must be YYYY-MM-DD');
   if (!['tool', 'chatbot', 'none'].includes(e.source)) bad.push('source must be tool, chatbot or none');
+  if (e.source === 'none' && e.decision !== 'hold') bad.push('none source must hold');
+  if (e.invalidReason !== undefined && (typeof e.invalidReason !== 'string' || !e.invalidReason || e.decision !== 'hold')) bad.push('invalidReason needs a nonempty reason and hold');
   if (e.source === 'chatbot' && (typeof e.chatbot !== 'string' || !e.chatbot)) bad.push('chatbot source needs chatbot name');
   if (['tool', 'none'].includes(e.source) && e.chatbot !== null) bad.push(`${e.source} chatbot must be null`);
   for (const key of ['add', 'drop']) {
@@ -28,24 +31,7 @@ export function validateEntry(e) {
   return e;
 }
 
-const STAT = { '3PM': 'fg3m', PTS: 'pts', REB: 'reb', AST: 'ast', STL: 'stl', BLK: 'blk' };
-
-export function realizedGain(entry, lines, { to }) {
-  const from = entry.start ?? entry.date;
-  const hold = entry.decision === 'hold';
-  const sums = (id) => {
-    const a = hold ? [] : lines.filter((x) => !x.didNotPlay && String(x.espnId) === String(id) && x.date >= from && x.date <= to);
-    const keys = ['fgm','fga','ftm','fta','fg3m','pts','reb','ast','stl','blk','to'];
-    return { gp: new Set(a.map((x) => `${x.date}/${x.espnEventId}`)).size, ...Object.fromEntries(keys.map((k) => [k, a.reduce((s, x) => s + (x[k] ?? 0), 0)])) };
-  };
-  const add = sums(entry.add?.espnId); const drop = sums(entry.drop?.espnId); const gain = {};
-  for (const c of CATEGORIES) {
-    if (c === 'FG%') gain[c] = { makes: add.fgm - drop.fgm, attempts: add.fga - drop.fga };
-    else if (c === 'FT%') gain[c] = { makes: add.ftm - drop.ftm, attempts: add.fta - drop.fta };
-    else gain[c] = c === 'TO' ? drop.to - add.to : add[STAT[c]] - drop[STAT[c]];
-  }
-  return { gain, gamesPlayed: { add: add.gp, drop: drop.gp } };
-}
+export const realizedGain = replayLineups;
 
 const outcome = (a, b, c) => c === 'TO' ? (a < b ? 'win' : a > b ? 'loss' : 'tie') : (a > b ? 'win' : a < b ? 'loss' : 'tie');
 const pct = (v, k) => (v?.[`${k}a`] ? v[`${k}m`] / v[`${k}a`] : 0);
@@ -77,14 +63,15 @@ export function summarize(results) {
   const groups = new Map();
   for (const r of results) { const name = r.entry.source === 'chatbot' ? r.entry.chatbot : r.entry.source; (groups.get(name) ?? groups.set(name, []).get(name)).push(r); }
   return [...groups].map(([source, rows]) => {
+    const scored = rows.filter((r) => r.status !== 'unscored' && r.gain);
     const rated = rows.filter((r) => r.entry.rating != null);
-    const mean = (value) => rows.reduce((n, r) => n + value(r), 0) / rows.length;
+    const mean = (value) => scored.length ? scored.reduce((n, r) => n + value(r), 0) / scored.length : null;
     const helped = rows.reduce((n, r) => n + (r.flips?.helped.length ?? 0), 0);
     const hurt = rows.reduce((n, r) => n + (r.flips?.hurt.length ?? 0), 0);
     const holds = rows.filter((r) => r.entry.decision === 'hold').length;
-    const meanGain = Object.fromEntries(CATEGORIES.map((c) => [c, c === 'FG%' || c === 'FT%'
+    const meanGain = !scored.length ? null : Object.fromEntries(CATEGORIES.map((c) => [c, c === 'FG%' || c === 'FT%'
       ? { makes: mean((r) => r.gain[c].makes), attempts: mean((r) => r.gain[c].attempts) } : mean((r) => r.gain[c])]));
-    return { source, moves: rows.length - holds, holds, helped, hurt, net: helped - hurt, meanGain,
+    return { source, scored: scored.length, unscored: rows.length - scored.length, invalid: rows.filter((r) => r.entry.invalidReason).length, moves: rows.length - holds, holds, helped, hurt, net: helped - hurt, meanGain,
       meanRating: rated.length ? rated.reduce((n, r) => n + r.entry.rating, 0) / rated.length : null,
       rejectReasons: Object.fromEntries(REJECT_REASONS.map((reason) => [reason, rows.filter((r) => r.entry.rejectReason === reason).length])) };
   });

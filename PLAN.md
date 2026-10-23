@@ -234,6 +234,14 @@ capture now yields insufficient evidence, not the rejected move (stale-data rehe
 uncalibrated; a complete rate model remains later work. Real outcome review and pilot freeze
 are still pending. The pilot prompt also needs the ESPN evidence available to the tool.
 
+**2026-10-23, lineup replay and pilot preparation.** Task 09 implements source-specific saved
+legal starts, banked production and lineup-aware replay for the tool, chatbot and no-move
+baseline. Missing evidence is unscored. Category changes use the saved no-move/opponent
+counterfactual, not later actual totals that may include unrelated changes. Rehearsal packet
+preparation supplies the same Yahoo/ESPN inputs to both arms and verifies hashes; it does not
+freeze or start the pilot. Real outcome reviews remain pending. A fresh Yahoo read was stopped
+on a Sign in link, per the read-only workflow; no login was attempted.
+
 **2026-10-23, refresh workflow and limitations.** Added `docs/limitations.md` as the ongoing
 register of observed evidence, projection and workflow limits. `refresh:analyze` processes an
 explicit saved capture through snapshot, logs, transaction/evidence reporting and advice,

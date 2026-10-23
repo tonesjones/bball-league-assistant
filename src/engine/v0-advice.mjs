@@ -204,5 +204,11 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       'Season guardrail: core players are never dropped; stream players bypass season checks. Other players need a prior, rank outside the protect rank, and pickup season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
     baseline, baselineLineups: { mine: mine.started, opponent: opponent.started },
+    banked: Object.fromEntries(['mine', 'opponent'].map((side) => [side, {
+      ...Object.fromEntries(Object.entries({ PTS: 'pts', REB: 'reb', AST: 'ast', STL: 'stl', BLK: 'blk', '3PM': 'fg3m', TO: 'to' })
+        .map(([c, k]) => [k, !banked ? 0 : snapshot.matchup.totals?.[side]?.[c] ?? null])),
+      ...Object.fromEntries(['fgm', 'fga', 'ftm', 'fta'].map((k) => [k,
+        !banked ? 0 : scoring.shootingKnown ? snapshot.matchup.volume?.[side]?.[k] : null])),
+    }])),
     decision, topPairs: pairs.slice(0, top), unscored, guardrail };
 }

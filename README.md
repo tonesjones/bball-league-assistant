@@ -94,6 +94,17 @@ comparison, with `week` and `asOf` matching that record. `npm run bakeoff -- rec
 checks that each referenced record exists before appending the batch. Old rehearsal entries
 without an ID cannot be scored as recorded decisions; do not invent a link retrospectively.
 
+New bakeoff entries retain source-specific baseline/proposed/opponent starts and banked
+production. Outcome scoring replays those lineups, counts benched games as nothing, subtracts
+displaced starters and marks missing evidence unscored. Category changes describe independent
+fixed-lineup counterfactuals; overlapping suggestions are not a weekly plan. Old rehearsals
+without replay evidence cannot be made scored decisions after the fact.
+
+`npm run pilot:prepare -- <decisionId>` writes a unique private rehearsal packet with the same
+Yahoo snapshot, ESPN evidence, projections, schedule, IDs and roles for the chatbot, plus input
+hashes and the candidate prompt. It excludes tool recommendations. It does not start the pilot;
+see [the comparison protocol](docs/bakeoff-prompt.md) for reviews and the pending freeze.
+
 Minutes blend this season's eligible games with two prior pseudo-games. `--minutes-k` changes
 that starting weight; it is not calibrated. Rates per minute remain from the prior season.
 Reports show observed games/starts, prior/season/projected MPG and four fixed pickup/drop
