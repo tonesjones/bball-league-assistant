@@ -120,7 +120,7 @@ No UI. Run from Claude Code.
      change in usage or shots per minute waits for the rate model after the pilot. The same
      projection feeds weekly scoring, lineup order and the season-value guardrail.
      The ESPN box score parser keeps DNP rows and the `starter` flag (both seen in real box
-     scores; today it skips DNP rows). A DNP with reason `COACH'S DECISION` counts as zero
+     scores; older logs discarded DNP rows). A DNP with reason `COACH'S DECISION` counts as zero
      minutes. Any other reason (an injury such as "RIGHT CALF", or rest) is left out of the
      blend, and so is a game where the player isn't in the box score. Starter status is stored
      and shown, not modeled. A player with no usable prior stays unknown, because minutes alone
@@ -226,6 +226,13 @@ minutes. Tony's ruling: hold. One strong game at 30 minutes should not be overru
 season's per-minute rates. Open decision before the pilot: bring per-minute rate updates
 forward from 5f, or withhold a drop when the player's season per-minute production beats the
 prior and few games are observed. Hold and insufficient-evidence examples still need review.
+
+**2026-10-22, player evidence and transaction history.** `npm run evidence` reports season and
+last-seven-day production from ESPN box scores for my roster, the opponent and the first 100
+available players: minutes, starts, shot volume, true shooting and an estimated USG%, with
+games observed. It also appends each transaction group seen in a saved snapshot to a private
+history, once. Yahoo stays the source for rosters, availability and transactions. The report is
+descriptive: usage doesn't change recommendation scores.
 
 **2026-10-22, steps 5b/5c implemented for review.** Decision records are in draft PR #24.
 The dependent minutes implementation uses two prior pseudo-games, retains DNP reasons and

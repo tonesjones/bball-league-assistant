@@ -35,3 +35,16 @@ test('DNP reasons and starter flags are preserved without invented production', 
   assert.equal(rows[0].starter, false);
   assert.ok(rows.every((r) => r.pts === undefined));
 });
+
+test('usage context requires complete player totals and uses reported team turnovers', () => {
+  const copy = structuredClone(summary);
+  copy.boxscore.players = [copy.boxscore.players[0]];
+  const group = copy.boxscore.players[0].statistics[0];
+  group.athletes = [{ athlete: { id: 'example', displayName: 'Sample Starter' }, starter: true, didNotPlay: false,
+    stats: group.labels.map((label) => ({ MIN: '48', PTS: '20', FG: '8-15', '3PT': '2-4', FT: '2-3', REB: '5', AST: '4', TO: '2', STL: '1', BLK: '1' })[label] ?? '0') }];
+  group.totals = [...group.athletes[0].stats];
+  copy.boxscore.teams = [{ team: copy.boxscore.players[0].team, statistics: [{ name: 'totalTurnovers', displayValue: '3' }] }];
+  assert.deepEqual(parseBoxScore(copy, { date: '2026-01-15', standardCode: map })[0].teamContext, { minutes: 48, fga: 15, fta: 3, to: 3 });
+  group.totals[group.labels.indexOf('FG')] = '9-17';
+  assert.equal(parseBoxScore(copy, { date: '2026-01-15', standardCode: map })[0].teamContext, null);
+});

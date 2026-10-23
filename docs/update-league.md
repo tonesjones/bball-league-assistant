@@ -77,3 +77,18 @@ For each page:
 
 Write `local/raw/<timestamp>/_log.txt` with one line per page: file name, the URL you opened,
 and `ok`, `skipped` or `sign-in`. Then tell Tony the folder path and any page that wasn't `ok`.
+
+## Build current-season evidence
+
+For a complete capture, run these in order with its exact timestamp:
+
+```
+node scripts/build-snapshot.mjs local/raw/<timestamp>
+npm run fetch:gamelogs -- --season 2026-27 --snapshot local/snapshots/<timestamp>.json
+npm run evidence -- local/snapshots/<timestamp>.json
+```
+
+The browser remains the source for league membership, available players, matchup state and
+transactions. ESPN supplies player production and estimated usage. The evidence command
+archives observed transactions without duplicates and saves private Markdown/JSON reports.
+It displays current-season actuals with sample sizes; it does not recommend a move.
