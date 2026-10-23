@@ -194,12 +194,21 @@ prints ok or the error, without page text. It would replace the scratch script u
 
 Updated at the end of each session.
 
+**2026-10-22, step 5a built.** Advice no longer counts a start with no projection as zero
+(#23). It scores those starts at zero and at a strong rotation line (90th percentile of the top
+150 priors, 10th percentile TO) for both teams. It recommends a move only if the move clears the
+hold threshold in all four scenarios. When only the best case clears it, the new "insufficient
+evidence" outcome names the players with missing starts. On the 2026-10-21 snapshot, 4 unknown
+starts on my side still left a move (score 0.543 to 0.587). The matchup parser now reads pages
+captured before that day's games tip off (#22). Next: Tony reviews a real example of each outcome
+(move, hold, insufficient evidence); the 10-21 run supplies the move. Then 5b.
+
 **2026-10-22, plan for step 5.** Reviewed an outside plan (Astra) against the code. Two real gaps:
 a start with no projection counts as zero, so dropping an unprojected stream player looks like a
 gain, and the bakeoff counts every game the pickup and drop played instead of the games they
 started. Step 5 is now six items: missing production, decision records, a minutes blend that also
 feeds the guardrail, the frozen 2-week pilot, lineup-aware scoring built during the pilot, and
-per-minute rates after it. Next: 5a.
+per-minute rates after it.
 
 **Checkpoint (2026-10-20, step 4 done).** Phase 0, step 5 of 5. Step 4 merged (#10 to #14):
 the report now gives one best move or "hold", fills legal daily lineups, rebuilds banked FG%/FT%
