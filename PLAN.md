@@ -113,16 +113,32 @@ No UI. Run from Claude Code.
      bakeoff entry names its decision record.
    - **5c. Minutes blend.** [Task 01](tasks/01-nba-data-and-projections.md) step 5, minutes only,
      pulled forward. Projected minutes blend the prior MPG with this season's games from the
-     first game on, with weights set as parameters. Per-minute rates stay at the prior, so
-     counting stats scale with projected minutes. That's an interim assumption: a change in
-     usage or shots per minute waits for the rate model after the pilot. The same projection
-     feeds weekly scoring, lineup order and the season-value guardrail. Game logs keep DNP rows
-     with their reason: an injury or rest DNP is left out of the blend, and a coach's-decision
-     DNP counts as zero minutes. A player with no usable prior stays unknown, because minutes
-     alone can't give category rates.
+     first game on, as pseudo-games: `(k × prior_mpg + sum of season minutes) / (k + games)`,
+     with `k = 2` as a parameter and equal weight per game. `k = 2` is a starting value, not a
+     calibrated one; recency decay waits for the Task 01 backtest. Per-minute rates stay at the
+     prior, so counting stats scale with projected minutes. That's an interim assumption: a
+     change in usage or shots per minute waits for the rate model after the pilot. The same
+     projection feeds weekly scoring, lineup order and the season-value guardrail.
+     The ESPN box score parser keeps DNP rows and the `starter` flag (both seen in real box
+     scores; today it skips DNP rows). A DNP with reason `COACH'S DECISION` counts as zero
+     minutes. Any other reason (an injury such as "RIGHT CALF", or rest) is left out of the
+     blend, and so is a game where the player isn't in the box score. Starter status is stored
+     and shown, not modeled. A player with no usable prior stays unknown, because minutes alone
+     can't give category rates.
+     A one-game role change shouldn't flip a decision on its own. Each pickup and drop gets two
+     minutes scenarios, the prior MPG and this season's MPG so far, and a move is recommended
+     only if it clears the hold threshold in all four combinations, the same rule 5a uses for
+     missing production. Otherwise the outcome is "insufficient evidence". The scenarios converge
+     as games accumulate, so no separate evidence threshold is needed. Advice refuses game logs
+     older than the snapshot. The report shows games observed, prior MPG, season MPG, projected
+     MPG and the as-of time of the logs.
      *Done when:* tests cover a player with 1 or 2 games, a player whose minutes rose (projection
-     and guardrail rank both up), an injury DNP left out, a coach's-decision DNP counted, and a
-     player with no prior still unknown.
+     and guardrail rank both up), an injury DNP left out, a coach's-decision DNP counted, a
+     player absent from the box score left out, a player with no prior still unknown, one game
+     that reverses a drop's ranking giving "insufficient evidence", a consistent 5-game history
+     giving a move, and stale game logs refused. A synthetic fixture covers the 10-21 regression (a
+     low-prior big who starts and plays 30 minutes, against a high-prior wing who plays 18 off
+     the bench) without real names.
    - **5d. Pilot, 2 full weeks.** Not a PR. Freeze the model settings,
      `docs/bakeoff-prompt.md` and the decision rules. Log every suggestion (tool, chatbot and
      "do nothing"), Tony's rating and any rejection reason before the outcome is known. Also
@@ -139,9 +155,12 @@ No UI. Run from Claude Code.
      *Done when:* tests show a benched pickup game adds nothing, a displaced starter subtracted,
      a mid-week move scored from its date, a complete hold scored as zero, and missing evidence
      shown as unscored.
-   - **5f. After the pilot.** Per-minute rate shrinkage and the rest of Task 01 (Phase 1).
-     Hand-entered role assumptions and two-scenario reports stay deferred unless the pilot shows
-     decisions going wrong in the first games after a role change.
+   - **5f. After the pilot.** Per-minute rate shrinkage and the rest of Task 01 (Phase 1). With
+     about 15 games of prior minutes, one 30-minute game moves a rate only about 7%, so rates
+     wait; the error in the first live runs came from minutes. Players with no prior get an
+     evidence threshold here (for example 5 games or 100 minutes) before their season rates are
+     used. Hand-entered role assumptions stay deferred unless the pilot shows decisions going
+     wrong in the first games after a role change.
 
 **Gate.** Go to Phase 1 only if the tool's moves beat both the chatbot's and doing nothing on
 categories helped minus hurt, and Tony rates them as more useful. Two weeks is a small sample:
@@ -193,6 +212,12 @@ prints ok or the error, without page text. It would replace the scratch script u
 ## Status
 
 Updated at the end of each session.
+
+**2026-10-22, step 5c revised.** Reviewed Codex's projection plan after the 10-21 run kept
+valuing a player by last season's 19.7 MPG after a 30-minute start. Kept per-minute rates in 5f
+and made 5c concrete: pseudo-game minutes blend with `k = 2`, DNP rule from real ESPN reasons,
+and a four-way minutes check that returns "insufficient evidence" when one game could reverse a
+move. Order unchanged: Tony reviews the 5a outcomes, then 5b, then 5c.
 
 **2026-10-22, step 5a built.** Advice no longer counts a start with no projection as zero
 (#23). It scores those starts at zero and at a strong rotation line (90th percentile of the top
