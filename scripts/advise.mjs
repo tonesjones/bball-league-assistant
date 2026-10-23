@@ -96,6 +96,10 @@ export function formatAdvice(report) {
     }
     for (const scenario of pair.minuteScenarios ?? []) lines.push(
       `   Minutes case pickup ${scenario.pickupMode} ${number(scenario.pickupMpg)} / drop ${scenario.dropMode} ${number(scenario.dropMpg)}: ${scenario.scoreRange.map(number).join(' to ')} categories`);
+    for (const p of [pair.pickup, pair.drop]) if (p.rates) lines.push(
+      `   ${p.name} per-minute evidence: ${p.rates.status}, ${p.rates.games} games / ${number(p.rates.minutes)} minutes`);
+    if (pair.rateScenarios?.length) lines.push(`   Per-minute sensitivity: ${pair.rateScenarios.length} additional cases, score ${number(Math.min(...pair.rateScenarios.map((s) => s.scoreRange[0])))} to ${number(Math.max(...pair.rateScenarios.map((s) => s.scoreRange[1])))} categories (full cases in JSON).`);
+    if (pair.missingRates?.length) lines.push(`   Missing complete per-minute evidence: ${pair.missingRates.join(', ')}`);
     lines.push(`   Season value: pickup ${season(pair.pickup)} vs drop ${season(pair.drop)}`);
     lines.push(`   ${Object.entries(pair.changes).map(([c, v]) => `${c}: total ${signed(v.total)}, P(win) ${signed(v.pWin)}`).join(' | ')}`);
   };

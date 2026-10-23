@@ -19,6 +19,14 @@ Tony rejected the first reviewed move because prior-season rates overruled stron
 production. Before the pilot, resolve that rate-model decision and review real hold and
 insufficient-evidence examples. Task specs are in [`tasks/`](tasks/).
 
+The pre-pilot rate disagreement check now tests observed season per-minute production shrunk
+toward the prior with the minutes blend's same k pseudo-games, alongside prior rates for
+pickup/drop at the fixed minutes endpoints. The prior contributes `k * prior.mpg` pseudo-minutes;
+raw observed rates remain descriptive. A conflicting case withholds the move, and the endpoints
+remain in the check as more games update the blend. Nominal projections still use prior rates;
+k is uncalibrated. No games uses prior rates; incomplete observed production prevents an
+otherwise supported move. Real examples still need Tony's review before the pilot starts.
+
 Rules for coding agents: [`AGENTS.md`](AGENTS.md).
 
 Trade research requested by Tony may also read other teams' rosters and the draft and draft-results
