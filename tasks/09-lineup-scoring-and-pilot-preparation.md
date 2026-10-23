@@ -20,7 +20,9 @@ reviews and an explicit freeze. Build this before recording any scored decisions
       projections, schedule, IDs and roles without exposing tool recommendations. Input hashes
       are verified; the candidate prompt and model identity are recorded.
 - [x] Synthetic replay and record/packet integration tests pass with the full suite.
-- [ ] Tony reviews the three real outcomes, confirms the settings/prompt and starts the pilot.
+- [x] Tony accepts the historical insufficient-evidence outcome (October 23).
+- [ ] Tony reviews acceptable real move and hold examples, confirms settings/prompt and starts
+      the pilot. The insufficient-evidence review alone does not complete this gate.
 
 ## Limits
 

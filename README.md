@@ -16,8 +16,9 @@ category estimates, not win probabilities. Descriptive player evidence and obser
 history are also available. Steps 5a–5c are implemented; the scored pilot has not started.
 
 Tony rejected the first reviewed move because prior-season rates overruled strong current-season
-production. Before the pilot, resolve that rate-model decision and review real hold and
-insufficient-evidence examples. Task specs are in [`tasks/`](tasks/).
+production. The conservative rate disagreement check below addresses that failure; Tony
+accepted the historical insufficient-evidence result. Acceptable real move and hold examples
+still need review before a pilot freeze. Task specs are in [`tasks/`](tasks/).
 
 The pre-pilot rate disagreement check now tests observed season per-minute production shrunk
 toward the prior with the minutes blend's same k pseudo-games, alongside prior rates for
