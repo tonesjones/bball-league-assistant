@@ -217,6 +217,17 @@ prints ok or the error, without page text. It would replace the scratch script u
 
 Updated at the end of each session.
 
+**2026-10-23, merge checkpoint.** Decision records (#24), current-season minutes (#25) and
+descriptive player evidence with observed transaction history (#27) are merged. PR #28 adds
+read-only draft and draft-results pages for trade research Tony requests, alongside the already
+allowed team rosters. Routine refreshes still use the same pages. The full suite passes 145 tests.
+The earlier draft evidence implementation (#26) is superseded by #27, which also handles box-score
+groups without athletes.
+
+The scored pilot has not started. Next: resolve the per-minute-rate decision from the rejected
+5a move below, then review real hold and insufficient-evidence outcomes before freezing the
+pilot settings and chatbot prompt. Merged implementations do not satisfy that review gate.
+
 **2026-10-22, 5a review: the "move" example is bad.** On the 22:28 snapshot (decision
 `4a5175ae`), advice said to drop a starting center who played 30 minutes with a strong line in
 his only game (14 REB, 5 AST, 3 BLK), for a bench forward on waivers. The move cleared the

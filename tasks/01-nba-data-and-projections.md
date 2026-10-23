@@ -26,7 +26,7 @@ For every NBA player, a per-game projection for each of the 9 categories with a 
 
 ## Done when
 
-### Phase 0 step 5c (implemented for review)
+### Phase 0 step 5c (merged in PR #25; pilot review gate remains open)
 
 - [x] One- and two-game histories follow the k=2 pseudo-game rule; k is labeled uncalibrated.
 - [x] Coach DNPs count zero; other DNPs and absent rows are excluded; starter flags are retained.
@@ -38,7 +38,7 @@ For every NBA player, a per-game projection for each of the 9 categories with a 
 - [x] Checked full-season coverage includes empty days; stale, missing or changed files fail.
 - [x] Successful runs save the effective projection table in their immutable decision record.
 
-### Current-season descriptive evidence (2026-10-22, implemented for review)
+### Current-season descriptive evidence (merged in PR #27)
 
 - [x] Yahoo browser captures supply current roster, availability and transaction observations.
 - [x] ESPN supplies actual season and last-seven-day player production, minutes, starts and

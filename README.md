@@ -9,12 +9,22 @@ The first version has to beat a simple baseline: roster screenshots posted into 
 ## Status
 
 Phase 0 of [`PLAN.md`](PLAN.md): v0 advice, not yet tested against the chatbot baseline. The
-league read, the 2026-27 schedule, the player ID map and v0 add/drop advice work. The advice
-numbers are approximate category estimates from last season's per-game lines, not win
-probabilities. The work in progress makes the advice a single "best next move, or hold" report
-built on legal daily lineups (step 4 in `PLAN.md`). Task specs are in [`tasks/`](tasks/).
+league read, schedule, player ID map and legal daily lineups work. Advice gives one move,
+hold or insufficient evidence, and saves an immutable decision record. Current-season minutes
+update projections, while rates per minute still come from last season. Scores are approximate
+category estimates, not win probabilities. Descriptive player evidence and observed transaction
+history are also available. Steps 5a–5c are implemented; the scored pilot has not started.
+
+Tony rejected the first reviewed move because prior-season rates overruled strong current-season
+production. Before the pilot, resolve that rate-model decision and review real hold and
+insufficient-evidence examples. Task specs are in [`tasks/`](tasks/).
 
 Rules for coding agents: [`AGENTS.md`](AGENTS.md).
+
+Trade research requested by Tony may also read other teams' rosters and the draft and draft-results
+pages. See [`docs/update-league.md`](docs/update-league.md#trade-research-pages-only-when-tony-asks)
+for the capture workflow. These pages are separate from a routine refresh; all Yahoo access stays
+read only.
 
 ## Setup
 
