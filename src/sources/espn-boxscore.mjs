@@ -14,7 +14,12 @@ export function parseBoxScore(json, { date, standardCode }) {
         if (positions[label] === undefined) throw new Error(`event ${eventId}: missing label ${label}`);
       }
       for (const p of group.athletes ?? []) {
-        if (p.didNotPlay) continue;
+        const identity = { espnId: String(p.athlete.id), name: p.athlete.displayName, team, date, espnEventId: eventId,
+          starter: p.starter ?? null, didNotPlay: p.didNotPlay ?? false, reason: p.reason ?? null };
+        if (p.didNotPlay) {
+          out.push({ ...identity, min: p.reason === "COACH'S DECISION" ? 0 : null });
+          continue;
+        }
         const val = (label) => p.stats[positions[label]];
         const pair = (label) => {
           const m = /^(\d+)-(\d+)$/.exec(val(label) ?? '');
@@ -25,7 +30,10 @@ export function parseBoxScore(json, { date, standardCode }) {
         const three = /^(\d+)-(\d+)$/.exec(val('3PT') ?? '');
         const fg3m = three ? +three[1] : Number(val('3PT'));
         if (!Number.isFinite(fg3m)) throw new Error(`event ${eventId}: invalid 3PT stat`);
-        out.push({ espnId: String(p.athlete.id), name: p.athlete.displayName, team, date, espnEventId: eventId,
+        if (!Number.isFinite(Number(val('MIN'))) || Number(val('MIN')) < 0 || val('MIN') == null || val('MIN') === '') {
+          throw new Error(`event ${eventId}: invalid minutes`);
+        }
+        out.push({ ...identity,
           min: Number(val('MIN')), fgm, fga, ftm, fta, fg3m, pts: Number(val('PTS')), reb: Number(val('REB')),
           ast: Number(val('AST')), stl: Number(val('STL')), blk: Number(val('BLK')), to: Number(val('TO')) });
       }

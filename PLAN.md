@@ -128,15 +128,19 @@ No UI. Run from Claude Code.
      A one-game role change shouldn't flip a decision on its own. Each pickup and drop gets two
      minutes scenarios, the prior MPG and this season's MPG so far, and a move is recommended
      only if it clears the hold threshold in all four combinations, the same rule 5a uses for
-     missing production. Otherwise the outcome is "insufficient evidence". The scenarios converge
-     as games accumulate, so no separate evidence threshold is needed. Advice refuses game logs
-     older than the snapshot. The report shows games observed, prior MPG, season MPG, projected
+     missing production. If some cases clear the threshold and others do not, the outcome is
+     "insufficient evidence"; if none support a move, it is "hold". These endpoints stay fixed:
+     more games update the blend, but do not retire the prior-MPG case. This conservative choice
+     can keep a move blocked even after a consistent season history. Advice requires a game-log
+     refresh checked at or after the snapshot, covering the season through its Eastern date
+     (including checked off-days). The report shows games observed, starts, prior MPG, season MPG, projected
      MPG and the as-of time of the logs.
      *Done when:* tests cover a player with 1 or 2 games, a player whose minutes rose (projection
      and guardrail rank both up), an injury DNP left out, a coach's-decision DNP counted, a
      player absent from the box score left out, a player with no prior still unknown, one game
      that reverses a drop's ranking giving "insufficient evidence", a consistent 5-game history
-     giving a move, and stale game logs refused. A synthetic fixture covers the 10-21 regression (a
+     moving the blended projection toward the observed role while retaining the fixed scenario
+     gate, and stale game logs refused. A synthetic fixture covers the 10-21 regression (a
      low-prior big who starts and plays 30 minutes, against a high-prior wing who plays 18 off
      the bench) without real names.
    - **5d. Pilot, 2 full weeks.** Not a PR. Freeze the model settings,
@@ -212,6 +216,14 @@ prints ok or the error, without page text. It would replace the scratch script u
 ## Status
 
 Updated at the end of each session.
+
+**2026-10-22, steps 5b/5c implemented for review.** Decision records are in draft PR #24.
+The dependent minutes implementation uses two prior pseudo-games, retains DNP reasons and
+starter flags, and feeds the blended lines to scoring, lineup order and season protection.
+Tony chose fixed prior/season minutes endpoints; the earlier convergence and guaranteed
+five-game-move claims are removed. Source-check coverage supplies log freshness, including
+off-days. Per-minute rates and calibrated weights remain deferred. The scored pilot has not
+started, and review of the real 5a outcomes is still pending.
 
 **2026-10-22, step 5c revised.** Reviewed Codex's projection plan after the 10-21 run kept
 valuing a player by last season's 19.7 MPG after a 30-minute start. Kept per-minute rates in 5f

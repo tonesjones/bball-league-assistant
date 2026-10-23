@@ -35,10 +35,20 @@ npm test
    node scripts/build-snapshot.mjs
    ```
 
-3. Get the advice for the newest snapshot in `local/snapshots/`:
+3. Refresh current-season game logs for that exact snapshot (replace the example path):
 
    ```
-   npm run advise
+   npm run fetch:gamelogs -- --season 2026-27 --snapshot local/snapshots/YYYY-MM-DD-HHmm.json
+   ```
+
+   This checks scoreboards, reuses cached final box scores and rebuilds daily files with DNP
+   reasons and starter flags. Advice requires checked coverage through the snapshot date,
+   including off-days. An older file or missing day is never accepted as zero production.
+
+4. Get the advice for that snapshot:
+
+   ```
+   npm run advise -- local/snapshots/YYYY-MM-DD-HHmm.json
    ```
 
 The advice is also saved as JSON in `local/advice/`. Every successful run also writes a new,
@@ -51,6 +61,13 @@ Every tool, chatbot and do-nothing bakeoff entry must include the same `decision
 comparison, with `week` and `asOf` matching that record. `npm run bakeoff -- record <entries.json>`
 checks that each referenced record exists before appending the batch. Old rehearsal entries
 without an ID cannot be scored as recorded decisions; do not invent a link retrospectively.
+
+Minutes blend this season's eligible games with two prior pseudo-games. `--minutes-k` changes
+that starting weight; it is not calibrated. Rates per minute remain from the prior season.
+Reports show observed games/starts, prior/season/projected MPG and four fixed pickup/drop
+minutes cases. A move must clear the threshold in every case, including missing-production
+cases. Fixed prior-MPG scenarios do not converge as more games arrive, so uncertainty may
+continue to withhold a move. This is a minutes update, not a current-season rate model.
 
 ## Priors from Draft Lab
 

@@ -26,6 +26,7 @@ export function estimateVolume({ roster, totals, logs, from, to, slots }) {
   if (!Number.isInteger(slots) || slots < 0) return unknown('invalid slots');
   const ids = new Set(players.filter(hasId).map((p) => String(p.espnId))), days = new Map();
   for (const row of logs) {
+    if (row.didNotPlay) continue;
     if (row.date < from || row.date > to || !ids.has(String(row.espnId))) continue;
     if (!days.has(row.date)) days.set(row.date, []);
     days.get(row.date).push(row);

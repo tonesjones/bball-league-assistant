@@ -18,13 +18,27 @@ For every NBA player, a per-game projection for each of the 9 categories with a 
 3. **Player IDs.** `data/ids.json` maps the source's player ID to name, team and (later, Task 02) Yahoo player key. Match prior names with a normalizer that strips accents, punctuation and suffixes (Jr., Sr., II, III). Unmatched names go to a report, never silently dropped.
 4. **Game logs.** `scripts/fetch-gamelogs.mjs` stores per-game lines (minutes, FGM, FGA, FTM, FTA, 3PM, PTS, REB, AST, STL, BLK, TO) for the current season, incrementally, and for 2025-26 once.
 5. **Projection model** in `src/engine/projections.mjs`, pure:
-    - Minutes: blend the prior MPG with this season's games, weighted toward recent games, from the first game on. Don't wait for 5 games. Weights are parameters, and tests cover 1- and 2-game histories. Game logs keep DNP rows with their reason: an injury or rest DNP is left out of the blend, since availability is separate from role, and a coach's-decision DNP counts as zero minutes. Players with no prior and no games get no projection. This part ships first, on its own, as PLAN.md step 5c: per-minute rates stay at the prior, and the same projection feeds weekly scoring, lineup order and the season-value guardrail.
+    - Minutes (Phase 0, PLAN.md step 5c): `(k * prior_mpg + season_minutes) / (k + games)` with `k = 2` prior pseudo-games and equal game weights from the first game. This is a starting value, not calibrated; recency weighting waits for the backtest. Keep DNP rows with their reason: only exact `COACH'S DECISION` counts as zero minutes; other DNPs and absent rows are excluded. Preserve starter status for display. A player without usable prior minutes and rates stays unknown. Per-minute rates stay at the prior, and the same projected line feeds weekly scoring, lineup order and the season-value guardrail. Fixed prior/season minutes scenarios gate each pickup/drop pair; see PLAN.md for the user-selected conservative rule.
     - Per-minute rates (after the pilot): shrink this season's rates toward the prior rate with `rate = (prior_rate * prior_minutes + season_total) / (prior_minutes + season_minutes)`. The numerator is production and the denominator is minutes. `prior_minutes` is a parameter worth about 15 games of minutes.
     - Spread: per-category standard deviation per game from the player's game logs once he has 10 or more games; before that, a default dispersion per category estimated from 2025-26 logs.
     - FG% and FT% are projected as makes and attempts, never as percentages.
 6. **Daily output.** `scripts/project.mjs` writes `local/projections/YYYY-MM-DD.json`: per player, per category, mean and standard deviation per game, plus projected minutes.
 
 ## Done when
+
+### Phase 0 step 5c (implemented for review)
+
+- [x] One- and two-game histories follow the k=2 pseudo-game rule; k is labeled uncalibrated.
+- [x] Coach DNPs count zero; other DNPs and absent rows are excluded; starter flags are retained.
+- [x] Shared projected lines update weekly totals, lineup order and season protection.
+- [x] No usable prior stays unknown; no observed games preserves the usable prior.
+- [x] Four fixed minutes cases cross with the existing missing-production cases; synthetic
+      starter/bench regression returns insufficient evidence rather than a prior-only move.
+- [x] Five-game history adapts the blend but retains the fixed endpoints, as Tony selected.
+- [x] Checked full-season coverage includes empty days; stale, missing or changed files fail.
+- [x] Successful runs save the effective projection table in their immutable decision record.
+
+### Full Task 01 (later)
 
 - [ ] `docs/sources.md` names the source, its terms and rate limit.
 - [x] Schedule check against `playoff-weeks.json` passes, or mismatches are listed and explained.

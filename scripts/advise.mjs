@@ -5,7 +5,8 @@ import { advise, normalizeRoles } from '../src/engine/v0-advice.mjs';
 import { estimateVolume } from '../src/engine/shooting-volume.mjs';
 import { findPlayer } from '../src/engine/names.mjs';
 import { addDays, tomorrow } from '../src/engine/weeks.mjs';
-import { loadGameLogs } from '../src/sources/gamelogs.mjs';
+import { loadProjectionLogs } from '../src/sources/gamelogs.mjs';
+import { projectPlayers } from '../src/engine/projections.mjs';
 import { saveDecision } from '../src/sources/decisions.mjs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -67,6 +68,8 @@ export function formatAdvice(report) {
     `From: ${report.fromDate} | Adds from: ${report.addsFrom} | Adds left: ${report.addsLeft}`,
     `Shooting volume: ${Object.entries(report.volumeStatus).map(([side, v]) => `${side}: ${v.status}${v.reason ? ` (${v.reason})` : ''}${v.unmatched?.length ? `; unmatched: ${v.unmatched.join(', ')}` : ''}`).join(' | ')}`, '',
     'Category     Mine       Opponent   P(win)   Need'];
+  if (report.projection) lines.splice(lines.length - 1, 0,
+    `Game logs checked: ${report.projection.asOf} | Minutes pseudo-games k=${report.projection.k} (starting value, not calibrated)`, '');
   if (report.freshness?.stale) lines.unshift(`STALE: snapshot is ${report.freshness.ageHours.toFixed(2)} hours old (maximum ${report.freshness.maxAgeHours}).`, '');
   for (const [c, v] of Object.entries(report.baseline.categories)) {
     const incomplete = v.pWinRange && !v.complete;
@@ -87,10 +90,17 @@ export function formatAdvice(report) {
         : `   Lineup: deliberately start ${pair.pickup.name} ${times}; no other projected starter is displaced.`);
     }
     const season = (p) => p.seasonValue == null ? 'unknown' : `${signed(p.seasonValue)} (#${p.seasonRank})`;
+    for (const p of [pair.pickup, pair.drop]) if (p.minutes) {
+      const m = p.minutes;
+      lines.push(`   ${p.name} minutes: games ${m.games}, starts ${m.starts}, prior ${number(m.prior)}, season ${number(m.season)}, projected ${number(m.projected)}`);
+    }
+    for (const scenario of pair.minuteScenarios ?? []) lines.push(
+      `   Minutes case pickup ${scenario.pickupMode} ${number(scenario.pickupMpg)} / drop ${scenario.dropMode} ${number(scenario.dropMpg)}: ${scenario.scoreRange.map(number).join(' to ')} categories`);
     lines.push(`   Season value: pickup ${season(pair.pickup)} vs drop ${season(pair.drop)}`);
     lines.push(`   ${Object.entries(pair.changes).map(([c, v]) => `${c}: total ${signed(v.total)}, P(win) ${signed(v.pWin)}`).join(' | ')}`);
   };
   if (d.action === 'move') pairLines(d.pair, 0);
+  else if (d.action === 'insufficient' && d.best) pairLines(d.best, 0);
   else lines.push(d.reason);
   lines.push('', 'Top pairs (alternatives against the current roster):');
   report.topPairs.forEach(pairLines);
@@ -125,10 +135,14 @@ async function main(args) {
     if (arg === '--from') options.fromDate = date(args[++i]);
     else if (arg === '--adds-from') options.addsFrom = date(args[++i]);
     else if (arg === '--allow-stale') freshnessOptions.allowStale = true;
-    else if (arg === '--max-age-hours' || arg === '--hold-below') {
+    else if (arg === '--max-age-hours' || arg === '--hold-below' || arg === '--minutes-k') {
       const value = args[++i];
       if (!value?.trim() || !Number.isFinite(Number(value)) || Number(value) < 0) throw new Error(`${arg} must be a nonnegative finite number`);
       if (arg === '--max-age-hours') freshnessOptions.maxAgeHours = Number(value);
+      else if (arg === '--minutes-k') {
+        if (Number(value) <= 0) throw new Error('--minutes-k must be positive');
+        options.minutesK = Number(value);
+      }
       else options.holdBelow = Number(value);
     }
     else if (arg === '--margin') {
@@ -162,11 +176,14 @@ async function main(args) {
     'data/ids.json', 'data/priors/players.json', 'data/schedule-2026-27.json',
   ].map(readJson));
   const roles = await readRoles();
+  const season = schedule.season ?? '2026-27';
+  const seasonStart = schedule.games.map((g) => g.date).sort()[0];
+  const { logs, coverage } = await loadProjectionLogs(season, { asOf: snapshot.asOf, from: seasonStart });
+  const projections = projectPlayers(priors, ids, logs, { k: options.minutesK ?? 2, asOf: coverage.checkedAt });
   const fromDate = options.fromDate ?? tomorrow(snapshot.asOf);
   const from = snapshot.matchup.start, to = [addDays(fromDate, -1), snapshot.matchup.end].sort()[0];
   const missingVolume = (side) => !['fgm', 'fga', 'ftm', 'fta'].every((k) => Number.isFinite(snapshot.matchup.volume?.[side]?.[k]));
   if (to >= from && ['mine', 'opponent'].some(missingVolume)) {
-    const logs = await loadGameLogs(schedule.season ?? '2026-27', from, to);
     const slots = snapshot.settings.rosterPositions.filter((p) => !['BN', 'IL', 'IL+'].includes(p.slot))
       .reduce((sum, p) => sum + p.count, 0);
     options.volumeStatus = {};
@@ -181,17 +198,18 @@ async function main(args) {
       }
     }
   }
-  const report = { ...advise(snapshot, { ...options, ids, priors, schedule, roles }), freshness };
+  const report = { ...advise(snapshot, { ...options, ids, priors, schedule, roles, projections }), freshness };
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   const gitOptions = { cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), encoding: 'utf8' };
   const provenance = {
     commit: execFileSync('git', ['rev-parse', 'HEAD'], gitOptions).trim(),
     dirty: Boolean(execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], gitOptions).trim()),
     snapshotPath: path.resolve(snapshotPath), snapshotHash: hash(await readFile(snapshotPath)),
-    projectionVersion: `prior-v1:${hash(JSON.stringify(priors))}`,
+    projectionVersion: `${projections.version}:${hash(JSON.stringify({ players: projections.players, k: projections.k }))}`,
+    gameLogCoverage: coverage,
     scheduleHash: hash(JSON.stringify(schedule)), idsHash: hash(JSON.stringify(ids)), roles,
   };
-  const saved = await saveDecision({ report, options: { ...report.options, ...freshnessOptions, maxAgeHours: freshness.maxAgeHours, allowStale: freshnessOptions.allowStale ?? false }, provenance });
+  const saved = await saveDecision({ report, options: { ...report.options, ...freshnessOptions, maxAgeHours: freshness.maxAgeHours, allowStale: freshnessOptions.allowStale ?? false }, provenance, projections });
   report.decisionId = saved.id;
   const text = formatAdvice(report);
   const output = path.join('local/advice', path.basename(snapshotPath));

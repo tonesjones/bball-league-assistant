@@ -12,10 +12,10 @@ export async function readDecision(id, dir = DECISIONS_DIR) {
   return record;
 }
 
-export async function saveDecision({ report, options, provenance }, dir = DECISIONS_DIR) {
+export async function saveDecision({ report, options, provenance, projections = null }, dir = DECISIONS_DIR) {
   const id = randomUUID(), createdAt = new Date().toISOString();
   const file = path.join(dir, `${id}.json`);
   await mkdir(dir, { recursive: true });
-  await writeFile(file, JSON.stringify({ id, createdAt, options, provenance, report }, null, 2) + '\n', { flag: 'wx' });
+  await writeFile(file, JSON.stringify({ id, createdAt, options, provenance, projections, report }, null, 2) + '\n', { flag: 'wx' });
   return { id, path: file };
 }
