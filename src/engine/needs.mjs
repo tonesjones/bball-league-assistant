@@ -1,5 +1,6 @@
 import { CATEGORIES } from '../sources/yahoo-pages/common.mjs';
 import { addDays } from './weeks.mjs';
+import { seasonValues } from './season-value.mjs';
 
 export const STAT = { '3PM': 'fg3m', PTS: 'pts', REB: 'reb', AST: 'ast', STL: 'stl', BLK: 'blk', TO: 'to' };
 export const DEFAULT_PHI = { PTS: 4, REB: 1.5, AST: 1.5, '3PM': 1.5, STL: 1.2, BLK: 1.5, TO: 1.2 };
@@ -14,6 +15,18 @@ const categories = (line) => ({
   'FG%': line.fga ? line.fgm / line.fga : 0,
   'FT%': line.fta ? line.ftm / line.fta : 0,
 });
+
+export function strongLine(priors, { poolSize = 150 } = {}) {
+  const values = seasonValues(priors, { poolSize });
+  const pool = priors.filter((p) => values.get(p.name)?.rank <= poolSize).map((p) => p.perGame);
+  if (!pool.length) throw new Error('strong line requires a nonempty prior pool');
+  const percentile = (numbers, q) => numbers.sort((a, b) => a - b)[Math.ceil(q * numbers.length) - 1] ?? 0;
+  const line = Object.fromEntries(KEYS.map((k) => [k, percentile(pool.map((p) => p[k] ?? 0), k === 'to' ? 0.1 : 0.9)]));
+  for (const [made, attempts] of [['fgm', 'fga'], ['ftm', 'fta']]) {
+    line[made] = line[attempts] * percentile(pool.filter((p) => p[attempts] > 0).map((p) => p[made] / p[attempts]), 0.9);
+  }
+  return line;
+}
 
 export function assignLineup(players, slots, preferredNames = []) {
   const positions = slots.filter((p) => active(p.slot)).flatMap((p) => Array(p.count).fill(p.slot));
@@ -39,8 +52,8 @@ export function assignLineup(players, slots, preferredNames = []) {
 }
 
 // Roster entries carry their matched prior. A swap takes effect on its start date.
-export function projectTeam(roster, totals, volume, settings, schedule, fromDate, endDate, swap = null) {
-  const remaining = empty(), banked = empty(), started = [];
+export function projectTeam(roster, totals, volume, settings, schedule, fromDate, endDate, swap = null, fill = null) {
+  const remaining = empty(), banked = empty(), started = [], unknownStarts = [];
   let unknownGames = 0;
   for (const [c, k] of Object.entries(STAT)) banked[k] = totals?.[c] ?? 0;
   for (const k of ['fgm', 'fga', 'ftm', 'fta']) banked[k] = volume?.[k] ?? 0;
@@ -59,12 +72,12 @@ export function projectTeam(roster, totals, volume, settings, schedule, fromDate
     for (const { player: p, slot } of assignLineup(eligible, settings.rosterPositions, preferred)) {
       if (started.length >= cap) break;
       started.push({ name: p.name, date, slot });
-      if (!p.prior) { unknownGames++; continue; }
-      for (const k of KEYS) remaining[k] += p.prior.perGame[k] ?? 0;
+      if (!p.prior) { unknownGames++; unknownStarts.push({ name: p.name, date }); }
+      for (const k of KEYS) remaining[k] += (p.prior ? p.prior.perGame[k] : fill?.[k]) ?? 0;
     }
   }
   const line = Object.fromEntries(KEYS.map((k) => [k, banked[k] + remaining[k]]));
-  return { totals: categories(line), line, remaining, started, unknownGames };
+  return { totals: categories(line), line, remaining, started, unknownGames, unknownStarts };
 }
 
 export function normalCdf(z) {

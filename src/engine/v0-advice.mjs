@@ -1,7 +1,7 @@
 import { findPlayer, normalizeName } from './names.mjs';
 import { tomorrow } from './weeks.mjs';
 import { gamesLeft } from './games-left.mjs';
-import { BLOCKED, projectTeam, needs } from './needs.mjs';
+import { BLOCKED, projectTeam, needs, strongLine } from './needs.mjs';
 import { seasonValues } from './season-value.mjs';
 
 export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
@@ -67,10 +67,22 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   const roster = match(snapshot.team.roster, 'roster');
   const opponentRoster = match(snapshot.matchup.opponentRoster, 'opponent');
   const freeAgents = match(snapshot.freeAgents, 'freeAgent');
-  const project = (players, side, swap) => projectTeam(players, snapshot.matchup.totals?.[side],
-    snapshot.matchup.volume?.[side], snapshot.settings, schedule, fromDate, window.end, swap);
+  const project = (players, side, swap, fill = null) => projectTeam(players, snapshot.matchup.totals?.[side],
+    snapshot.matchup.volume?.[side], snapshot.settings, schedule, fromDate, window.end, swap, fill);
   const mine = project(roster, 'mine'), opponent = project(opponentRoster, 'opponent');
-  const baseline = needs(mine, opponent, phi, scoring), pairs = [];
+  let fill;
+  const filled = (players, side, zero, swap) => zero.unknownGames
+    ? project(players, side, swap, fill ??= strongLine(priors, { poolSize })) : zero;
+  const mineScenarios = [mine, filled(roster, 'mine', mine)];
+  const opponentScenarios = [opponent, filled(opponentRoster, 'opponent', opponent)];
+  const outlooks = (lineups) => lineups.flatMap((m) => opponentScenarios.map((o) => needs(m, o, phi, scoring)));
+  const range = (numbers) => [Math.min(...numbers), Math.max(...numbers)];
+  const baselines = outlooks(mineScenarios), baseline = baselines[0], pairs = [], afterByPair = new Map();
+  for (const [c, category] of Object.entries(baseline.categories)) {
+    category.pWinRange = category.label === 'unknown' ? null : range(baselines.map((b) => b.categories[c].pWin));
+    category.complete = category.pWinRange != null && category.pWinRange[1] - category.pWinRange[0] < 1e-12;
+  }
+  baseline.expectedRange = range(baselines.map((b) => b.expectedCategories));
   const roleNames = normalizeRoles(roles, protectedNames);
   const coreSet = new Set(roleNames.core.map(normalizeName)), streamSet = new Set(roleNames.stream.map(normalizeName));
   const isNormal = (p) => !coreSet.has(normalizeName(p.name)) && !streamSet.has(normalizeName(p.name));
@@ -103,34 +115,52 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       const automaticPickupStarts = pickupStarts(automatic);
       const deliberatelyStart = pickupStarts(startedPickup) > automaticPickupStarts;
       const after = deliberatelyStart ? startedPickup : automatic;
-      const result = needs(after, opponent, phi, scoring);
+      const results = outlooks([after, filled(roster, 'mine', after, { ...swap, startPickup: deliberatelyStart })]);
+      const result = results[0];
       const startedKeys = new Set(startedPickup.started.map((g) => `${g.date}\0${g.name}`));
       const displaced = deliberatelyStart ? automatic.started.filter((g) => !startedKeys.has(`${g.date}\0${g.name}`))
         .map(({ name, date }) => ({ name, date })) : [];
       const changes = Object.fromEntries(Object.keys(baseline.categories).filter((c) => baseline.categories[c].label !== 'unknown').map((c) => [c, {
         total: after.totals[c] - mine.totals[c], pWin: result.categories[c].pWin - baseline.categories[c].pWin,
       }]));
-      pairs.push({ pickup: describe(pickup, start), drop: describe(drop, fromDate), dropRole, pickupStart: start,
+      const pair = { pickup: describe(pickup, start), drop: describe(drop, fromDate), dropRole, pickupStart: start,
         unknownGames: after.unknownGames, lineup: { mode: deliberatelyStart ? 'start-pickup' : 'automatic',
           automaticPickupStarts, pickupStarts: pickupStarts(after),
           displaced },
-        changes, score: result.expectedCategories - baseline.expectedCategories });
+        changes, score: result.expectedCategories - baseline.expectedCategories,
+        scoreRange: range(results.map((r, i) => r.expectedCategories - baselines[i].expectedCategories)) };
+      pairs.push(pair);
+      afterByPair.set(pair, after);
     }
   }
-  pairs.sort((a, b) => b.score - a.score);
+  pairs.sort((a, b) => b.scoreRange[0] - a.scoreRange[0] || b.score - a.score);
   const addsLeft = Math.max(0, (snapshot.settings.maxAddsPerWeek ?? 4) - snapshot.team.addsUsedThisWeek);
-  const best = pairs[0] ?? null;
+  const best = [...pairs].sort((a, b) => b.scoreRange[1] - a.scoreRange[1])[0] ?? null;
+  const robust = pairs.find((p) => p.scoreRange[0] > 0 && p.scoreRange[0] >= holdBelow);
+  const missing = (pair) => ['mine', 'opponent'].flatMap((side) => {
+    const players = side === 'mine' ? roster : opponentRoster;
+    const lineups = side === 'mine' ? [mine, afterByPair.get(pair)] : [opponent];
+    const starts = new Map();
+    for (const lineup of lineups) for (const g of lineup.unknownStarts) {
+      if (!starts.has(g.name)) starts.set(g.name, new Set());
+      starts.get(g.name).add(g.date);
+    }
+    return players.filter((p) => starts.has(p.name)).map((p) => ({ name: p.name, nbaTeam: p.nbaTeam,
+      side, starts: starts.get(p.name).size, reason: p.unscoredReason })).sort((a, b) => a.name.localeCompare(b.name));
+  });
   const decision = !addsLeft ? { action: 'hold', reason: 'No adds left this week.', best }
     : !best ? { action: 'hold', reason: 'No eligible add/drop pairs.', best }
-      : best.score <= 0 || best.score < holdBelow
-        ? { action: 'hold', reason: `Best move gains ${best.score.toFixed(3)} expected categories; requires a positive gain of at least ${holdBelow}.`, best }
-        : { action: 'move', pair: best };
+      : robust ? { action: 'move', pair: robust }
+        : best.scoreRange[1] > 0 && best.scoreRange[1] >= holdBelow
+          ? { action: 'insufficient', reason: 'Missing projections can change whether the move clears the required gain.', best, missing: missing(best) }
+          : { action: 'hold', reason: `Best move gains ${best.scoreRange[1].toFixed(3)} expected categories; requires a positive gain of at least ${holdBelow}.`, best };
   return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft,
     volumeStatus: shootingVolume,
     unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow,
     notes: [...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
       'After making the move, refresh the league and rerun; the other pairs were scored against the current roster.',
       'When the default prior-MPG lineup would bench a pickup, the advice evaluates legally starting that pickup instead; displaced starts are shown.',
+      'Unknown starts are scored at zero and at a strong rotation line (90th percentile of the top 150, 10th percentile TO); a move must win in both.',
       'Projections use prior-season production and do not capture current role changes or breakout upside.',
       'Season guardrail: core players are never dropped; stream players bypass season checks. Other players need a prior, rank outside the protect rank, and pickup season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
