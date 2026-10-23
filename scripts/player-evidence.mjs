@@ -31,6 +31,7 @@ const report = { ...evidence, gameLogsCheckedAt: coverage.checkedAt,
   matchup: { score: snapshot.matchup.score, totals: snapshot.matchup.totals },
   transactions: { latestPage: snapshot.transactions, history: transactions.history,
     mine: transactions.history.filter((r) => r.event.team === snapshot.team.name), newlyArchived: transactions.added.length,
+    newlyArchivedEvents: transactions.added,
     note: 'Only events observed in saved Yahoo snapshots are tracked; earlier or rolled-off unseen events cannot be reconstructed.' } };
 const number = (n) => n == null ? 'unknown' : n.toFixed(1);
 const safe = (s) => String(s ?? '').replace(/[\r\n|]/g, ' ');
@@ -48,6 +49,10 @@ const lines = ['# League and player evidence', '', `Yahoo snapshot: ${snapshot.a
   'Counting statistics and shot attempts below are per played game. DNPs are retained in JSON and excluded from these averages.',
   'Estimated USG% uses ESPN team/player box scores and rounded player minutes, with possession-exposure weighting across games. It is not official NBA USG%.',
   'Last season does not enter these descriptive tables. Current-season evidence does not yet update per-minute rates in the separate recommender.', '',
+  '## Newly archived transactions', '',
+  'First seen in saved captures, not necessarily made since the previous refresh. Includes backfilled history; a rerun can show none.', '',
+  '| First observed | Team | Yahoo time | Moves |', '|---|---|---|---|',
+  ...transactions.added.map((r) => `| ${[r.firstSeen, r.event.team, r.event.time, r.event.moves.map((m) => `${m.type} ${m.player}${m.faab != null ? ` ($${m.faab})` : ''}`).join('; ')].map(safe).join(' | ')} |`), '',
   '## Your roster: season so far', '', table(report.roster), '',
   `## Your roster: last seven days (${report.recentFrom} to ${report.through}, Eastern game dates)`, '', table(report.roster, true), '',
   '## Available players: season so far', '', 'Only the first 100 players from Yahoo’s available-player list were captured; order follows Yahoo, not a new model ranking.', '', table(report.available), '',

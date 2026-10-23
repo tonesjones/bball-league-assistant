@@ -37,6 +37,20 @@ npm test
 
 ## Get advice
 
+After a browser capture, run `npm run refresh:analyze -- local/raw/YYYY-MM-DD-HHmm` to build
+the snapshot, refresh logs, archive transactions, produce evidence and run advice together.
+It prints a compact summary with newly observed transaction details and saves full output
+privately. Browser collection is still a separate read-only step. Known evidence and model
+limits are tracked in [the limitations register](docs/limitations.md).
+
+Refresh on demand after completed game slates, when Tony requests it. No daily watch or
+background monitor is needed. At each refresh, compare watched players' minutes, starts and
+production with the prior capture, keeping the sample size visible. User-reported pending
+trade status and the current watch are in ignored `local/trade-watch-status.json` when present.
+These private files stay on this computer; another checkout needs its own local inputs.
+
+Individual steps for debugging:
+
 1. In Claude Code, say "update league". The `yahoo-reader` agent saves the Yahoo pages to
    `local/raw/`, as described in [`docs/update-league.md`](docs/update-league.md).
 2. Build the snapshot from the newest folder in `local/raw/`:

@@ -16,6 +16,7 @@
     "fetch:gamelogs": "node scripts/fetch-gamelogs.mjs",
     "bakeoff": "node scripts/bakeoff.mjs",
     "advise": "node scripts/advise.mjs",
-    "evidence": "node scripts/player-evidence.mjs"
+    "evidence": "node scripts/player-evidence.mjs",
+    "refresh:analyze": "node scripts/analyze-refresh.mjs"
   }
 }
