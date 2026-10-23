@@ -38,7 +38,19 @@ For every NBA player, a per-game projection for each of the 9 categories with a 
 - [x] Checked full-season coverage includes empty days; stale, missing or changed files fail.
 - [x] Successful runs save the effective projection table in their immutable decision record.
 
-### Full Task 01 (later)
+### Current-season descriptive evidence (2026-10-22, implemented for review)
+
+- [x] Yahoo browser captures supply current roster, availability and transaction observations.
+- [x] ESPN supplies actual season and last-seven-day player production, minutes, starts and
+      shooting volume; last-game lines and per-36 rates are retained in private JSON.
+- [x] Estimated USG% is explicitly labeled, source-defined and unknown if required team context
+      is incomplete; multi-game usage weights opportunity exposure rather than averaging rates.
+- [x] Observed transaction groups are backfilled from private snapshots and appended once;
+      repeated refreshes never remove prior observations or invent unseen history.
+- [x] CLI integration and pure tests cover joins, DNPs, missing inputs, team context, rate
+      aggregation and transaction deduplication. Recommendation scoring stays unchanged.
+
+### Remaining full Task 01 acceptance
 
 - [ ] `docs/sources.md` names the source, its terms and rate limit.
 - [x] Schedule check against `playoff-weeks.json` passes, or mismatches are listed and explained.

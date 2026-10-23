@@ -13,9 +13,28 @@ export function parseBoxScore(json, { date, standardCode }) {
       for (const label of ['MIN', 'PTS', 'FG', '3PT', 'FT', 'REB', 'AST', 'TO', 'STL', 'BLK']) {
         if (positions[label] === undefined) throw new Error(`event ${eventId}: missing label ${label}`);
       }
+      const playing = group.athletes.filter((p) => !p.didNotPlay);
+      const teamMinutes = playing.every((p) => p.stats[positions.MIN] !== '' && Number.isFinite(Number(p.stats[positions.MIN])))
+        ? playing.reduce((sum, p) => sum + Number(p.stats[positions.MIN]), 0) : null;
+      const totalAttempts = (label) => {
+        const match = /^(\d+)-(\d+)$/.exec(group.totals?.[positions[label]] ?? '');
+        return match ? Number(match[2]) : null;
+      };
+      const teamFga = totalAttempts('FG'), teamFta = totalAttempts('FT');
+      const teamToText = group.totals?.[positions.TO];
+      const teamTo = /^\d+$/.test(teamToText ?? '') ? Number(teamToText) : null;
+      const playerSum = (label, attempts = false) => playing.reduce((sum, p) => {
+        const value = p.stats[positions[label]];
+        return sum + (attempts ? Number(/^(\d+)-(\d+)$/.exec(value ?? '')?.[2] ?? NaN) : Number(value));
+      }, 0);
+      const allTeamTo = json.boxscore.teams?.find((t) => standardCode(t.team.abbreviation) === team)
+        ?.statistics?.find((s) => s.name === 'totalTurnovers')?.displayValue;
+      const teamContext = teamMinutes > 0 && teamFga != null && teamFta != null && teamTo != null
+        && playerSum('FG', true) === teamFga && playerSum('FT', true) === teamFta && playerSum('TO') === teamTo
+        ? { minutes: teamMinutes, fga: teamFga, fta: teamFta, to: /^\d+$/.test(allTeamTo ?? '') ? Number(allTeamTo) : teamTo } : null;
       for (const p of group.athletes ?? []) {
         const identity = { espnId: String(p.athlete.id), name: p.athlete.displayName, team, date, espnEventId: eventId,
-          starter: p.starter ?? null, didNotPlay: p.didNotPlay ?? false, reason: p.reason ?? null };
+          starter: p.starter ?? null, didNotPlay: p.didNotPlay ?? false, reason: p.reason ?? null, teamContext };
         if (p.didNotPlay) {
           out.push({ ...identity, min: p.reason === "COACH'S DECISION" ? 0 : null });
           continue;

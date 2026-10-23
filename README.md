@@ -69,6 +69,31 @@ minutes cases. A move must clear the threshold in every case, including missing-
 cases. Fixed prior-MPG scenarios do not converge as more games arrive, so uncertainty may
 continue to withhold a move. This is a minutes update, not a current-season rate model.
 
+## Current-season player evidence
+
+After the browser refresh, snapshot build and ESPN game-log refresh, run:
+
+```
+npm run evidence -- local/snapshots/YYYY-MM-DD-HHmm.json
+```
+
+This saves readable Markdown and JSON in ignored `local/evidence/`: your roster, opponent
+data in JSON, and the first 100 available players captured from Yahoo. Yahoo supplies league
+membership, status, waiver dates and transactions. ESPN supplies actual production, minutes,
+starts, shot attempts, shooting efficiency and estimated usage, for the season and last seven
+days. Last-game lines and per-36 rates are also retained in JSON. Unmatched players and missing
+inputs remain unknown. List order follows Yahoo and is not a new recommendation ranking.
+
+Estimated USG% uses the documented box-score formula with recorded team/player minutes and
+possession-exposure weighting across games. It is not official NBA on-court USG%, and it does
+not change the recommendation score. The source and method are included in each report.
+
+The command backfills saved snapshots and appends unseen transaction groups to ignored
+`local/transactions/history.jsonl`, deduplicating by season, team, displayed time and moves.
+Repeated observations do not create duplicates, and events remain after they disappear from
+Yahoo's recent list. This tracks only observed events; it cannot recover earlier unseen moves.
+Tracking runs when the evidence command runs; no background schedule is installed.
+
 ## Priors from Draft Lab
 
 Last season's per-game lines, positions, teams, minutes and playoff-week game counts come from the [Draft Lab](https://github.com/tonesjones/fantasy-basketball-mock-draft) repo, imported once into `data/priors/` with the source commit recorded in `PROVENANCE.json`. To refresh, with Draft Lab checked out next to this repo:
