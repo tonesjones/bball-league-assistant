@@ -6,6 +6,7 @@ const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && 
 export function validateEntry(e) {
   const bad = [];
   if (!e || typeof e !== 'object' || Array.isArray(e)) throw new Error('invalid entry:\n- not an object');
+  if (typeof e.decisionId !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,100}$/.test(e.decisionId)) bad.push('decisionId must name a saved decision record');
   e = { ...e, decision: e.decision === undefined ? 'move' : e.decision, start: e.start === undefined ? e.date : e.start };
   if (!Number.isInteger(e.week) || e.week < 1) bad.push('week must be a positive integer');
   if (!isDate(e.date)) bad.push('date must be YYYY-MM-DD');

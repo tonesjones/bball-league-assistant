@@ -1,11 +1,14 @@
 import { readFile, readdir, stat, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { advise, normalizeRoles } from '../src/engine/v0-advice.mjs';
 import { estimateVolume } from '../src/engine/shooting-volume.mjs';
 import { findPlayer } from '../src/engine/names.mjs';
 import { addDays, tomorrow } from '../src/engine/weeks.mjs';
 import { loadGameLogs } from '../src/sources/gamelogs.mjs';
+import { saveDecision } from '../src/sources/decisions.mjs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 
 const readJson = async (file) => JSON.parse(await readFile(file, 'utf8'));
 const PROTECTED_FILE = 'local/protected.json';
@@ -179,12 +182,24 @@ async function main(args) {
     }
   }
   const report = { ...advise(snapshot, { ...options, ids, priors, schedule, roles }), freshness };
+  const hash = (value) => createHash('sha256').update(value).digest('hex');
+  const gitOptions = { cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), encoding: 'utf8' };
+  const provenance = {
+    commit: execFileSync('git', ['rev-parse', 'HEAD'], gitOptions).trim(),
+    dirty: Boolean(execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], gitOptions).trim()),
+    snapshotPath: path.resolve(snapshotPath), snapshotHash: hash(await readFile(snapshotPath)),
+    projectionVersion: `prior-v1:${hash(JSON.stringify(priors))}`,
+    scheduleHash: hash(JSON.stringify(schedule)), idsHash: hash(JSON.stringify(ids)), roles,
+  };
+  const saved = await saveDecision({ report, options: { ...report.options, ...freshnessOptions, maxAgeHours: freshness.maxAgeHours, allowStale: freshnessOptions.allowStale ?? false }, provenance });
+  report.decisionId = saved.id;
   const text = formatAdvice(report);
   const output = path.join('local/advice', path.basename(snapshotPath));
   await mkdir(path.dirname(output), { recursive: true });
   await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
   console.log(text);
   console.log(`JSON: ${output}`);
+  console.log(`Decision: ${saved.id}\nRecord: ${saved.path}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
