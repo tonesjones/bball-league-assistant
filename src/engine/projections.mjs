@@ -31,13 +31,18 @@ export function projectPlayers(priors, ids, logs, { k = 2, asOf = null } = {}) {
     const played = rows.filter((row) => !row.didNotPlay);
     const playedMinutes = played.reduce((sum, row) => sum + row.min, 0);
     const complete = playedMinutes > 0 && played.every((row) => STATS.every((stat) => Number.isFinite(row[stat]) && row[stat] >= 0));
+    const observedSum = complete ? Object.fromEntries(STATS.map((stat) => [stat,
+      played.reduce((sum, row) => sum + row[stat], 0)])) : null;
+    const priorMinutes = usable ? k * prior.mpg : null;
     const rates = { status: !played.length ? 'no-games' : complete ? 'observed' : 'unavailable',
-      games: played.length, minutes: playedMinutes, asOf,
-      perMinute: complete ? Object.fromEntries(STATS.map((stat) => [stat,
-        played.reduce((sum, row) => sum + row[stat], 0) / playedMinutes])) : null };
+      games: played.length, minutes: playedMinutes, asOf, priorMinutes,
+      observedPerMinute: complete ? Object.fromEntries(STATS.map((stat) => [stat,
+        observedSum[stat] / playedMinutes])) : null,
+      perMinute: usable && complete ? Object.fromEntries(STATS.map((stat) => [stat,
+        (k * prior.perGame[stat] + observedSum[stat]) / (priorMinutes + playedMinutes)])) : null };
     return { ...prior, original: prior, mpg, minutes, rates, perGame: usable ? scale(prior, mpg) : null };
   });
-  return { players, k, asOf, version: 'minutes-pseudogames-rate-check-v2' };
+  return { players, k, asOf, version: 'minutes-rates-pseudogames-v3' };
 }
 
 // These endpoints deliberately stay fixed; more games update the blend, not the prior endpoint.

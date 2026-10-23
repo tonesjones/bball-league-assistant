@@ -24,6 +24,20 @@ const project = (f, roster, totals = {}, volume = {}, from = '2026-10-20', end =
   projectTeam(roster, totals, volume, f.snapshot.settings, f.schedule, from, end);
 const scored = (f, index = 0) => ({ ...f.snapshot.team.roster[0], prior: f.priors[index] });
 
+test('one modestly strong observed game allows a move that clears every minutes-only case', () => {
+  const f = fresh(); better(f);
+  const logs = [{ ...f.priors[0].perGame, espnId: '1', date: '2026-10-21', espnEventId: 'game',
+    min: 30, starter: true, didNotPlay: false, pts: 20, reb: 6, ast: 5,
+    fgm: 7, fga: 13, ftm: 5, fta: 6 }];
+  const projections = projectPlayers(f.priors, f.ids, logs);
+  const r = run(f, { projections, roles: { stream: ['Alex Sample'] } });
+  const pair = r.decision.pair ?? r.decision.best;
+  assert.ok(logs[0].pts / logs[0].min > f.priors[0].perGame.pts / f.priors[0].mpg);
+  assert.ok(pair.minuteScenarios.every((s) => s.scoreRange[0] >= r.holdBelow));
+  assert.equal(r.decision.action, 'move');
+  assert.ok(pair.rateScenarios.every((s) => s.scoreRange[0] >= r.holdBelow));
+});
+
 test('strong observed production can withhold a drop even when every minutes-only case recommends it', () => {
   const f = fresh(); better(f);
   const logs = [{ ...f.priors[0].perGame, espnId: '1', date: '2026-10-21', espnEventId: 'game',
@@ -579,7 +593,7 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     assert.equal(report.guardrail.protectRank, 0);
     assert.equal(report.holdBelow, 0.02);
     const saved = JSON.parse(await readFile(path.join(dir, `local/decisions/${report.decisionId}.json`), 'utf8'));
-    assert.equal(saved.projections.version, 'minutes-pseudogames-rate-check-v2');
+    assert.equal(saved.projections.version, 'minutes-rates-pseudogames-v3');
     assert.equal(saved.projections.k, 2);
     assert.equal(saved.projections.players.length, f.priors.length);
     assert.equal(saved.projections.players[0].original.mpg, f.priors[0].mpg);

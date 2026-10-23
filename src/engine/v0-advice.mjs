@@ -199,7 +199,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       ...(projections ? [
         `Minutes blend: k=${projections.k} prior pseudo-games (starting value, not calibrated); equal weights. Per-minute rates remain at the prior.`,
         'Fixed prior-MPG and season-MPG cases are crossed for pickup/drop, alongside missing-production cases; every case must clear the move threshold. These endpoints do not converge with more games.',
-        'Current-season per-minute production is an additional sensitivity check for pickup and drop, crossed with minutes and missing-production cases. It can withhold a move; nominal projections still use prior rates. No games uses the prior; incomplete observed box scores withhold an otherwise supported move. Usage remains descriptive.',
+        'Current-season per-minute production is an additional sensitivity check for pickup and drop: the observed rate is shrunk toward the prior with the same k pseudo-games, crossed with minutes and missing-production cases. It can withhold a move; nominal projections still use prior rates. No games uses the prior; incomplete observed box scores withhold an otherwise supported move. Usage remains descriptive.',
       ] : ['Projections use prior-season production and do not capture current role changes or breakout upside.']),
       'Season guardrail: core players are never dropped; stream players bypass season checks. Other players need a prior, rank outside the protect rank, and pickup season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],

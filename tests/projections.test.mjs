@@ -68,17 +68,37 @@ test('lineup order uses projected minutes from the same player lines as the guar
   assert.equal(assignLineup(roster, [{ slot: 'C', count: 1 }])[0].player.name, prior.name);
 });
 
-test('observed rates sum complete played production over minutes and leave nominal rates unchanged', () => {
+test('observed rates retain raw production and shrink toward the prior without changing nominal rates', () => {
   const played = (min, fields = {}) => row(min, { ...prior.perGame, ...fields });
   const p = project([played(30, { pts: 30 }), played(10, { pts: 20, espnEventId: 'second' }),
     row(0, { espnEventId: 'coach', didNotPlay: true, reason: "COACH'S DECISION" }),
     row(null, { espnEventId: 'injury', didNotPlay: true, reason: 'REST' })]);
   assert.equal(p.rates.games, 2);
   assert.equal(p.rates.minutes, 40);
-  assert.equal(p.rates.perMinute.pts, 50 / 40);
+  assert.equal(p.rates.status, 'observed');
+  assert.equal(p.rates.priorMinutes, 2 * prior.mpg);
+  for (const stat of Object.keys(prior.perGame).filter((stat) => stat !== 'g')) {
+    const sum = stat === 'pts' ? 50 : 2 * prior.perGame[stat];
+    assert.equal(p.rates.observedPerMinute[stat], sum / 40);
+    assert.equal(p.rates.perMinute[stat], (2 * prior.perGame[stat] + sum) / (2 * prior.mpg + 40));
+  }
   assert.equal(p.perGame.pts / p.mpg, prior.perGame.pts / prior.mpg);
-  assert.equal(minutesCase(p, 'prior', 'season').perGame.pts, 25);
-  assert.equal(minutesCase(p, 'season', 'season').perGame.pts, (40 / 3) * 50 / 40);
+  assert.equal(minutesCase(p, 'prior', 'season').perGame.pts, prior.mpg * p.rates.perMinute.pts);
+  assert.equal(minutesCase(p, 'season', 'season').perGame.pts, (40 / 3) * p.rates.perMinute.pts);
+  const custom = project([played(30, { pts: 30 })], { k: 4 });
+  assert.equal(custom.rates.priorMinutes, 4 * prior.mpg);
+  assert.equal(custom.rates.perMinute.pts, (4 * prior.perGame.pts + 30) / (4 * prior.mpg + 30));
+  const unusable = projectPlayers([{ ...prior, mpg: null }], ids, [played(30)]).players[0];
+  assert.equal(unusable.rates.perMinute, null);
+  assert.equal(unusable.rates.priorMinutes, null);
+  assert.equal(unusable.rates.status, 'observed');
+  assert.equal(unusable.rates.games, 1);
+  assert.equal(unusable.rates.minutes, 30);
+  assert.equal(unusable.rates.observedPerMinute.pts, prior.perGame.pts / 30);
   assert.equal(project([row(30)]).rates.status, 'unavailable');
+  assert.equal(project([row(30)]).rates.observedPerMinute, null);
+  assert.equal(project([row(30)]).rates.perMinute, null);
   assert.equal(project([]).rates.status, 'no-games');
+  assert.equal(project([]).rates.observedPerMinute, null);
+  assert.equal(project([]).rates.perMinute, null);
 });
