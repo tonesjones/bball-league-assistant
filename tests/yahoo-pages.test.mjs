@@ -33,6 +33,15 @@ test('completed matchup handles parenthesized empty and departed player pairs', 
   assert.throws(() => parseMatchup(text.replace('W, 110-100 vs BOS', 'garbled game')), /expected a number/);
 });
 
+test('totals matchup accepts scheduled game times without changing rosters or totals', () => {
+  const original = parseMatchup(page('matchup'));
+  for (const game of ['6:30 pm vs DEN', '4:00 pm @ CLE']) {
+    const text = page('matchup').replace(/OKC - PG/, `$&\n${game}`);
+    assert.deepEqual(parseMatchup(text), original);
+    assert.throws(() => parseMatchup(text.replace(game, 'garbled game')), /expected a number/);
+  }
+});
+
 test('settings: categories, slots, limits, playoffs', () => {
   const s = parseSettings(page('settings'));
   assert.equal(s.scoringType, 'h2h-each-category');

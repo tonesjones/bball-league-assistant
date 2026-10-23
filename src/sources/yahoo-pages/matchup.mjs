@@ -139,8 +139,8 @@ export function parseMatchup(text, page = 'matchup') {
       if (SLOT_RE.test(L[i].s) || L[i].s === '--') {
         if (slot !== null || k % 2) throw fail(page, L[i], 'unexpected slot label');
         slot = L[i].s;
-      } else if (i === at + 2 && /^(?:W|L), \d+-\d+ (?:vs|@) [A-Z]{2,3}$/.test(L[i].s)) {
-        // Completed games appear between the team/positions and the stat cells.
+      } else if (i === at + 2 && /^(?:(?:W|L), \d+-\d+|\d{1,2}:\d{2} [ap]m) (?:vs|@) [A-Z]{2,3}$/.test(L[i].s)) {
+        // Results and scheduled tipoffs appear before the stat cells.
       } else {
         num(page, L[i]);
         cells++;
