@@ -66,3 +66,22 @@ final summaries to retain DNP reasons and starter flags. A coverage record store
 time, date range and daily file hashes only after every requested day succeeds. Empty checked
 days are valid coverage. Missing days, an older check than the Yahoo snapshot or changed files
 are refused by advice; a player's last appearance date alone is not a freshness measure.
+
+### Descriptive usage and efficiency
+
+Player evidence uses these same ESPN box scores, independent of Yahoo's player statistics.
+Team totals must match the playing-athlete attempts and player turnovers before usage context
+is retained; reported total team turnovers are used when provided. Recorded player minutes
+are summed for team minutes, including overtime and their source rounding. Missing inputs
+leave usage unknown.
+
+Estimated USG% follows the box-score approximation documented by
+[Basketball Reference](https://www.basketball-reference.com/about/glossary.html) and its
+[publisher's glossary](https://faq.sports-reference.com/portal/en/kb/articles/basketball-glossary):
+`100 * (FGA + 0.44*FTA + TO) * (teamMIN/5) / (MIN * (teamFGA + 0.44*teamFTA + teamTO))`.
+Across games, sum the player's used plays and minutes-adjusted team-opportunity exposures,
+then take their ratio; do not average game percentages. This estimate differs from official
+NBA on-court possession USG%. The references supply definitions only; no Basketball Reference
+data is scraped. True shooting uses `PTS / (2 * (FGA + 0.44*FTA))` on summed actual totals.
+The `0.44` factor is an approximation. Usage and efficiency are descriptive and do not alter
+the recommendation engine's prior per-minute rates.
