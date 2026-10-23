@@ -225,7 +225,7 @@ test still withholds. On the saved October 22 capture the result stays insuffici
 top pair drops the center Tony agreed to withhold, while most pickup-only rate cases now clear.
 150 tests pass. k remains uncalibrated (Task 01 backtest).
 
-**2026-10-23, combined verification and outcome review.** Tasks 08/09 pass 152 tests together.
+**2026-10-23, combined verification and outcome review.** Tasks 08/09 pass 153 tests together, including rate shrinkage.
 Tony accepted withholding the historical drop as insufficient evidence. Acceptable real move
 and hold examples, fresh Yahoo data and the pilot freeze remain pending. The shared ESPN/Yahoo
 rehearsal packet was generated and its input hashes checked. No pilot or background watch was
