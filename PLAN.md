@@ -217,6 +217,16 @@ prints ok or the error, without page text. It would replace the scratch script u
 
 Updated at the end of each session.
 
+**2026-10-22, 5a review: the "move" example is bad.** On the 22:28 snapshot (decision
+`4a5175ae`), advice said to drop a starting center who played 30 minutes with a strong line in
+his only game (14 REB, 5 AST, 3 BLK), for a bench forward on waivers. The move cleared the
+hold threshold in all four minutes cases, so the minutes check worked. The cause is the
+per-minute rates: they're still last season's, so the drop's strong game counts only as more
+minutes. Tony's ruling: hold. One strong game at 30 minutes should not be overruled by last
+season's per-minute rates. Open decision before the pilot: bring per-minute rate updates
+forward from 5f, or withhold a drop when the player's season per-minute production beats the
+prior and few games are observed. Hold and insufficient-evidence examples still need review.
+
 **2026-10-22, steps 5b/5c implemented for review.** Decision records are in draft PR #24.
 The dependent minutes implementation uses two prior pseudo-games, retains DNP reasons and
 starter flags, and feeds the blended lines to scoring, lineup order and season protection.
