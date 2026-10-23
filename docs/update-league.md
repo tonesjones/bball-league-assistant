@@ -5,6 +5,12 @@ edit what a page says: copy its text and save it.
 
 ## Before you start
 
+Run on Tony's request, usually after a completed game slate. Do not install a daily schedule
+or repeatedly poll. If `local/trade-watch-status.json` exists, use it as user-reported context,
+not verified live trade status. Review watched players from the resulting evidence tables,
+comparing dates, starts, minutes and production with the previous capture. Preserve uncertainty
+when there are too few games. New checkouts do not include ignored local inputs.
+
 1. Read `YAHOO_LEAGUE_ID` and `YAHOO_TEAM_ID` from `.env`. If either is empty, stop and ask Tony.
 2. Make the folder `local/raw/<YYYY-MM-DD-HHmm>/`, using the current local time. Example:
    `local/raw/2026-10-19-2130/`. Save every page of this refresh in that one folder.
@@ -88,7 +94,24 @@ lineup and transaction pages stay blocked, and no trade is submitted.
 
 ## Build current-season evidence
 
-For a complete capture, run these in order with its exact timestamp:
+For a complete capture, process that exact folder in one command:
+
+```
+npm run refresh:analyze -- local/raw/<timestamp>
+```
+
+This builds the snapshot, refreshes ESPN logs, archives observed transactions, writes player
+evidence and runs advice, stopping at the first failed step. It prints the computed decision,
+adds remaining, unknown starts and newly archived transaction details. Full advice and step
+diagnostics are saved in ignored `local/refreshes/<timestamp>/`; evidence remains in
+`local/evidence/`. A failed run can leave outputs from earlier successful steps; only a run
+that reaches the final summary is complete. Reruns deduplicate transactions and produce a new
+decision record. The step logs and evidence for that timestamp are replaced on rerun.
+
+Newly archived events can include backfilled history. They are not guaranteed to have happened
+since the previous refresh. Both your team's and other teams' observed moves are shown.
+
+The individual commands remain available for debugging:
 
 ```
 node scripts/build-snapshot.mjs local/raw/<timestamp>
@@ -100,3 +123,27 @@ The browser remains the source for league membership, available players, matchup
 transactions. ESPN supplies player production and estimated usage. The evidence command
 archives observed transactions without duplicates and saves private Markdown/JSON reports.
 It displays current-season actuals with sample sizes; it does not recommend a move.
+
+## Models and token use
+
+The Claude Code `yahoo-reader` is configured as `model: haiku`. That is configuration, not
+verification of a past run's actual model. It collects unchanged page text and returns only
+the capture folder and failures. Node performs snapshot parsing, game-log fetching, transaction
+deduplication, evidence tables and recommendation arithmetic; these scripts call no LLM.
+
+In Codex, `.claude/agents/yahoo-reader.md` does not select or launch a model. Keep Sol responsible
+for review. Consider a bounded Luna collection assignment only when the signed-in browser and
+unchanged-text file export are available to that worker and the handoff is worthwhile. Verify
+the actual model where runtime metadata permits; otherwise label it requested but unverified.
+Never weaken Yahoo access rules to enable a cheaper worker.
+
+For routine updates, keep collection in its own small context. Run `refresh:analyze` and bring
+the compact output to the reviewing chat; read detailed evidence only for a specific uncertainty.
+Do not paste whole Yahoo pages, the entire historical transaction archive, or unchanged reports
+into the review chat. Retain those inputs privately for debugging. This reduces repeated context;
+subscription savings remain unmeasured without comparable observed runs. Tokenomics does not
+automatically switch models, and no router or recurring usage audit is needed per refresh.
+
+On each review, record any newly encountered limitation in `docs/limitations.md` using a
+synthetic description. Put real player/league details and rejection reasons in ignored local
+decision or rehearsal records. Do not treat a descriptive evidence report as a model fix.

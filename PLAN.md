@@ -217,6 +217,21 @@ prints ok or the error, without page text. It would replace the scratch script u
 
 Updated at the end of each session.
 
+**2026-10-23, refresh workflow and limitations.** Added `docs/limitations.md` as the ongoing
+register of observed evidence, projection and workflow limits. `refresh:analyze` processes an
+explicit saved capture through snapshot, logs, transaction/evidence reporting and advice,
+with compact output and private step logs. Newly archived transactions appear first in the
+evidence report. Claude collection is configured for Haiku; all arithmetic runs in Node.
+Codex model routing remains host-specific; token savings have not been measured. This does
+not change projections or resolve the pre-pilot rate-model decision.
+
+Tony chose on-demand refreshes after completed game slates, not a daily scheduled watch.
+Review watched players during that refresh, using current-season sample sizes and the prior
+capture. If present, read `local/trade-watch-status.json` for user-reported trade/watch state
+and `local/recovery/` for preserved interrupted assessments. These are private local inputs,
+not files available merely by pulling the public repository. A new checkout must capture
+its own data or receive those inputs privately; do not reconstruct them from public docs.
+
 **2026-10-23, merge checkpoint.** Decision records (#24), current-season minutes (#25) and
 descriptive player evidence with observed transaction history (#27) are merged. PR #28 adds
 read-only draft and draft-results pages for trade research Tony requests, alongside the already

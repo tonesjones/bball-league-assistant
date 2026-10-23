@@ -31,11 +31,16 @@ test('evidence CLI saves outside stats and private transaction history; reruns d
   const cli = fileURLToPath(new URL('../scripts/player-evidence.mjs', import.meta.url));
   const run = () => execFileSync(process.execPath, [cli, `local/snapshots/${name}.json`], { cwd: dir, encoding: 'utf8' });
   assert.match(run(), /Newly archived: 1/);
+  const first = JSON.parse(await readFile(path.join(dir, `local/evidence/${name}.json`)));
+  assert.equal(first.transactions.newlyArchivedEvents[0].event.moves[0].player, 'Example Add');
+  const firstMarkdown = await readFile(path.join(dir, `local/evidence/${name}.md`), 'utf8');
+  assert.ok(firstMarkdown.indexOf('## Newly archived transactions') < firstMarkdown.indexOf('## Your roster'));
   assert.match(run(), /Newly archived: 0/);
   const report = JSON.parse(await readFile(path.join(dir, `local/evidence/${name}.json`)));
   assert.equal(report.roster[0].season.perGame.pts, 12);
   assert.ok(report.roster[0].season.estimatedUsgPct > 0);
   assert.equal(report.transactions.mine.length, 1);
+  assert.deepEqual(report.transactions.newlyArchivedEvents, []);
   assert.equal((await readFile(path.join(dir, 'local/transactions/history.jsonl'), 'utf8')).trim().split('\n').length, 1);
   assert.match(await readFile(path.join(dir, `local/evidence/${name}.md`), 'utf8'), /not official NBA USG%/);
 });
