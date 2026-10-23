@@ -378,6 +378,7 @@ test('advice can deliberately start a lower-mpg pickup and reports the displaced
     automaticPickupStarts: 0,
     pickupStarts: 1,
     displaced: [{ name: 'Alex Sample', date: '2026-10-21' }],
+    started: [{ name: 'Casey Fiction', date: '2026-10-21', slot: 'C' }],
   });
   assert.match(formatAdvice(r), /Lineup: deliberately start Casey Fiction once; displaces Alex Sample on 2026-10-21\./);
 });

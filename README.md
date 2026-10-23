@@ -41,7 +41,16 @@ npm test
    npm run advise
    ```
 
-The advice is also saved as JSON in `local/advice/`.
+The advice is also saved as JSON in `local/advice/`. Every successful run also writes a new,
+immutable `local/decisions/<decisionId>.json` and prints its ID. The record keeps effective
+options, baseline and proposed daily starts, the snapshot path and hash, projection version,
+input hashes and code commit. A dirty checkout is explicitly marked; its commit alone does
+not reproduce uncommitted code. Repeated runs never overwrite a decision record.
+
+Every tool, chatbot and do-nothing bakeoff entry must include the same `decisionId` for the
+comparison, with `week` and `asOf` matching that record. `npm run bakeoff -- record <entries.json>`
+checks that each referenced record exists before appending the batch. Old rehearsal entries
+without an ID cannot be scored as recorded decisions; do not invent a link retrospectively.
 
 ## Priors from Draft Lab
 

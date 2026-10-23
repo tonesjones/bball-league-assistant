@@ -126,7 +126,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       const pair = { pickup: describe(pickup, start), drop: describe(drop, fromDate), dropRole, pickupStart: start,
         unknownGames: after.unknownGames, lineup: { mode: deliberatelyStart ? 'start-pickup' : 'automatic',
           automaticPickupStarts, pickupStarts: pickupStarts(after),
-          displaced },
+          displaced, started: after.started },
         changes, score: result.expectedCategories - baseline.expectedCategories,
         scoreRange: range(results.map((r, i) => r.expectedCategories - baselines[i].expectedCategories)) };
       pairs.push(pair);
@@ -155,6 +155,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
           ? { action: 'insufficient', reason: 'Missing projections can change whether the move clears the required gain.', best, missing: missing(best) }
           : { action: 'hold', reason: `Best move gains ${best.scoreRange[1].toFixed(3)} expected categories; requires a positive gain of at least ${holdBelow}.`, best };
   return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft,
+    options: { fromDate, addsFrom, top, phi: phi ?? null, seasonMargin, protectRank, poolSize, holdBelow, roles: roleNames },
     volumeStatus: shootingVolume,
     unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow,
     notes: [...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
@@ -164,5 +165,6 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       'Projections use prior-season production and do not capture current role changes or breakout upside.',
       'Season guardrail: core players are never dropped; stream players bypass season checks. Other players need a prior, rank outside the protect rank, and pickup season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],
-    baseline, decision, topPairs: pairs.slice(0, top), unscored, guardrail };
+    baseline, baselineLineups: { mine: mine.started, opponent: opponent.started },
+    decision, topPairs: pairs.slice(0, top), unscored, guardrail };
 }

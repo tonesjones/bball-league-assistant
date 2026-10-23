@@ -178,3 +178,13 @@ Open:
 - ~~Tony's protected list was in committed `config/protected.json`.~~ Moved 2026-10-20 to git-ignored
   `local/protected.json`. `npm run advise` prints how many names it read, and fails on a malformed
   file.
+
+## Step 5b: decision records (2026-10-22)
+
+- [x] Each successful advice run creates a unique, exclusively written record in ignored
+      `local/decisions/`, even when a snapshot or options are reused.
+- [x] Records retain effective options, baseline and proposed daily starts, snapshot path/hash,
+      projection version, input hashes, commit and dirty status.
+- [x] Tool, chatbot and do-nothing entries require a decision ID; record/score verifies that the
+      saved record exists and that week/as-of match. Earlier unlinked rehearsal entries fail.
+- [x] Synthetic tests cover reruns, recorded lineups and required links for all three sources.
