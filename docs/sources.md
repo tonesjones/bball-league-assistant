@@ -24,6 +24,9 @@ Base URL: `https://basketball.fantasysports.yahoo.com/nba`
 | Opponent | `/{L}/{OPP}` | The opponent's roster, same layout as Tony's team. Not read by default: the matchup page lists both rosters with slots. |
 | Free agents | `/{L}/players?status=A&pos=P&sort=AR&sdir=1&count={0,25,50,75}` | 25 available players per page, ranked, with team, positions, status and stats. Four pages cover the top 100. |
 | Transactions | `/{L}/transactions` | Adds, drops, trades and winning FAAB bids. Empty before the first move ("No recent transactions"). |
+| Other teams | `/{L}/{1..12}` | Each team's roster, same layout as Tony's team. Read only for trade research Tony asks for. |
+| Draft | `/{L}/draft` | The league draft. Read only for trade research; no query parameters allowed. |
+| Draft results | `/{L}/draftresults` | Each team's draft picks, for the draft cost of a player. Read only for trade research; no query parameters allowed. |
 
 Notes from the first fetch:
 

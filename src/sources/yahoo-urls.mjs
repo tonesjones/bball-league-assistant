@@ -8,6 +8,8 @@ const PAGES = {
   matchup: ['mid1', 'mid2', 'week'],
   players: ['status', 'pos', 'sort', 'sdir', 'count'],
   transactions: [],
+  draft: [],
+  draftresults: [],
 };
 
 function parse(raw) {
