@@ -13,7 +13,7 @@ export function parseBoxScore(json, { date, standardCode }) {
       for (const label of ['MIN', 'PTS', 'FG', '3PT', 'FT', 'REB', 'AST', 'TO', 'STL', 'BLK']) {
         if (positions[label] === undefined) throw new Error(`event ${eventId}: missing label ${label}`);
       }
-      const playing = group.athletes.filter((p) => !p.didNotPlay);
+      const playing = (group.athletes ?? []).filter((p) => !p.didNotPlay);
       const teamMinutes = playing.every((p) => p.stats[positions.MIN] !== '' && Number.isFinite(Number(p.stats[positions.MIN])))
         ? playing.reduce((sum, p) => sum + Number(p.stats[positions.MIN]), 0) : null;
       const totalAttempts = (label) => {
