@@ -133,7 +133,7 @@ at 0.98 barely moves.
       as fewer-is-better, and each guardrail.
 - [x] `scripts/advise.mjs` runs on a real snapshot and every suggestion shows its numbers.
 - [ ] `docs/bakeoff-prompt.md` exists and has been used at least once.
-- [ ] `scripts/bakeoff.mjs score` runs on a synthetic log in `tests/fixtures/`.
+- [x] `scripts/bakeoff.mjs score` runs on synthetic saved lineups and logs (Task 09 integration test).
 - [ ] Two full weeks of bakeoff logged, with the result and the gate decision written into
       `PLAN.md` under Status.
 

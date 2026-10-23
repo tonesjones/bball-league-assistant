@@ -35,4 +35,5 @@ This is a conservative disagreement check, not calibrated uncertainty or a full 
       descriptively. A modest one-game improvement allows a robust move, while extreme
       production still withholds a conflicting move.
 - [x] Full suite passes (150 tests); a saved real capture produces insufficient evidence.
-- [ ] Tony reviews and accepts a real example; rehearsal alone does not start the pilot.
+- [x] Tony reviewed the historical insufficient-evidence example on October 23 and accepted
+      withholding the move. This accepts that behavior, not a current transaction or pilot start.

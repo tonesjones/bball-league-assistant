@@ -71,7 +71,7 @@ export function projectTeam(roster, totals, volume, settings, schedule, fromDate
     const preferred = swap?.startPickup && date >= swap.start ? [swap.pickup.name] : [];
     for (const { player: p, slot } of assignLineup(eligible, settings.rosterPositions, preferred)) {
       if (started.length >= cap) break;
-      started.push({ name: p.name, date, slot });
+      started.push({ name: p.name, espnId: p.espnId ?? null, date, slot });
       if (!p.prior) { unknownGames++; unknownStarts.push({ name: p.name, date }); }
       for (const k of KEYS) remaining[k] += (p.prior ? p.prior.perGame[k] : fill?.[k]) ?? 0;
     }

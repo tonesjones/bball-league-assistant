@@ -225,6 +225,12 @@ test still withholds. On the saved October 22 capture the result stays insuffici
 top pair drops the center Tony agreed to withhold, while most pickup-only rate cases now clear.
 150 tests pass. k remains uncalibrated (Task 01 backtest).
 
+**2026-10-23, combined verification and outcome review.** Tasks 08/09 pass 153 tests together, including rate shrinkage.
+Tony accepted withholding the historical drop as insufficient evidence. Acceptable real move
+and hold examples, fresh Yahoo data and the pilot freeze remain pending. The shared ESPN/Yahoo
+rehearsal packet was generated and its input hashes checked. No pilot or background watch was
+started. Task 09 depends on Task 08; both are draft PRs for review.
+
 **2026-10-23, rate disagreement check.** Task 08 adds observed per-minute production as an
 additional sensitivity endpoint for both pickup and drop, crossed with minutes and missing
 production. Nominal rates remain prior-season rates; estimated usage stays descriptive. This
@@ -233,6 +239,14 @@ capture now yields insufficient evidence, not the rejected move (stale-data rehe
 149 tests pass, including the failing-before regression. The rate endpoints stay fixed and
 uncalibrated; a complete rate model remains later work. Real outcome review and pilot freeze
 are still pending. The pilot prompt also needs the ESPN evidence available to the tool.
+
+**2026-10-23, lineup replay and pilot preparation.** Task 09 implements source-specific saved
+legal starts, banked production and lineup-aware replay for the tool, chatbot and no-move
+baseline. Missing evidence is unscored. Category changes use the saved no-move/opponent
+counterfactual, not later actual totals that may include unrelated changes. Rehearsal packet
+preparation supplies the same Yahoo/ESPN inputs to both arms and verifies hashes; it does not
+freeze or start the pilot. Real outcome reviews remain pending. A fresh Yahoo read was stopped
+on a Sign in link, per the read-only workflow; no login was attempted.
 
 **2026-10-23, refresh workflow and limitations.** Added `docs/limitations.md` as the ongoing
 register of observed evidence, projection and workflow limits. `refresh:analyze` processes an

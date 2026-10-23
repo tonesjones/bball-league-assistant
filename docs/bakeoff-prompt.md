@@ -1,55 +1,82 @@
-# Chatbot bakeoff prompt
+# Chatbot comparison protocol (prepared, not frozen)
 
-The chatbot gets the same information the tool gets, at the same decision time, so the comparison is fair. This baseline measures whether the tool makes more useful add/drop decisions.
+The scored pilot has not started. Review real move, hold and insufficient-evidence outcomes
+with Tony, merge the model/scoring changes, and confirm the settings before recording a pilot
+start timestamp. Existing decisions and packets are rehearsals. No retrospective start dates.
 
-## Chatbot
+## Shared evidence
 
-Chatbot: ChatGPT, run through the Codex CLI with the `codex-delegate` skill's bridge (`--tier sol`). Record the model name from the bridge's receipt (`model`), for example `gpt-6.1-sol`. A later pilot may switch to Claude; that starts a new pilot.
+Run `npm run pilot:prepare -- <decisionId>` for a new saved decision. It creates a unique private
+packet under `local/pilot-packets/`, with input hashes and the exact prompt. Complete game logs, saved banked production and effective options are included. Both arms use the
+same snapshot, schedule, player IDs, protected roles, saved projection inputs and ESPN evidence.
+The packet verifies the saved snapshot, schedule, ID map and game-log hashes before writing.
+If they changed, prepare a new decision; do not silently substitute later inputs.
 
-Use a fresh Codex thread per decision (a new `run`, never `resume`), with no custom instructions or memory, and the same tier for the whole pilot.
+The packet includes ESPN current-season minutes, starts, production, shooting and estimated
+usage, not just Yahoo screenshots. Usage is descriptive; the tool does not add a usage bonus.
+Projections include the prior lines and current-season sample. Do not give the chatbot the
+recommendation, rankings, sensitivity scores or other chats' conclusions.
 
-## Inputs
+Run a fresh isolated ChatGPT/Codex session outside this repository using `gpt-6.1-sol`, no memory,
+custom instructions, browsing or other input files. Copy only the packet to that directory.
+Keep the same model and effort throughout the pilot and record the observed model/effort from
+the session receipt. The preparation command does not launch a model or freeze a pilot.
 
-The chatbot gets the same Yahoo pages the tool read, as saved text, from the same refresh in `local/raw/<YYYY-MM-DD-HHmm>/`:
+## Fixed prompt candidate
 
-1. `team.txt`: my roster, including games this week.
-2. `matchup.txt`: this week's matchup, with both teams' category totals.
-3. `fa-1.txt`, `fa-2.txt`, `fa-3.txt`: available players, ranked.
+<!-- PROMPT START -->
+You are advising on ONE add/drop decision in a head-to-head nine-category fantasy basketball league. Categories are PTS, REB, AST, STL, BLK, 3PM, FG%, FT% and TO (fewer turnovers wins).
 
-Copy only these files into a new empty folder outside any git repository, so the chatbot can't read the tool's code or its output. Run the bridge read-only from that folder:
+Use only the supplied files: snapshot.json contains Yahoo league settings, rosters, availability, banked totals, weekly adds used and capture time; schedule.json contains NBA game dates; ids.json maps player identities; roles.json lists core players who cannot be dropped and stream players; projections.json contains prior production, current-season minutes and the projection inputs; evidence.json contains ESPN current-season production, shooting, starts and estimated usage with sample sizes; gamelogs.json provides the underlying box scores; banked.json retains the checked banked production; options.json sets the effective dates and comparison settings. Missing evidence is unknown, never zero. Estimated usage is descriptive, not official NBA on-court usage. Do not browse or introduce player statistics or availability from memory.
 
-```bash
-python <bridge> run --tier sol --cd <folder> --prompt-file <folder>/prompt.md
-```
+Recommend ONE best legal add/drop for the rest of this Yahoo week, or HOLD if the evidence does not support one. Respect core protection, available adds, eligible roster slots, injury/status restrictions and waiver processing dates. Adds start no earlier than the next Los Angeles calendar day after the snapshot or their waiver clear date, whichever is later; also respect the later effective dates in options.json. Account for bench congestion and displaced starters. Explain expected categories helped and hurt; treat opening samples cautiously.
 
-`prompt.md` is the frozen prompt below with `<N>` filled in.
-
-## Frozen prompt
-
-Use the following text as `prompt.md`. Replace `<N>` with the adds left this week; change nothing else.
-
-```text
-You are advising on a fantasy basketball roster. The league is head-to-head, 9-category: PTS, REB, AST, STL, BLK, 3PM, FG%, FT%, TO (fewer TO is better); 12 teams; 4 adds per week; daily lineups. Adds left this week: <N>.
-
-Using the files in this folder (team.txt is my roster, matchup.txt is this week's matchup, fa-*.txt are available players), recommend ONE best add/drop for the rest of this week, or say hold. Name the categories you expect the move to help and hurt. You may use your own knowledge of the players' skills and stats. Take availability, rosters and games this week only from the files; do not invent them. If the files do not support a legal add/drop, say hold.
-
-Reply in exactly one of these formats:
-ADD: <player> | DROP: <player> | HELPS: <cats> | HURTS: <cats> | WHY: <one sentence>
+Reply in exactly one format:
+ADD: <player> | DROP: <player> | START: <YYYY-MM-DD> | HELPS: <cats> | HURTS: <cats> | WHY: <one sentence>
 HOLD | WHY: <one sentence>
-```
+<!-- PROMPT END -->
 
-## Log each decision
+## Record before results
 
-Record the tool, chatbot, and do-nothing baseline before the week's outcome is known. For a chatbot response, set `source` to `chatbot`, `chatbot` to the chatbot name, `date` to the decision date, `week` to the Yahoo week number, and `asOf` to the refresh timestamp. Set `decision` to `move` or `hold`; for a move, enter `start`, plus `add` and `drop` objects with `name` and `espnId`. Set `rating` to Tony's 1–5 usefulness rating. Use `note` for the raw answer or invalid reason.
+For each decision record one entry each for `tool`, `chatbot`, and `none` (no move). All three
+must name the SAME `decisionId`, `week` and `asOf` from the saved decision. Set `date` to the
+comparison date. A move includes `start`, and `add`/`drop` objects with `name` and `espnId`.
+A hold has `decision: "hold"`, `add: null`, `drop: null`. An insufficient-evidence tool outcome
+is logged as hold; its original `toolAction` is retained automatically. Set `chatbot` to the
+observed model for the chatbot source and null for the other sources. Set Tony's `rating`
+(1–5), or null when not yet reviewed. Record a rejection reason (`wrong-role`, `core-player`,
+`bad-data`, `injury`, `timing`, `other`) and explanation before the outcome is known.
 
-Put entries in a JSON array and run `node scripts/bakeoff.mjs record <entries.json>`. The command appends validated entries to `local/bakeoff.jsonl`. For `tool` and `none` entries, set `chatbot` to `null`. Use `null` for a rating you haven't given.
+Keep the raw chatbot reply in `note`. An unavailable/illegal/malformed chatbot answer is an
+invalid hold: include `invalidReason` and the raw reply. Do not drop invalid decisions from the
+comparison. Record known action disposition in `taken`; it does not change replay scoring.
+Later action notes belong in a separate private log; never rewrite the original prediction
+or retrospectively change a rating. Pending ratings remain pending, not a pilot pass.
 
-After you act, set `taken` to `true` or `false`. If you reject a suggestion, set `rejectReason` to one of `wrong-role`, `core-player`, `bad-data`, `injury`, `timing` or `other`, and say why in `note`.
+Save the three entries as a JSON array and run `npm run bakeoff -- record <entries.json>`.
+This appends source-specific saved legal lineups, rather than applying the tool's proposal to
+the chatbot's move. Do not record the same arm twice for one decision.
 
-**Invalid answers.** If the answer names a player who isn't in the `fa-*.txt` files, drops a player who isn't on your roster, or doesn't use the reply format, log it as `decision: hold`. Start `note` with `INVALID:`, followed by the reason and the raw answer. It still counts in the pilot. The schema has no invalid field yet, so the `INVALID:` prefix is how those entries are counted.
+## Score
 
-These fields follow `validateEntry` in `src/engine/bakeoff.mjs`.
+After the full Yahoo week ends, refresh complete ESPN logs, then run
+`npm run bakeoff -- score --week N --from YYYY-MM-DD --to YYYY-MM-DD` (week bounds).
+Scoring replays each arm's saved baseline/proposed starts plus the saved opponent starts and
+banked makes/attempts. Benched games add nothing; displaced starters are subtracted; production
+before the effective date cancels. Missing rows or shooting volume mean unscored, never zero.
+Only explicit DNP rows count as known zero. Missing historical lineups cannot be reconstructed
+into scored entries. Actual later Yahoo totals cannot establish the hypothetical no-move
+baseline, so category changes use the saved-lineup counterfactual instead.
 
-## Frozen
+Report each decision separately. Source summaries count invalid and unscored decisions and
+average each category only over scored entries. Helped/hurt totals across overlapping hypothetical
+moves are decision-level evidence, not a feasible weekly plan. Two weeks is a small sample;
+inconclusive is a valid result.
 
-Do not edit this prompt during the 2-week pilot. Any prompt change starts a new pilot.
+## Freeze record (pending)
+
+Before starting, save a private freeze record with the approved commit/projection version,
+clean working-tree state, options/roles, prompt hash, observed chatbot model/effort and UTC
+start time. Only decisions made after that timestamp count. Freeze these for two full weeks.
+A recommendation/scoring-changing fix or prompt/model change restarts the scored window;
+a parser repair that only permits capture does not. No watch or scheduled automation is added.

@@ -11,7 +11,7 @@ test('two centers cannot share one C slot even when a guard slot is empty', () =
   assert.deepEqual(lineup, [{ player: high, slot: 'C' }]);
   const projected = projectTeam([low, high], {}, {}, { rosterPositions: slots('C', 'PG') },
     { games: [{ date: '2026-10-20', home: 'AAA', away: 'BBB' }] }, '2026-10-20', '2026-10-20');
-  assert.deepEqual(projected.started, [{ name: high.name, date: '2026-10-20', slot: 'C' }]);
+  assert.deepEqual(projected.started, [{ name: high.name, espnId: null, date: '2026-10-20', slot: 'C' }]);
   assert.equal(projected.totals.PTS, 10);
 });
 
