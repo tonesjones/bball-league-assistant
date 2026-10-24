@@ -32,12 +32,28 @@ All logic goes in a new pure module, `src/engine/stream-chain.mjs`. I/O goes in
 
 ### Open slot per day
 
-For each day, take Tony's roster without the stream-slot player and run `assignLineup`
-(`src/engine/needs.mjs`) on the players whose team plays that day and whose status is not in
-`BLOCKED`. The slots left unfilled are that day's open slots. A candidate starts on a day only if
-their team plays that day and one of their eligible positions fits an open slot (`Util` fits
-everyone). The candidate is never placed ahead of a rostered player. A day with a game but no
-fitting open slot counts as zero started games for that candidate.
+A back-to-back is worth only the days the pickup can start. Tony's other players and the
+league's roster slots decide that, not the schedule alone. For example:
+
+- On Monday, if only SG and SF are open, a center pickup starts zero games that day.
+- On Wednesday, if Tony already has more players with games than slots, a Wednesday–Thursday
+  pickup starts only Thursday. Wednesday is a wash.
+
+For each day, take Tony's roster without the stream-slot player, keeping the players whose team
+plays that day and whose status is not in `BLOCKED`. Run `assignLineup`
+(`src/engine/needs.mjs`) on them to get the rostered starters. A candidate starts that day only if
+their team plays and a legal lineup exists with all of those rostered starters plus the
+candidate. Rostered players may move to other slots they're eligible for (a G/F can move from
+G to F to open G). Rostered starters are never benched for the candidate.
+
+`assignLineup` finds lineups by augmenting paths, so placing the candidate after every rostered
+player keeps all rostered starters. Add an option or a small exported helper to place one player
+last. Don't decide by checking the candidate against one arrangement's unfilled slots: that misses
+lineups where a flexible player moves over.
+
+A day with a game but no legal start counts zero started games for that candidate. The planner
+gets no credit for it, so a Wednesday–Thursday team on a full Wednesday ties a Thursday-only
+team, and the chain may make the add effective Thursday instead.
 
 ### Candidates
 
@@ -93,6 +109,11 @@ When at least one hold candidate exists:
 
 ### Output
 
+First, a day-by-day table for the window: games scheduled for Tony's other players, rostered
+starters, players benched because the day is full, and the open slots in the rostered starters'
+assignment (for example "SG, SF", "none, 2 benched"). The open-slot column only explains the
+plan. Whether a candidate starts is still decided by the legal-lineup check above.
+
 For each budget: the links (player, team, run of dates, started games each day, unprojected flag),
 total started games, adds used, and how many games the current stream player starts if Tony makes
 no move. The report also shows the snapshot's as-of time and the schedule fetch time.
@@ -111,11 +132,19 @@ against the week set by `--adds-week effective` (default, the week of the effect
 All tests use synthetic fixtures in `tests/fixtures/stream/`, with no real names.
 
 - [ ] A 7-day schedule with back-to-backs on Mon–Tue (team A), Wed–Thu (B) and Fri–Sat (C), a
-      Sunday game (D), and a team E that plays Tue, Wed, Fri and Sun: 4 adds give 7 started games
+      Sunday game (D), and a team E that plays Tue, Wed, Fri and Sun, with Util open every day:
+      4 adds give 7 started games
       (A, B, C, D), 3 adds give 6, and 2 adds give 5 (a Monday player, then E).
 - [ ] A day with no fitting open slot adds no started game. The planner picks a team that starts
       instead when one exists.
-- [ ] A C-only candidate doesn't count on a day when only a guard slot is open. `Util` fits anyone.
+- [ ] A day with only SG and SF open (Util filled): a C-only candidate starts zero games that
+      day, while an SG/SF candidate starts. `Util` fits anyone when it is open.
+- [ ] A day with more rostered players playing than slots: a Wednesday–Thursday candidate counts
+      one started game (Thursday), ties a Thursday-only candidate on games, and no rostered
+      starter is benched.
+- [ ] A flexible rostered G/F sits in G, and only F is open in that arrangement: a PG-only
+      candidate still starts, because the G/F moves to F.
+- [ ] The report's day table shows open slots and benched counts for each day in the window.
 - [ ] A player who is out, with no return timeline, or on waivers past the link's start never
       appears. A player dropped earlier in the chain isn't added back.
 - [ ] A free agent inside `protectRank` under the shrunk-rate case (but not the prior case) is
