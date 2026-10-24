@@ -43,6 +43,7 @@ Carried over from Draft Lab's season manager. Treat them as tests, not suggestio
 - Keep pure logic (projections, simulator, planner) in `src/engine/`, free of I/O. I/O lives in `src/sources/` and `scripts/`.
 - Seed every random number generator; the same inputs must give the same output.
 - If a task's spec is wrong or impossible, stop and write what you found at the end of the task file instead of guessing.
+- Docs-only pull requests (only `tasks/`, `docs/`, `PLAN.md`, `README.md` or `AGENTS.md`) don't wait for Tony. After opening one, check that the PR head equals the local branch tip, squash-merge it, delete the branch locally and on GitHub, and update local `main`, without asking. A pull request that touches anything else, including `.claude/` settings, still waits for Tony's OK to merge.
 
 ## Layout
 
