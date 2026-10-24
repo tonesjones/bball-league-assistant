@@ -166,6 +166,11 @@ No UI. Run from Claude Code.
      used. Hand-entered role assumptions stay deferred unless the pilot shows decisions going
      wrong in the first games after a role change.
 
+6. Stream-chain planner ([Task 10](tasks/10-stream-chain-planner.md)). A separate command that
+   chains pickups across teams' back-to-backs to get the most started games from one stream
+   slot, for 2, 3 and 4 adds. A long-term pickup always comes first and gets its own add. It
+   doesn't change `advise` output or the bakeoff, so it can be built before or during the pilot.
+
 **Gate.** Go to Phase 1 only if the tool's moves beat both the chatbot's and doing nothing on
 categories helped minus hurt, and Tony rates them as more useful. Two weeks is a small sample:
 "inconclusive, keep testing" is a valid result. Otherwise rethink or stop. Record the result here
@@ -216,6 +221,13 @@ prints ok or the error, without page text. It would replace the scratch script u
 ## Status
 
 Updated at the end of each session.
+
+**2026-10-23, stream-chain spec.** Wrote [Task 10](tasks/10-stream-chain-planner.md) from a manual
+plan for the week of Oct 26 (back-to-backs: BOS Mon–Tue, ATL/CLE Wed–Thu, CHA/HOU/MIN/PHI Fri–Sat;
+7 games from 4 adds). Tony's rule: schedule efficiency never pushes a long-term pickup down the
+list. Hold candidates (an `advise` move or insufficient-evidence pickup, or inside `protectRank`
+under any minutes or rate case) are listed first and reserve an add. Not built. Open question:
+which week Yahoo counts a Sunday add for a Monday game against.
 
 **2026-10-23, rate shrinkage.** The observed per-minute endpoint is now shrunk toward the
 prior with the minutes blend's k pseudo-games: `(k * prior per-game + observed totals) /
