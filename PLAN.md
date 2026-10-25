@@ -182,9 +182,17 @@ No UI. Run from Claude Code.
    report warns when claims need more adds or spots than Tony has. Proposed trades are reported,
    not modeled. `MODEL_VERSION` 3.
 
+9. Unblock the scored pilot ([Task 14](tasks/14-pilot-unblock.md)), from the 2026-10-24 scope
+   audit. Four PRs, in order: banked makes and attempts from Yahoo's `week=N` matchup page
+   (14a), a chatbot model that runs (14b), a ratings join and the gate tie (14c), and a move
+   rule that withholds only moves that could lose, with a lower bar for add-only moves (14d,
+   `MODEL_VERSION` 4). Then `MODEL_VERSION` 4 is frozen until the gate is read.
+
 **Gate.** A rolling comparison per model version. Go to Phase 1 when one version, over at least
-10 scored decisions, beats both the chatbot and doing nothing on categories helped minus hurt, and
-Tony's mean rating for the tool is higher than for both. Fewer than 10 scored decisions is "too
+10 scored decisions, does at least as well as both the chatbot and doing nothing on categories
+helped minus hurt, and Tony's mean rating for the tool is strictly higher than for both. A tie on
+net counts when the ratings break it (Tony, 2026-10-24): a tool that rightly holds scores 0, the
+same as doing nothing. Fewer than 10 scored decisions is "too
 few, keep testing". If no version clears the gate by 2026-11-23, rethink or stop. Record the
 result here and as a decision note in the vault.
 
@@ -239,6 +247,15 @@ prints ok or the error, without page text. It would replace the scratch script u
 ## Status
 
 Updated at the end of each session.
+
+**2026-10-24, scope audit.** No paired, scored decision exists yet. Four causes: the 21:13
+decision saved banked shooting as null, so every arm is unscorable; the chatbot model is
+rejected on Tony's account; ratings in `local/pilot-reviews.jsonl` never reach the scorecard;
+and a holding tool ties doing nothing on net, which the gate counted as a loss. Since the rate
+gate landed, real runs were withheld by the 0.15 threshold rather than by risk. On 10-23 the best
+pair was positive in all 24 cases (+0.080 to +0.382). Tony approved Task 14 with a net tie broken
+by ratings and a lower add-only bar. Frozen, not extended, until the gate: the stream planner,
+the transaction history archive, the draft pages and the ad hoc research scripts. Next: 14a.
 
 **2026-10-24, empty-slot pickups.** PRs #32, #37 and #38 are merged. The 2026-10-24 21:13
 refresh held with "No eligible add/drop pairs": an IL move opened a spot, but `advise` only
@@ -449,4 +466,5 @@ transactions parser when "retry transactions fetch" finds a real move.
   Firefox, which the browser tools can't drive.
 - ~~Schedule source for 2026-27.~~ Settled 2026-10-19: ESPN's public site API, per team. See
   `docs/sources.md`.
-- The chatbot used for the bakeoff baseline, and its fixed prompt.
+- The chatbot used for the bakeoff baseline, and its fixed prompt. The pinned `gpt-6.1-sol` is
+  rejected on Tony's ChatGPT account (2026-10-24); Tony picks a replacement in Task 14b.
