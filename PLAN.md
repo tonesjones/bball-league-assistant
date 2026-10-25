@@ -255,7 +255,12 @@ and a holding tool ties doing nothing on net, which the gate counted as a loss. 
 gate landed, real runs were withheld by the 0.15 threshold rather than by risk. On 10-23 the best
 pair was positive in all 24 cases (+0.080 to +0.382). Tony approved Task 14 with a net tie broken
 by ratings and a lower add-only bar. Frozen, not extended, until the gate: the stream planner,
-the transaction history archive, the draft pages and the ad hoc research scripts. Next: 14a.
+the transaction history archive, the draft pages and the ad hoc research scripts.
+
+**2026-10-24, Task 14a merged (#42).** A refresh also saves the `week=N` matchup page as
+`matchup-totals.txt`, and the snapshot takes banked makes and attempts from it. On the 10-24
+capture, both teams get all four values. 188 tests pass. A live refresh that fetches the new page
+hasn't run yet. Next: 14b, after Tony picks the chatbot model.
 
 **2026-10-24, empty-slot pickups.** PRs #32, #37 and #38 are merged. The 2026-10-24 21:13
 refresh held with "No eligible add/drop pairs": an IL move opened a spot, but `advise` only
