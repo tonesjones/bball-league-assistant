@@ -13,7 +13,7 @@ function isoDay(md, asOf) {
   return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-// pages: { settings, team, matchup, transactions, 'fa-1': text, 'fa-2': text, ... }
+// pages: { settings, team, matchup, transactions, 'fa-1': text, 'fa-2': text, ..., optional 'matchup-totals' }
 export function buildSnapshot(pages, asOf) {
   const missing = ['settings', 'team', 'matchup', 'transactions'].filter((k) => typeof pages[k] !== 'string');
   const faKeys = Object.keys(pages).filter((k) => /^fa-\d+$/.test(k)).sort((a, b) => a.slice(3) - b.slice(3));
@@ -25,6 +25,15 @@ export function buildSnapshot(pages, asOf) {
   const m = parseMatchup(pages.matchup);
   if (m.teamName !== team.name) {
     throw new Error(`matchup page is not my team's matchup: "${m.teamName}" does not match "${team.name}"`);
+  }
+  // The live matchup page has no makes or attempts; the same page with an explicit week does.
+  let volume = m.volume;
+  if (typeof pages['matchup-totals'] === 'string') {
+    const t = parseMatchup(pages['matchup-totals'], 'matchup-totals');
+    const mismatch = [['week', t.week, m.week], ['team', t.teamName, m.teamName], ['opponent', t.opponentName, m.opponentName]]
+      .filter(([, a, b]) => a !== b).map(([k, a, b]) => `${k} "${a}" vs "${b}"`);
+    if (mismatch.length) throw new Error(`matchup-totals page does not match the matchup page: ${mismatch.join(', ')}`);
+    volume = t.volume;
   }
   const transactions = parseTransactions(pages.transactions);
   const freeAgents = faKeys
@@ -41,7 +50,7 @@ export function buildSnapshot(pages, asOf) {
       end: isoDay(m.days.at(-1), asOf),
       opponentName: m.opponentName,
       totals: m.totals,
-      volume: m.volume,
+      volume,
       score: m.score,
       opponentRoster: m.opponentRoster,
     },
