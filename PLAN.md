@@ -173,6 +173,10 @@ No UI. Run from Claude Code.
    slot, for 2, 3 and 4 adds. A long-term pickup always comes first and gets its own add. It
    doesn't change `advise` output or the bakeoff, so it can be built before or during the pilot.
 
+7. Empty-slot pickups ([Task 12](tasks/12-empty-slot-pickups.md)). When an IL move opens a
+   non-IL roster spot, `advise` also scores an add with no drop. Each reported pickup shows its
+   next-week games and legal starts as context; they don't change the score. `MODEL_VERSION` 2.
+
 **Gate.** A rolling comparison per model version. Go to Phase 1 when one version, over at least
 10 scored decisions, beats both the chatbot and doing nothing on categories helped minus hurt, and
 Tony's mean rating for the tool is higher than for both. Fewer than 10 scored decisions is "too
@@ -230,6 +234,14 @@ prints ok or the error, without page text. It would replace the scratch script u
 ## Status
 
 Updated at the end of each session.
+
+**2026-10-24, empty-slot pickups.** PRs #32, #37 and #38 are merged. The 2026-10-24 21:13
+refresh held with "No eligible add/drop pairs": an IL move opened a spot, but `advise` only
+scored drops, and the guardrail blocked every one. Task 12 adds add-only moves and next-week
+context (`MODEL_VERSION` 2). On that snapshot it now holds for the right reason: the best add-only
+move gains 0.017 expected categories. The pickup Tony wanted gains 0.002 this week from one
+Sunday start and shows 3 games and 3 legal starts the next week. Next: Tony reviews the Task 12
+PR, then the daily pilot routine.
 
 **2026-10-24, continuous pilot.** Tony dropped the frozen 2-week pilot: it waited on a real move
 he accepts, and every real run so far has been hold or insufficient evidence (latest: decision
@@ -409,6 +421,12 @@ protecting that player; move the protected list to a git-ignored `local/protecte
 transactions parser when "retry transactions fetch" finds a real move.
 
 ## Open decisions
+
+- Whether next-week value should ever change a recommendation (2026-10-24). Today it is context
+  only. The case for it: an add left at week's end expires, and an open spot costs nothing. It
+  depends on which week Yahoo charges a Sunday add to (`--adds-week`), on a bar the pickup must
+  clear against next week's options, and on scoring next-week value apart from this week's
+  categories. Decide after the pilot has a few cases like this one.
 
 - ~~Which pages the league read needs, and their URLs.~~ Settled 2026-10-19: 8 pages, listed with
   the reason for each in `docs/update-league.md` (the first fetch also read the opponent page).

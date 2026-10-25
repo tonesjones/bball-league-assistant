@@ -123,3 +123,35 @@ test('record saves each source lineup, rejects duplicate arms and prepares a has
   await writeFile(path.join(dir, 'data/ids.json'), '{}');
   assert.throws(() => execFileSync(process.execPath, [prepare, saved.id], { cwd: dir, stdio: 'pipe' }), /ids hash changed/);
 });
+
+test('record attaches an add-only move into an open spot and refuses one for a full roster', async (t) => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'bball-add-only-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const f = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url)));
+  await mkdir(path.join(dir, 'data'), { recursive: true });
+  await writeFile(path.join(dir, 'data/ids.json'), JSON.stringify(f.ids));
+  await writeFile(path.join(dir, 'data/schedule-2026-27.json'), JSON.stringify(f.schedule));
+  const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));
+  const record = async (snapshot, name) => {
+    const projections = projectPlayers(f.priors, f.ids, []);
+    const report = advise(snapshot, { ...f, projections, protectRank: 0 });
+    const snapshotPath = path.join(dir, `${name}.json`), snapshotText = JSON.stringify(snapshot);
+    await writeFile(snapshotPath, snapshotText);
+    const saved = await saveDecision({ report, options: report.options, projections,
+      provenance: { snapshotPath, snapshotHash: hash(snapshotText), idsHash: hash(JSON.stringify(f.ids)),
+        scheduleHash: hash(JSON.stringify(f.schedule)), gameLogCoverage: { hashes: {} } } }, path.join(dir, 'local/decisions'));
+    const input = path.join(dir, `${name}-entries.json`);
+    await writeFile(input, JSON.stringify([{ decisionId: saved.id, week: report.week, date: '2026-10-20', asOf: report.asOf,
+      source: 'chatbot', chatbot: 'Example', promptVersion: 1, decision: 'move', start: '2026-10-21', rating: null,
+      add: { name: 'Casey Fiction', espnId: '3' }, drop: null }]));
+    return () => execFileSync(process.execPath, [cli, 'record', input], { cwd: dir, stdio: 'pipe' });
+  };
+  const open = structuredClone(f.snapshot);
+  open.team.roster[0].slot = 'IL+';
+  (await record(open, 'open'))();
+  const [row] = (await readFile(path.join(dir, 'local/bakeoff.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);
+  assert.equal(row.drop, null);
+  assert.ok(!row.lineups.baseline.some((g) => g.espnId === '3'));
+  assert.deepEqual(row.lineups.proposed.filter((g) => g.espnId === '3').map((g) => g.date), ['2026-10-21']);
+  assert.throws(await record(f.snapshot, 'full'), /needs an open roster spot/);
+});

@@ -24,6 +24,8 @@ export function validateEntry(e, { allowLegacyPromptVersion = true } = {}) {
   if (['tool', 'none'].includes(e.source) && e.chatbot !== null) bad.push(`${e.source} chatbot must be null`);
   for (const key of ['add', 'drop']) {
     if (e.decision === 'hold') { if (e[key] !== null) bad.push(`${key} must be null for hold`); }
+    // A move with drop null adds the pickup to an open roster spot.
+    else if (key === 'drop' && e[key] === null) continue;
     else if (!e[key] || typeof e[key].name !== 'string' || !e[key].name || (typeof e[key].espnId !== 'string' && typeof e[key].espnId !== 'number')) bad.push(`${key} needs name and espnId`);
   }
   if (!(e.rating === null || (Number.isInteger(e.rating) && e.rating >= 1 && e.rating <= 5))) bad.push('rating must be 1..5 or null');

@@ -37,7 +37,7 @@ console.log(`\nAs of: ${advice.asOf}\nDecision: ${advice.decision.action} (${adv
 if (advice.decision.reason) console.log(advice.decision.reason);
 if (advice.decision.pair) {
   const p = advice.decision.pair;
-  console.log(`Add ${p.pickup.name}; drop ${p.drop.name}; approximate category gain ${p.score.toFixed(3)}`);
+  console.log(`Add ${p.pickup.name}; ${p.drop ? `drop ${p.drop.name}` : 'no drop (open roster spot)'}; approximate category gain ${p.score.toFixed(3)}`);
   console.log(`Scenario gain range: ${p.scoreRange.map((n) => n.toFixed(3)).join(' to ')}`);
   for (const [category, change] of Object.entries(p.changes)) {
     console.log(`${category}: projected total change ${change.total.toFixed(3)}; approximate category probability change ${change.pWin.toFixed(3)}`);
