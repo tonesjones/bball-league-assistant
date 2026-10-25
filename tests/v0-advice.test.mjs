@@ -266,10 +266,60 @@ test('pairs sort by the worst case and a robust move wins over a higher zero-fil
   const [robust, optimistic] = r.topPairs;
   assert.ok(robust.scoreRange[0] > optimistic.scoreRange[0]);
   assert.ok(robust.score < optimistic.score);
-  const uncertain = run(f, { roles: { stream: ['Alex Sample', 'Drew Placeholder'] }, holdBelow: 0.1, top: 0 });
+  const worstBelowBar = run(f, { roles: { stream: ['Alex Sample', 'Drew Placeholder'] }, holdBelow: 0.1, top: 0 });
+  assert.ok(robust.scoreRange[0] < 0.1 && robust.score >= 0.1);
+  assert.equal(worstBelowBar.decision.action, 'move');
+  assert.equal(worstBelowBar.decision.pair.drop.name, 'Drew Placeholder');
+  const uncertain = run(f, { roles: { stream: ['Alex Sample', 'Drew Placeholder'] }, holdBelow: robust.score + 0.01, top: 0 });
+  assert.ok(optimistic.scoreRange[1] >= robust.score + 0.01);
   assert.equal(uncertain.decision.action, 'insufficient');
   assert.equal(uncertain.decision.best.drop.name, 'Alex Sample');
   assert.deepEqual(uncertain.topPairs, []);
+});
+
+const unknownDrops = (f, pts) => {
+  sameSchedule(f); f.priors[2].perGame.pts = pts; f.priors[0].perGame = null;
+  f.snapshot.settings.rosterPositions[0].count = 2;
+  f.snapshot.team.roster.push({ name: 'Drew Placeholder', nbaTeam: 'AAA', slot: 'BN' });
+  f.ids.players.push({ name: 'Drew Placeholder', team: 'AAA', priorName: 'Blair Old' });
+  return run(f, { roles: { stream: ['Alex Sample', 'Drew Placeholder'] } });
+};
+
+test('a move positive in every case moves on its nominal score even when its worst case is below the bar', () => {
+  const r = unknownDrops(fresh(), 18);
+  const pair = r.decision.pair;
+  assert.equal(r.decision.action, 'move');
+  assert.deepEqual(r.decision.bar, { kind: 'drop', value: 0.15 });
+  assert.ok(pair.scoreRange[0] > 0 && pair.scoreRange[0] < 0.15 && pair.score >= 0.15);
+  assert.match(formatAdvice(r), /Bars: drop 0\.15 \| add-only 0\.05 \| applied: drop/);
+});
+
+test('a best case above the bar with some case at zero or below is insufficient evidence', () => {
+  const r = unknownDrops(fresh(), 17);
+  assert.equal(r.decision.action, 'insufficient');
+  assert.ok(r.decision.best.scoreRange[0] <= 0 && r.decision.best.scoreRange[1] >= 0.15);
+  assert.ok(r.topPairs.some((p) => p.scoreRange[0] > 0 && p.score < 0.15), 'the all-positive pair is below the bar');
+  assert.match(r.decision.reason, /worst case 0\.000/);
+});
+
+test('add-only moves use the lower add-only bar', () => {
+  const f = fresh(); sameSchedule(f);
+  f.snapshot.settings.rosterPositions[0].count = 2;
+  for (const key of Object.keys(f.priors[2].perGame)) if (key !== 'g') f.priors[2].perGame[key] *= 0.025;
+  const addOnly = run(f, { seasonMargin: -100 });
+  assert.equal(addOnly.decision.action, 'move');
+  assert.equal(addOnly.decision.pair.drop, null);
+  assert.deepEqual(addOnly.decision.bar, { kind: 'add-only', value: 0.05 });
+  near(addOnly.decision.pair.score, 0.08, 0.005);
+  assert.equal(run(f, { seasonMargin: -100, addOnlyBelow: 0.1 }).decision.action, 'hold');
+  const drop = fresh(); sameSchedule(drop); drop.priors[2].perGame.pts = 16.3;
+  const r = run(drop);
+  assert.equal(r.decision.action, 'hold');
+  near(r.decision.best.score, 0.08, 0.005);
+  assert.deepEqual(r.decision.best.scoreRange, [r.decision.best.score, r.decision.best.score]);
+  assert.deepEqual(r.decision.bar, { kind: 'drop', value: 0.15 });
+  assert.match(r.decision.reason, /positive in every case; requires at least 0\.15 \(drop bar\)/);
+  for (const addOnlyBelow of [-1, NaN, Infinity]) assert.throws(() => run(f, { addOnlyBelow }), /addOnlyBelow/);
 });
 
 test('hold below the default threshold, move at the threshold, and retain the best pair with top zero', () => {
@@ -586,7 +636,7 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     const through = easternDate(f.snapshot.asOf), text = '[]\n';
     await writeFile(path.join(logDir, `${through}.json`), text);
     await writeFile(path.join(logDir, '_coverage.json'), JSON.stringify({ from: through, through, checkedAt: f.snapshot.asOf, hashes: { [through]: logHash(text) } }));
-    const output = execFileSync(process.execPath, [cli, 'snapshot.json', '--allow-stale', '--max-age-hours', '0', '--hold-below', '0.02', '--from', '2026-10-22', '--adds-from', '2026-11-01', '--top', '1', '--margin', '-0.25', '--protect-rank', '0'], { cwd: dir, encoding: 'utf8' });
+    const output = execFileSync(process.execPath, [cli, 'snapshot.json', '--allow-stale', '--max-age-hours', '0', '--hold-below', '0.02', '--add-only-below', '0.03', '--from', '2026-10-22', '--adds-from', '2026-11-01', '--top', '1', '--margin', '-0.25', '--protect-rank', '0'], { cwd: dir, encoding: 'utf8' });
     const report = JSON.parse(await readFile(path.join(dir, 'local/advice/snapshot.json'), 'utf8'));
     assert.equal(report.fromDate, '2026-10-22');
     assert.equal(report.topPairs.length, 1);
@@ -594,6 +644,7 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     assert.equal(report.guardrail.seasonMargin, -0.25);
     assert.equal(report.guardrail.protectRank, 0);
     assert.equal(report.holdBelow, 0.02);
+    assert.equal(report.addOnlyBelow, 0.03);
     const saved = JSON.parse(await readFile(path.join(dir, `local/decisions/${report.decisionId}.json`), 'utf8'));
     assert.equal(saved.provenance.modelVersion, MODEL_VERSION);
     assert.equal(saved.projections.version, 'minutes-rates-pseudogames-v3');
@@ -615,7 +666,7 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     assert.throws(() => execFileSync(process.execPath, [cli, 'snapshot.json', '--allow-stale'], { cwd: dir, stdio: 'pipe' }), /Game logs are older than the snapshot/);
     assert.match(output, /Core players: None\./);
     assert.match(output, /Stream players: None\./);
-    for (const args of [['--minutes-k', '0'], ['--minutes-k', '-1'], ['--minutes-k', 'NaN'], ['--minutes-k'], ['--from', '2026-02-30'], ['--top', '-1'], ['--margin', 'Infinity'], ['--margin', 'NaN'], ['--margin'], ['--protect-rank', '-1'], ['--protect-rank', '1.5'], ['--hold-below', '-1'], ['--hold-below', 'NaN'], ['--hold-below'], ['--max-age-hours', '-1'], ['--max-age-hours', 'Infinity'], ['--max-age-hours']]) {
+    for (const args of [['--minutes-k', '0'], ['--minutes-k', '-1'], ['--minutes-k', 'NaN'], ['--minutes-k'], ['--from', '2026-02-30'], ['--top', '-1'], ['--margin', 'Infinity'], ['--margin', 'NaN'], ['--margin'], ['--protect-rank', '-1'], ['--protect-rank', '1.5'], ['--hold-below', '-1'], ['--hold-below', 'NaN'], ['--hold-below'], ['--add-only-below', '-1'], ['--add-only-below', 'NaN'], ['--add-only-below'], ['--max-age-hours', '-1'], ['--max-age-hours', 'Infinity'], ['--max-age-hours']]) {
       assert.throws(() => execFileSync(process.execPath, [cli, ...args], { cwd: dir, stdio: 'pipe' }));
     }
   } finally {

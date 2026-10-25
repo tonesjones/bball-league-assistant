@@ -109,9 +109,10 @@ see [the comparison protocol](docs/bakeoff-prompt.md) for the versioned pilot.
 Minutes blend this season's eligible games with two prior pseudo-games. `--minutes-k` changes
 that starting weight; it is not calibrated. Rates per minute remain from the prior season.
 Reports show observed games/starts, prior/season/projected MPG and four fixed pickup/drop
-minutes cases. A move must clear the threshold in every case, including missing-production
-cases. Fixed prior-MPG scenarios do not converge as more games arrive, so uncertainty may
-continue to withhold a move. This is a minutes update, not a current-season rate model.
+minutes cases. A move must gain in every case, including missing-production cases, and its
+nominal score must reach the bar: 0.15 expected categories with a drop (`--hold-below`), 0.05
+for an add-only move into an open spot (`--add-only-below`). Fixed prior-MPG scenarios do not
+converge as more games arrive, so uncertainty may continue to withhold a move. This is a minutes update, not a current-season rate model.
 
 ## Current-season player evidence
 

@@ -5,7 +5,7 @@ import { BLOCKED, projectTeam, needs, strongLine, openRosterSpots } from './need
 import { seasonValues } from './season-value.mjs';
 import { minutesCase } from './projections.mjs';
 
-export const MODEL_VERSION = 3;
+export const MODEL_VERSION = 4;
 
 // Yahoo's "Oct 25" as a date on or after the matchup start.
 function monthDay(value, window, what) {
@@ -40,9 +40,10 @@ export function normalizeRoles(roles = {}, protectedNames = []) {
 
 export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedNames = [],
   fromDate = tomorrow(snapshot.asOf), addsFrom = fromDate, top = 10, phi,
-  seasonMargin = 0, protectRank = 120, poolSize = 150, volumeStatus = {}, holdBelow = 0.15, projections = null } = {}) {
+  seasonMargin = 0, protectRank = 120, poolSize = 150, volumeStatus = {}, holdBelow = 0.15, addOnlyBelow = 0.05, projections = null } = {}) {
   if (projections) priors = projections.players;
   if (!Number.isFinite(holdBelow) || holdBelow < 0) throw new Error('holdBelow must be a nonnegative finite number');
+  if (!Number.isFinite(addOnlyBelow) || addOnlyBelow < 0) throw new Error('addOnlyBelow must be a nonnegative finite number');
   const window = { start: snapshot.matchup.start, end: snapshot.matchup.end };
   const banked = fromDate > window.start;
   const shootingVolume = Object.fromEntries(['mine', 'opponent'].map((side) => [side,
@@ -185,7 +186,9 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   pairs.sort((a, b) => b.scoreRange[0] - a.scoreRange[0] || b.score - a.score);
   const addsLeft = Math.max(0, addsBefore - reservedAdds);
   const best = [...pairs].sort((a, b) => b.scoreRange[1] - a.scoreRange[1])[0] ?? null;
-  const robust = pairs.find((p) => !p.missingRates.length && p.scoreRange[0] > 0 && p.scoreRange[0] >= holdBelow);
+  const bar = (pair) => pair.drop ? { kind: 'drop', value: holdBelow } : { kind: 'add-only', value: addOnlyBelow };
+  const robust = pairs.filter((p) => !p.missingRates.length && p.scoreRange[0] > 0 && p.score >= bar(p).value)
+    .sort((a, b) => b.score - a.score)[0];
   const missing = (pair) => ['mine', 'opponent'].flatMap((side) => {
     const players = side === 'mine' ? roster : opponentRoster;
     const lineups = side === 'mine' ? [mine, afterByPair.get(pair)] : [opponent];
@@ -199,10 +202,12 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   });
   const decision = !addsLeft ? { action: 'hold', reason: reservedAdds ? 'No adds left this week after pending claims.' : 'No adds left this week.', best }
     : !best ? { action: 'hold', reason: 'No eligible moves.', best }
-      : robust ? { action: 'move', pair: robust }
-        : best.scoreRange[1] > 0 && best.scoreRange[1] >= holdBelow
-          ? { action: 'insufficient', reason: projections ? 'Minutes, current-season per-minute production, or missing evidence can change whether the move clears the required gain.' : 'Missing projections can change whether the move clears the required gain.', best, missing: missing(best) }
-          : { action: 'hold', reason: `Best move gains ${best.scoreRange[1].toFixed(3)} expected categories; requires a positive gain of at least ${holdBelow}.`, best };
+      : robust ? { action: 'move', pair: robust, bar: bar(robust) }
+        : best.scoreRange[1] > 0 && best.scoreRange[1] >= bar(best).value && (best.scoreRange[0] <= 0 || best.missingRates.length)
+          ? { action: 'insufficient', reason: `${projections ? 'Minutes, current-season per-minute production, or missing evidence' : 'Missing projections'} can make the best move lose (worst case ${best.scoreRange[0].toFixed(3)} expected categories); a move must gain in every case and at least ${bar(best).value} nominally (${bar(best).kind} bar).`, best, bar: bar(best), missing: missing(best) }
+          : { action: 'hold', reason: best.scoreRange[0] > 0 && !best.missingRates.length
+            ? `Best move gains ${best.score.toFixed(3)} expected categories nominally, positive in every case; requires at least ${bar(best).value} (${bar(best).kind} bar).`
+            : `Best move gains at most ${best.scoreRange[1].toFixed(3)} expected categories; requires a positive gain of at least ${bar(best).value} (${bar(best).kind} bar).`, best, bar: bar(best) };
   // Context only: next week's games and legal starts never change the score or the decision.
   const nextWeek = { start: addDays(window.end, 1), end: addDays(window.end, 7) };
   for (const pair of new Set([...pairs.slice(0, top), best, robust])) if (pair) {
@@ -220,11 +225,11 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       : null };
   const others = pending.proposedTrades + pending.unlisted;
   return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft, openSpots, pending,
-    options: { fromDate, addsFrom, top, phi: phi ?? null, seasonMargin, protectRank, poolSize, holdBelow, roles: roleNames,
+    options: { fromDate, addsFrom, top, phi: phi ?? null, seasonMargin, protectRank, poolSize, holdBelow, addOnlyBelow, roles: roleNames,
       minutesK: projections?.k ?? null },
     projection: projections ? { version: projections.version, k: projections.k, asOf: projections.asOf } : null,
     volumeStatus: shootingVolume,
-    unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow,
+    unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow, addOnlyBelow,
     notes: [...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
       'After making the move, refresh the league and rerun; the other pairs were scored against the current roster.',
       ...(pendingClaims.length ? [`Pending claims are assumed to go through: ${plural(reservedAdds, 'add')} this week and their open spots are reserved, claimed players and pending drops are not offered, and their production is not in the baseline.`] : []),
@@ -235,7 +240,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       'Unknown starts are scored at zero and at a strong rotation line (90th percentile of the top 150, 10th percentile TO); a move must win in both.',
       ...(projections ? [
         `Minutes blend: k=${projections.k} prior pseudo-games (starting value, not calibrated); equal weights. Per-minute rates remain at the prior.`,
-        'Fixed prior-MPG and season-MPG cases are crossed for pickup/drop, alongside missing-production cases; every case must clear the move threshold. These endpoints do not converge with more games.',
+        'Fixed prior-MPG and season-MPG cases are crossed for pickup/drop, alongside missing-production cases; a move must gain in every case, and its nominal score must reach the bar. These endpoints do not converge with more games.',
         'Current-season per-minute production is an additional sensitivity check for pickup and drop: the observed rate is shrunk toward the prior with the same k pseudo-games, crossed with minutes and missing-production cases. It can withhold a move; nominal projections still use prior rates. No games uses the prior; incomplete observed box scores withhold an otherwise supported move. Usage remains descriptive.',
       ] : ['Projections use prior-season production and do not capture current role changes or breakout upside.']),
       'Season guardrail: core players are never dropped; stream players bypass season checks. Other players need a prior, rank outside the protect rank, and pickup season value at least the drop value plus the margin.',
