@@ -235,8 +235,15 @@ Updated at the end of each session.
 he accepts, and every real run so far has been hold or insufficient evidence (latest: decision
 `1d9f5a61` on the 2026-10-23 22:19 refresh). Step 5d is now a continuous pilot scored per model
 version, with a rolling gate (above) and a 2026-11-23 rethink date. Tasks 08 and 09 are merged
-(#30, #31). PR #32 (ESPN DNP flags) passes 154 tests and waits for Tony. Task 10 and Task 11a
-are being built.
+(#30, #31). PR #32 (ESPN DNP flags) passes 154 tests and waits for Tony. Task 11a (versioned
+scorecard, PR #37) and Task 10 (stream-chain planner, PR #38) are open for review. The first
+real planner run (week of Oct 26) reserves an add because 21 free agents rank inside
+`protectRank` under some minutes or rate case. It finds 5 starts from 3 adds (6 from 4 with
+`--adds-week transaction`), not the hand plan's 7, because Monday has only SF and F open and
+Wednesday has none. Next: Tony reviews #32, #37 and #38. After #32 merges, every refresh runs
+the daily pilot routine (refresh, `refresh:analyze`, `pilot:prepare`, chatbot arm, three logged
+entries, Tony's ratings). Open: whether the any-case `protectRank` hold rule is too loose this
+early in the season.
 
 **2026-10-23, stream-chain spec.** Wrote [Task 10](tasks/10-stream-chain-planner.md) from a manual
 plan for the week of Oct 26 (back-to-backs: BOS Mon–Tue, ATL/CLE Wed–Thu, CHA/HOU/MIN/PHI Fri–Sat;
