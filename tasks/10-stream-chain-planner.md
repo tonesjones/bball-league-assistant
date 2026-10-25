@@ -131,32 +131,32 @@ against the week set by `--adds-week effective` (default, the week of the effect
 
 All tests use synthetic fixtures in `tests/fixtures/stream/`, with no real names.
 
-- [ ] A 7-day schedule with back-to-backs on Mon–Tue (team A), Wed–Thu (B) and Fri–Sat (C), a
+- [x] A 7-day schedule with back-to-backs on Mon–Tue (team A), Wed–Thu (B) and Fri–Sat (C), a
       Sunday game (D), and a team E that plays Tue, Wed, Fri and Sun, with Util open every day:
       4 adds give 7 started games
       (A, B, C, D), 3 adds give 6, and 2 adds give 5 (a Monday player, then E).
-- [ ] A day with no fitting open slot adds no started game. The planner picks a team that starts
+- [x] A day with no fitting open slot adds no started game. The planner picks a team that starts
       instead when one exists.
-- [ ] A day with only SG and SF open (Util filled): a C-only candidate starts zero games that
+- [x] A day with only SG and SF open (Util filled): a C-only candidate starts zero games that
       day, while an SG/SF candidate starts. `Util` fits anyone when it is open.
-- [ ] A day with more rostered players playing than slots: a Wednesday–Thursday candidate counts
+- [x] A day with more rostered players playing than slots: a Wednesday–Thursday candidate counts
       one started game (Thursday), ties a Thursday-only candidate on games, and no rostered
       starter is benched.
-- [ ] A flexible rostered G/F sits in G, and only F is open in that arrangement: a PG-only
+- [x] A flexible rostered G/F sits in G, and only F is open in that arrangement: a PG-only
       candidate still starts, because the G/F moves to F.
-- [ ] The report's day table shows open slots and benched counts for each day in the window.
-- [ ] A player who is out, with no return timeline, or on waivers past the link's start never
+- [x] The report's day table shows open slots and benched counts for each day in the window.
+- [x] A player who is out, with no return timeline, or on waivers past the link's start never
       appears. A player dropped earlier in the chain isn't added back.
-- [ ] A free agent inside `protectRank` under the shrunk-rate case (but not the prior case) is
+- [x] A free agent inside `protectRank` under the shrunk-rate case (but not the prior case) is
       listed first, takes one reserved add, and appears in no chain. With 4 adds left, only the
       2- and 3-add chains are planned.
-- [ ] An `advise()` result of `insufficient evidence` naming an available pickup also reserves
+- [x] An `advise()` result of `insufficient evidence` naming an available pickup also reserves
       an add and is listed first.
-- [ ] When the hold move drops the stream-slot player, no chain is planned and the report says why.
-- [ ] A budget larger than the adds left is "not available". A core player as `--slot` is refused.
-- [ ] Tied chains come out the same on every run, in the documented tie-break order.
-- [ ] The report shows the as-of times and says only the first link is a recommendation.
-- [ ] `npm test` passes.
+- [x] When the hold move drops the stream-slot player, no chain is planned and the report says why.
+- [x] A budget larger than the adds left is "not available". A core player as `--slot` is refused.
+- [x] Tied chains come out the same on every run, in the documented tie-break order.
+- [x] The report shows the as-of times and says only the first link is a recommendation.
+- [x] `npm test` passes.
 
 ## Limits
 
@@ -173,3 +173,22 @@ All tests use synthetic fixtures in `tests/fixtures/stream/`, with no real names
   transaction page and make that the default for `--adds-week`.
 - Whether Tony wants a per-category streamer score here later. If so, it belongs after Task 03
   (matchup odds), not in this task.
+
+## Build notes (2026-10-24)
+
+- The search is exact but only tries each run's top 5 candidates (by started games, then
+  projected, season value and name). A chain has at most 5 links, so one of those 5 is always
+  unused elsewhere in the chain and does at least as well. Without this, the real 582-player pool
+  ran for more than 10 minutes; with it, the planner takes about 2 seconds.
+- Week 0 is the snapshot's matchup, whatever its length. Later weeks run 7 days from its end.
+  Week 1 of this league is 6 days (Oct 20 to 25), so counting 7-day blocks from the matchup start
+  would have put Monday Oct 26 in week 1.
+- A budget is "not available" only when it is larger than the adds left across every week the
+  window touches. With `--adds-week transaction`, a Sunday add uses this week's adds and the
+  later adds use next week's.
+- First real run (2026-10-23 22:19 snapshot, week of Oct 26): 21 free agents rank inside
+  `protectRank` under at least one minutes or rate case, so an add is always reserved. With
+  `--adds-week effective` the chains get 4 starts from 2 adds and 5 from 3 adds; the 4-add chain
+  isn't available. With `--adds-week transaction` they get 4, 5 and 6. The hand plan's 7 from
+  4 adds ignored open slots: on Monday only SF and F are open, and on Wednesday 13 of Tony's
+  players play and no slot is open, so a Wednesday-Thursday pickup starts only Thursday.
