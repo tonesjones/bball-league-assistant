@@ -1,7 +1,9 @@
 import { replayLineups } from './lineup-replay.mjs';
 import { CATEGORIES } from '../sources/yahoo-pages/common.mjs';
+import { addDays, tomorrow } from './weeks.mjs';
 
 const REJECT_REASONS = ['wrong-role', 'core-player', 'bad-data', 'injury', 'timing', 'other'];
+const isDecisionId = (v) => typeof v === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,100}$/.test(v);
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
 
 export function validateEntry(e, { allowLegacyPromptVersion = true } = {}) {
@@ -35,6 +37,36 @@ export function validateEntry(e, { allowLegacyPromptVersion = true } = {}) {
   if (e.note !== undefined && typeof e.note !== 'string') bad.push('note must be a string');
   if (bad.length) throw new Error(`invalid entry:\n- ${bad.join('\n- ')}`);
   return e;
+}
+
+export function validateReview(r) {
+  const bad = [];
+  if (!isDecisionId(r.decisionId)) bad.push('decisionId must name a saved decision record');
+  if (!['tool', 'chatbot', 'none'].includes(r.source)) bad.push('source must be tool, chatbot or none');
+  if (!Number.isInteger(r.rating) || r.rating < 1 || r.rating > 5) bad.push('rating must be 1..5');
+  if (r.rejectReason !== undefined && !REJECT_REASONS.includes(r.rejectReason)) bad.push(`rejectReason must be one of ${REJECT_REASONS.join(', ')}`);
+  if (r.note !== undefined && typeof r.note !== 'string') bad.push('note must be a string');
+  if (typeof r.recordedAt !== 'string' || Number.isNaN(Date.parse(r.recordedAt))) bad.push('recordedAt must be a timestamp');
+  if (bad.length) throw new Error(`invalid review:\n- ${bad.join('\n- ')}`);
+  return r;
+}
+
+// Tony rates in local/pilot-reviews.jsonl after recording. The last on-time review for a decision
+// and source replaces the entry's rating. Rows without a source (strategy reviews) don't apply.
+// A review dated (Pacific) after the decision window ends could have seen the outcome.
+export function applyReviews(results, reviews) {
+  const latest = new Map();
+  for (const r of reviews) if (r.source && r.rating != null) latest.set(`${r.decisionId}/${r.source}`, r);
+  let late = 0;
+  const applied = results.map((row) => {
+    const review = latest.get(`${row.entry.decisionId}/${row.entry.source}`);
+    if (!review) return row;
+    if (addDays(tomorrow(review.recordedAt), -1) > row.windowEnd) { late++; return row; }
+    const entry = { ...row.entry, rating: review.rating };
+    if (review.rejectReason !== undefined) entry.rejectReason = review.rejectReason;
+    return { ...row, entry };
+  });
+  return { results: applied, late };
 }
 
 export const realizedGain = replayLineups;
@@ -110,7 +142,8 @@ export function scorecard(results, { lastN = 10, minScored = 10 } = {}) {
     const rollings = ['tool', 'chatbot', 'none'].map((source) => ({ source, ...summarize(pairedRows(source, paired.slice(-lastN)))[0] })).filter((r) => r.scored !== undefined);
     const total = Object.fromEntries(['tool', 'chatbot', 'none'].map((source) => [source, summarize(pairedRows(source))[0]]));
     const { tool, chatbot, none } = total;
-    const beats = (other) => tool.net > other.net && tool.meanRating != null && other.meanRating != null && tool.meanRating > other.meanRating;
+    // A tie on net counts when ratings break it: a tool that rightly holds nets 0, as "none" does.
+    const beats = (other) => tool.net >= other.net && tool.meanRating != null && other.meanRating != null && tool.meanRating > other.meanRating;
     const gate = group.rehearsal ? 'rehearsal' : paired.length < minScored ? 'too few' : beats(chatbot) && beats(none) ? 'met' : 'not met';
     return { modelVersion: group.modelVersion, promptVersion: group.promptVersion, rehearsal: group.rehearsal, paired: paired.length, summaries,
       rolling: rollings, gate, comparison: Object.fromEntries(['tool', 'chatbot', 'none'].map((source) => [source, { net: total[source]?.net ?? 0, meanRating: total[source]?.meanRating ?? null }])) };

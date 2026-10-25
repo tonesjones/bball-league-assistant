@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { realizedGain, flips, validateEntry, summarize, scorecard } from '../src/engine/bakeoff.mjs';
+import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { realizedGain, flips, validateEntry, validateReview, applyReviews, summarize, scorecard } from '../src/engine/bakeoff.mjs';
 
 const entries = (await readFile(new URL('./fixtures/bakeoff/log.jsonl', import.meta.url), 'utf8')).trim().split('\n').map(JSON.parse);
 const logs = JSON.parse(await readFile(new URL('./fixtures/bakeoff/gamelogs.json', import.meta.url)));
@@ -90,13 +94,55 @@ test('scorecard groups model and prompt versions, pairs scored decisions, gates 
   assert.deepEqual(scorecard(rows, { lastN: 3 }), cards);
   const tied = rows.map((r) => r.entry.decisionId.startsWith('new-') && r.entry.source === 'chatbot'
     ? { ...r, flips: { helped: ['PTS', 'PTS'], hurt: [] } } : r);
-  assert.equal(scorecard(tied).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'not met');
+  assert.equal(scorecard(tied).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'met');
+  const tiedRatings = tied.map((r) => r.entry.source === 'tool' ? { ...r, entry: { ...r.entry, rating: 3 } } : r);
+  assert.equal(scorecard(tiedRatings).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'not met');
+  const behind = rows.map((r) => r.entry.decisionId.startsWith('new-') && r.entry.source === 'chatbot'
+    ? { ...r, flips: { helped: ['PTS', 'PTS', 'PTS'], hurt: [] } } : r);
+  assert.equal(scorecard(behind).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'not met');
   const unrated = rows.map((r) => r.entry.source === 'none' ? { ...r, entry: { ...r.entry, rating: null } } : r);
   assert.equal(scorecard(unrated).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'not met');
   const nine = rows.filter((r) => r.entry.decisionId !== 'new-10');
   assert.equal(scorecard(nine).find((c) => c.modelVersion === 2 && c.promptVersion === 1).paired, 9);
   assert.equal(scorecard(nine).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'too few');
   assert.deepEqual(scorecard(rows.filter((r) => r.entry.decisionId !== 'old'), { lastN: 3 }), cards.slice(1));
+});
+
+test('reviews override entry ratings unless late; rows without a source are skipped', () => {
+  const row = (source, rating) => ({ entry: { ...entries[0], decisionId: 'd1', source, rating }, windowEnd: '2026-10-25' });
+  const reviews = [
+    { recordedAt: '2026-10-25T04:00:00Z', decisionId: 'd1', source: 'tool', rating: 2, rejectReason: 'timing' },
+    { recordedAt: '2026-10-25T05:00:00Z', decisionId: 'd1', source: 'tool', rating: 4 },
+    { recordedAt: '2026-10-25T05:00:00Z', type: 'strategy-review', decisionId: 'd1', rating: null },
+    // 2026-10-26 08:00 UTC is 01:00 Pacific on the 26th, after the window ends on the 25th.
+    { recordedAt: '2026-10-26T08:00:00Z', decisionId: 'd1', source: 'none', rating: 5 },
+    // 2026-10-26 06:00 UTC is still the 25th in Pacific time.
+    { recordedAt: '2026-10-26T06:00:00Z', decisionId: 'd1', source: 'chatbot', rating: 1 },
+  ];
+  const { results, late } = applyReviews([row('tool', null), row('none', 3), row('chatbot', null)], reviews);
+  assert.equal(results[0].entry.rating, 4);
+  assert.equal(results[0].entry.rejectReason, undefined);
+  assert.equal(results[1].entry.rating, 3);
+  assert.equal(results[2].entry.rating, 1);
+  assert.equal(late, 1);
+});
+
+test('rate validates the review and the decision before appending', async (t) => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'bball-rate-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  await mkdir(path.join(dir, 'local/decisions'), { recursive: true });
+  await writeFile(path.join(dir, 'local/decisions/d1.json'), JSON.stringify({ id: 'd1' }));
+  const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));
+  const rate = (...a) => execFileSync(process.execPath, [cli, 'rate', ...a], { cwd: dir, stdio: 'pipe' });
+  rate('d1', 'none', '3', '--reason', 'timing', '--note', 'late add');
+  assert.throws(() => rate('missing', 'tool', '3'), /ENOENT/);
+  assert.throws(() => rate('d1', 'coach', '3'), /source must be/);
+  assert.throws(() => rate('d1', 'tool', '6'), /rating must be/);
+  assert.throws(() => rate('d1', 'tool', '3', '--reason', 'vibes'), /rejectReason must be/);
+  const lines = (await readFile(path.join(dir, 'local/pilot-reviews.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);
+  assert.equal(lines.length, 1);
+  assert.deepEqual({ ...lines[0], recordedAt: 'x' }, { recordedAt: 'x', decisionId: 'd1', source: 'none', rating: 3, rejectReason: 'timing', note: 'late add' });
+  assert.throws(() => validateReview({ ...lines[0], recordedAt: 'never' }), /recordedAt/);
 });
 
 test('unversioned records are isolated as rehearsal data', () => {

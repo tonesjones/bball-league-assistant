@@ -78,11 +78,11 @@ source, so a later rating can't count.
 
 Done when:
 
-- [ ] A test: equal nets and a higher tool rating gives `met`; equal nets and equal ratings gives
+- [x] A test: equal nets and a higher tool rating gives `met`; equal nets and equal ratings gives
       `not met`.
-- [ ] A test: a review overrides a null entry rating, a late review is ignored, and a
+- [x] A test: a review overrides a null entry rating, a late review is ignored, and a
       `strategy-review` row is skipped.
-- [ ] `rate` rejects an unknown decision, source or reason.
+- [x] `rate` rejects an unknown decision, source or reason.
 - [x] `PLAN.md`'s gate paragraph states the tie rule (done with this spec).
 
 ## 14d: move rule and the add-only bar (`MODEL_VERSION` 4)
