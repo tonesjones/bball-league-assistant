@@ -1,7 +1,8 @@
 # Task 09: saved-lineup scoring and fair pilot inputs
 
-Implements Phase 0 step 5e and prepares step 5d. The pilot remains pending Tony's real outcome
-reviews and an explicit freeze. Build this before recording any scored decisions.
+Implements Phase 0 step 5e and prepares step 5d. The pilot is continuous and scored per model
+version ([Task 11](11-continuous-pilot-and-scorecard.md)). Build this before recording any
+scored decisions.
 
 ## Done when
 
@@ -21,8 +22,9 @@ reviews and an explicit freeze. Build this before recording any scored decisions
       are verified; the candidate prompt and model identity are recorded.
 - [x] Synthetic replay and record/packet integration tests pass with the full suite.
 - [x] Tony accepts the historical insufficient-evidence outcome (October 23).
-- [ ] Tony reviews acceptable real move and hold examples, confirms settings/prompt and starts
-      the pilot. The insufficient-evidence review alone does not complete this gate.
+- [x] The pilot starts without a freeze (Tony, 2026-10-24). It runs continuously from the first
+      refresh after PR #32 merges and is scored per model version (Task 11). Accepting a real
+      move is no longer a precondition.
 
 ## Limits
 

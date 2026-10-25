@@ -1,7 +1,7 @@
 # Task 10: stream-chain planner
 
 A side tool beside `npm run advise`. It doesn't change advice output, decision records or the
-bakeoff, so it doesn't affect the pilot freeze. Needs Tasks 02, 05 and 08.
+bakeoff, so it doesn't affect the pilot. Needs Tasks 02, 05 and 08.
 
 ## Goal
 
