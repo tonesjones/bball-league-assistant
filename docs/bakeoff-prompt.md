@@ -1,6 +1,12 @@
 # Chatbot comparison protocol (versioned)
 
-Prompt version: 1
+Prompt version: 2
+Chatbot model: gpt-6-sol
+Chatbot effort: medium
+
+Version 1 named `gpt-6.1-sol`, which the Codex CLI rejects on Tony's ChatGPT account
+(`model_not_found`, 2026-10-24), so no version 1 chatbot entry exists. Version 2 keeps the
+prompt text and changes only the model and the pinned effort.
 
 The pilot is continuous and has no freeze (PLAN step 5d, Task 11). Every refresh after PR #32
 merges gets a decision record and three entries: tool, chatbot and do-nothing. Results are
@@ -21,11 +27,21 @@ usage, not just Yahoo screenshots. Usage is descriptive; the tool does not add a
 Projections include the prior lines and current-season sample. Do not give the chatbot the
 recommendation, rankings, sensitivity scores or other chats' conclusions.
 
-Run a fresh isolated ChatGPT/Codex session outside this repository using `gpt-6.1-sol`, no memory,
-custom instructions, browsing or other input files. Copy only the packet to that directory.
-Record the prompt version and the observed model/effort from the session receipt with each
-chatbot entry. A different model or effort is a new prompt version. The preparation command
-does not launch a model.
+Run a fresh isolated Codex session outside this repository with the model and effort above, no
+memory, browsing or other input files. Copy only the files listed in the packet's
+`manifest.json` `hashes` to a new empty directory, then run from that directory:
+
+```
+codex exec --json --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check -s read-only -m gpt-6-sol -c model_reasoning_effort="medium" -c windows.sandbox="elevated" --disable memories --disable apps --disable browser_use --disable browser_use_external --disable in_app_browser --disable computer_use - < prompt.txt
+```
+
+`--ignore-user-config` skips Tony's `config.toml`, whose default model is the rejected one. That
+also drops its Windows sandbox setting, so `-c windows.sandbox="elevated"` restores it. Without
+it, every file read is "blocked by policy" and the model answers without seeing the packet. Check
+that the session ran commands with no policy rejections before recording the reply. The CLI still
+loads `~/.codex/AGENTS.md`; nothing in this protocol relies on it. Record the prompt
+version and the observed model/effort with each chatbot entry. A different model or effort is a
+new prompt version. The preparation command does not launch a model.
 
 ## Fixed prompt candidate
 

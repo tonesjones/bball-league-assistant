@@ -34,11 +34,16 @@ const body = prompt.split('<!-- PROMPT START -->')[1]?.split('<!-- PROMPT END --
 if (!body) throw new Error('Pilot prompt markers missing');
 await writeFile(path.join(folder, 'prompt.txt'), body + '\n', { flag: 'wx' });
 hashes['prompt.txt'] = hash(body + '\n');
-const manifest = { status: 'rehearsal-not-frozen', decisionId: id, preparedAt: new Date().toISOString(),
+const field = (label) => {
+  const value = new RegExp(`^${label}: (\\S+)$`, 'm').exec(prompt)?.[1];
+  if (!value) throw new Error(`docs/bakeoff-prompt.md has no "${label}:" line`);
+  return value;
+};
+const manifest = { protocol: 'continuous', decisionId: id, preparedAt: new Date().toISOString(),
   asOf: record.report.asOf, logCoverage: coverage, commit: record.provenance.commit,
-  dirty: record.provenance.dirty, projectionVersion: record.provenance.projectionVersion,
-  options: record.options, baselineModel: 'gpt-6.1-sol', hashes,
-  pending: ['Tony reviews real move, hold and insufficient-evidence examples',
-    'Merge and review model/scorer changes', 'Confirm frozen model, prompt, options and pilot start before prospective logging'] };
+  dirty: record.provenance.dirty, modelVersion: record.provenance.modelVersion ?? null,
+  projectionVersion: record.provenance.projectionVersion, options: record.options,
+  promptVersion: Number(field('Prompt version')), chatbotModel: field('Chatbot model'),
+  chatbotEffort: field('Chatbot effort'), hashes };
 await writeFile(path.join(folder, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n', { flag: 'wx' });
-console.log(`Prepared rehearsal packet: ${folder}\nNo pilot started. Use a fresh isolated chatbot session with only packet files; withhold the tool recommendation.`);
+console.log(`Prepared pilot packet: ${folder}\nRun the chatbot arm (prompt version ${manifest.promptVersion}, ${manifest.chatbotModel}, ${manifest.chatbotEffort}) in a fresh isolated session with only the files in manifest.hashes; withhold the tool recommendation.`);
