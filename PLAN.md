@@ -177,6 +177,11 @@ No UI. Run from Claude Code.
    non-IL roster spot, `advise` also scores an add with no drop. Each reported pickup shows its
    next-week games and legal starts as context; they don't change the score. `MODEL_VERSION` 2.
 
+8. Pending claims ([Task 13](tasks/13-pending-claims.md)). The team page's pending waiver
+   claims reserve adds and open spots, claimed players and pending drops aren't offered, and the
+   report warns when claims need more adds or spots than Tony has. Proposed trades are reported,
+   not modeled. `MODEL_VERSION` 3.
+
 **Gate.** A rolling comparison per model version. Go to Phase 1 when one version, over at least
 10 scored decisions, beats both the chatbot and doing nothing on categories helped minus hurt, and
 Tony's mean rating for the tool is higher than for both. Fewer than 10 scored decisions is "too
@@ -242,6 +247,11 @@ context (`MODEL_VERSION` 2). On that snapshot it now holds for the right reason:
 move gains 0.017 expected categories. The pickup Tony wanted gains 0.002 this week from one
 Sunday start and shows 3 games and 3 legal starts the next week. Task 12 is merged (#39). Next: the
 daily pilot routine.
+
+**2026-10-24, pending claims.** Task 13 reads pending waiver claims from the team page. On the
+21:13 capture, two add-only claims need 2 adds and 2 open spots but Tony has 1 of each, so the
+report now warns that the second claim may fail and holds with no adds left after the claims.
+Next: Tony reviews the Task 13 PR.
 
 **2026-10-24, continuous pilot.** Tony dropped the frozen 2-week pilot: it waited on a real move
 he accepts, and every real run so far has been hold or insufficient evidence (latest: decision

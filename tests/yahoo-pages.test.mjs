@@ -310,3 +310,27 @@ test('player names: Jr./III suffixes and a status after a numeral still parse', 
   const fa = parseFreeAgents(page('fa-1').replace('Kelly Oubreson Jr.QPlayer Note', 'Kelly Oubreson IIIQPlayer Note'), 'fa-1');
   assert.equal(fa.find((p) => p.name === 'Kelly Oubreson III').status, 'Q');
 });
+
+// Shapes seen in real captures; names are synthetic.
+const withPending = (count, ...items) => page('team').replace('Waiver Budget: $91',
+  ['Waiver Budget: $91', '', 'Pending Transactions', String(count), 'Collapse', ...items, 'Edit Waiver Priority', 'Edit'].join('\n'));
+
+test('team: pending waiver claims, proposed trades and unlisted items', () => {
+  const t = parseTeam(withPending(5,
+    'Waiver 1 (Oct 28): Bid $3 for Pat Pickup, Drop Marcus Mockwell Jr.', 'View Details',
+    'Waiver 2 (Oct 28): Add Quinn Claim, Drop Wendell Benchmark', 'View Details',
+    'Waiver 3 (Oct 29): Add Riley Rookie', 'View Details',
+    'You have proposed a trade to Other Fixture Team', 'View Proposed Trade'));
+  assert.deepEqual(t.pending, { count: 5, proposedTrades: 1, unlisted: 1, waivers: [
+    { order: 1, date: 'Oct 28', add: 'Pat Pickup', bid: 3, drop: 'Marcus Mockwell Jr.' },
+    { order: 2, date: 'Oct 28', add: 'Quinn Claim', bid: null, drop: 'Wendell Benchmark' },
+    { order: 3, date: 'Oct 29', add: 'Riley Rookie', bid: null, drop: null }] });
+  assert.equal(t.roster.length, 10);
+  assert.deepEqual(parseTeam(page('team')).pending, { count: 0, waivers: [], proposedTrades: 0, unlisted: 0 });
+  assert.throws(() => parseTeam(withPending(1, 'Waiver 1 (Oct 28): Swap Pat Pickup')), /team: line \d+: unrecognized pending waiver claim/);
+  assert.throws(() => parseTeam(withPending(0, 'Waiver 1 (Oct 28): Add Pat Pickup')), /more pending items listed than the count/);
+  const s = buildSnapshot({ ...pages(), team: withPending(1, 'Waiver 1 (Oct 28): Add Pat Pickup') }, ASOF);
+  assert.doesNotThrow(() => validate(JSON.parse(JSON.stringify(s))));
+  s.team.pending.waivers[0].add = '';
+  assert.throws(() => validate(s), /team\.pending has a bad shape/);
+});

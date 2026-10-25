@@ -1,5 +1,29 @@
 import { load, fail, indexOf, stopIndex, player, SLOT_RE, NAME_RE, rejectSignedOut } from './common.mjs';
 
+const WAIVER_RE = /^Waiver (\d+) \(([A-Z][a-z]{2} \d{1,2})\): (?:Add (.+?)|Bid \$(\d+(?:\.\d+)?) for (.+?))(?:, Drop (.+))?$/;
+
+// Pending claims and proposed trades. Items the count includes but the page doesn't list
+// (for example a trade offered to Tony) are counted as unlisted, never guessed.
+function parsePending(page, L) {
+  const p = L.findIndex((l) => l.s === 'Pending Transactions');
+  if (p < 0) return { count: 0, waivers: [], proposedTrades: 0, unlisted: 0 };
+  const count = Number(L[p + 1]?.s);
+  if (!Number.isInteger(count)) throw fail(page, L[p + 1] ?? L[p], 'expected a pending transaction count');
+  const waivers = [];
+  let proposedTrades = 0;
+  for (let i = p + 2; i < L.length; i++) {
+    const s = L[i].s, w = WAIVER_RE.exec(s);
+    if (['Collapse', 'View Details', 'View Proposed Trade'].includes(s)) continue;
+    if (w) waivers.push({ order: +w[1], date: w[2], add: w[3] ?? w[5], bid: w[4] == null ? null : Number(w[4]), drop: w[6] ?? null });
+    else if (/^You have proposed a trade to .+/.test(s)) proposedTrades++;
+    else if (/^Waiver \d+ /.test(s)) throw fail(page, L[i], 'unrecognized pending waiver claim');
+    else break;
+  }
+  const unlisted = count - waivers.length - proposedTrades;
+  if (unlisted < 0) throw fail(page, L[p + 1], 'more pending items listed than the count');
+  return { count, waivers, proposedTrades, unlisted };
+}
+
 export function parseTeam(text, page = 'team') {
   rejectSignedOut(text, page);
   const L = load(text);
@@ -34,5 +58,6 @@ export function parseTeam(text, page = 'team') {
   }
   if (!roster.length) throw fail(page, L[hdr], 'no roster rows');
 
-  return { name, rank, record: { wins: +rec[1], losses: +rec[2], ties: +rec[3] }, faabBalance: Number(budget[1]), addsUsedThisWeek, roster };
+  return { name, rank, record: { wins: +rec[1], losses: +rec[2], ties: +rec[3] }, faabBalance: Number(budget[1]), addsUsedThisWeek,
+    pending: parsePending(page, L), roster };
 }

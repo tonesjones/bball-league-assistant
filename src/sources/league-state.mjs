@@ -4,7 +4,8 @@
 //   asOf,                              ISO time of the refresh
 //   settings: { scoringType, categories, rosterPositions: [{slot, count}], maxAddsPerWeek|null,
 //               maxGamesPerWeek|null, waiverType, playoffs: {teams, weeks, endsOn}, raw },
-//   team: { name, rank: integer|null, record: {wins, losses, ties}, faabBalance, addsUsedThisWeek, roster: [player] },
+//   team: { name, rank: integer|null, record: {wins, losses, ties}, faabBalance, addsUsedThisWeek, roster: [player],
+//           pending?: { count, waivers: [{ order, date: 'Mon D', add, bid|null, drop|null }], proposedTrades, unlisted } },
 //   matchup: { week, start, end (YYYY-MM-DD), opponentName, totals: {mine, opponent}, volume: {mine, opponent},
 //              score: {mine, opponent}, opponentRoster: [player] },
 //   freeAgents: [{ rank, name, nbaTeam, positions, status, waiverClears|null }],
@@ -64,6 +65,10 @@ export function validate(s) {
     need(isNum(t.faabBalance), 'team.faabBalance must be a number');
     need(Number.isInteger(t.addsUsedThisWeek) && t.addsUsedThisWeek >= 0, 'team.addsUsedThisWeek must be a count');
     players(t.roster, 'team.roster');
+    const p = t.pending;
+    if (p !== undefined) need(isObj(p) && [p.count, p.proposedTrades, p.unlisted].every((n) => Number.isInteger(n) && n >= 0)
+      && Array.isArray(p.waivers) && p.waivers.every((w) => isObj(w) && Number.isInteger(w.order) && isStr(w.date) && isStr(w.add)
+        && (w.bid === null || isNum(w.bid)) && (w.drop === null || isStr(w.drop))), 'team.pending has a bad shape');
   }
 
   const m = s.matchup;

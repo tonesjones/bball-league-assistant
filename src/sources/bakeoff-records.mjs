@@ -46,7 +46,7 @@ export async function attachLineups(entry) {
     const pickup = snapshot.freeAgents.map(match).find((p) => p.name === entry.add.name && String(p.espnId) === String(entry.add.espnId));
     const drop = entry.drop && roster.find((p) => p.name === entry.drop.name && String(p.espnId) === String(entry.drop.espnId));
     if (!pickup || (entry.drop && !drop) || BLOCKED.includes(pickup.status)) throw new Error('Move must name an available eligible pickup and a rostered drop');
-    if (!entry.drop && openRosterSpots(snapshot.settings, snapshot.team.roster) < 1) throw new Error('A move without a drop needs an open roster spot');
+    if (!entry.drop && (r.openSpots ?? openRosterSpots(snapshot.settings, snapshot.team.roster)) < 1) throw new Error('A move without a drop needs an open roster spot');
     if (drop && r.options.roles.core.some((name) => normalizeName(name) === normalizeName(drop.name))) throw new Error('Cannot drop a core player');
     if (!r.addsLeft || entry.start < pickupStart(pickup, r.fromDate, r.window, r.addsFrom) || entry.start > r.window.end) throw new Error('Move has no legal effective date/add remaining');
     const project = (force) => projectTeam(roster, {}, {}, snapshot.settings, schedule, r.fromDate, r.window.end,

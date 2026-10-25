@@ -66,6 +66,8 @@ export function formatAdvice(report) {
     `Unknown games: mine ${report.unknownGames.mine} | opponent ${report.unknownGames.opponent}`, '',
     `Snapshot: ${report.asOf}`, `Week ${report.week}: ${report.window.start} to ${report.window.end}`,
     `From: ${report.fromDate} | Adds from: ${report.addsFrom} | Adds left: ${report.addsLeft}`,
+    ...(report.pending?.waivers ?? []).map((w) => `Pending claim ${w.order} (${w.date}): add ${w.add}${w.bid == null ? '' : ` for $${w.bid}`}${w.drop ? `, drop ${w.drop}` : ''}`),
+    ...(report.pending?.warning ? [`Warning: ${report.pending.warning}`] : []),
     `Shooting volume: ${Object.entries(report.volumeStatus).map(([side, v]) => `${side}: ${v.status}${v.reason ? ` (${v.reason})` : ''}${v.unmatched?.length ? `; unmatched: ${v.unmatched.join(', ')}` : ''}`).join(' | ')}`, '',
     'Category     Mine       Opponent   P(win)   Need'];
   if (report.projection) lines.splice(lines.length - 1, 0,
