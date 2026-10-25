@@ -69,11 +69,17 @@ chatbot entry to the prompt version above; `record` rejects a chatbot entry with
 (1–5), or null when not yet reviewed. Record a rejection reason (`wrong-role`, `core-player`,
 `bad-data`, `injury`, `timing`, `other`) and explanation before the outcome is known.
 
+To rate after recording, run `npm run bakeoff -- rate <decisionId> <tool|chatbot|none> <1-5>
+[--reason R] [--note N]`. It appends to `local/pilot-reviews.jsonl`. Rate all three arms,
+"none" included: the gate compares mean ratings. `score` and `scorecard` use the last review
+for each decision and arm in place of the entry's rating. A review dated (Pacific time) after
+the decision's week ends is ignored and counted as late.
+
 Keep the raw chatbot reply in `note`. An unavailable/illegal/malformed chatbot answer is an
 invalid hold: include `invalidReason` and the raw reply. Do not drop invalid decisions from the
 comparison. Record known action disposition in `taken`; it does not change replay scoring.
 Later action notes belong in a separate private log; never rewrite the original prediction
-or retrospectively change a rating. Pending ratings remain pending, not a pilot pass.
+or change a rating after the week ends. Pending ratings remain pending, not a pilot pass.
 
 Save the three entries as a JSON array and run `npm run bakeoff -- record <entries.json>`.
 This appends source-specific saved legal lineups, rather than applying the tool's proposal to
