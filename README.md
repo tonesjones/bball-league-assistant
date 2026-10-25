@@ -17,8 +17,8 @@ history are also available. Steps 5a–5c are implemented; the scored pilot has 
 
 Tony rejected the first reviewed move because prior-season rates overruled strong current-season
 production. The conservative rate disagreement check below addresses that failure; Tony
-accepted the historical insufficient-evidence result. Acceptable real move and hold examples
-still need review before a pilot freeze. Task specs are in [`tasks/`](tasks/).
+accepted the historical insufficient-evidence result. The pilot runs continuously and is
+scored per model version, with no freeze. Task specs are in [`tasks/`](tasks/).
 
 The pre-pilot rate disagreement check now tests observed season per-minute production shrunk
 toward the prior with the minutes blend's same k pseudo-games, alongside prior rates for
@@ -104,7 +104,7 @@ without replay evidence cannot be made scored decisions after the fact.
 `npm run pilot:prepare -- <decisionId>` writes a unique private rehearsal packet with the same
 Yahoo snapshot, ESPN evidence, projections, schedule, IDs and roles for the chatbot, plus input
 hashes and the candidate prompt. It excludes tool recommendations. It does not start the pilot;
-see [the comparison protocol](docs/bakeoff-prompt.md) for reviews and the pending freeze.
+see [the comparison protocol](docs/bakeoff-prompt.md) for the versioned pilot.
 
 Minutes blend this season's eligible games with two prior pseudo-games. `--minutes-k` changes
 that starting weight; it is not calibrated. Rates per minute remain from the prior season.

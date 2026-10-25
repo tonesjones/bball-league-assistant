@@ -143,13 +143,15 @@ No UI. Run from Claude Code.
      gate, and stale game logs refused. A synthetic fixture covers the 10-21 regression (a
      low-prior big who starts and plays 30 minutes, against a high-prior wing who plays 18 off
      the bench) without real names.
-   - **5d. Pilot, 2 full weeks.** Not a PR. Freeze the model settings,
-     `docs/bakeoff-prompt.md` and the decision rules. Log every suggestion (tool, chatbot and
-     "do nothing"), Tony's rating and any rejection reason before the outcome is known. Also
-     track invalid and unscorable decisions, refresh time and recurring data problems. Decisions
-     logged before the freeze are rehearsal data and don't count toward the gate. If a bug that
-     changes recommendations or scores (projections, lineups, scoring) is fixed mid-pilot,
-     restart the scored window. A parser fix that only lets a refresh succeed doesn't restart it.
+   - **5d. Continuous pilot ([Task 11](tasks/11-continuous-pilot-and-scorecard.md)).** Not a
+     freeze. Starts with the first refresh after PR #32 merges and runs every refresh from then
+     on, even while Tony rates most advice as bad. Every refresh gets a decision record. Log the
+     tool, chatbot and "do nothing" entries, Tony's rating and any rejection reason before the
+     outcome is known. Also track invalid and unscorable decisions, refresh time and recurring
+     data problems. A fix doesn't restart anything: a change to recommendations or scores bumps
+     `MODEL_VERSION`, a change to the chatbot prompt bumps its prompt version, and the scorecard
+     groups results by version. Decisions recorded before Task 11a have no version and count
+     only as rehearsals.
    - **5e. Lineup-aware scoring.** Built while the pilot runs, from the saved lineups. Replay the
      baseline and proposed daily starts against real game logs: a pickup's benched game counts
      for nothing, a displaced starter's production is subtracted, games before the effective
@@ -171,10 +173,17 @@ No UI. Run from Claude Code.
    slot, for 2, 3 and 4 adds. A long-term pickup always comes first and gets its own add. It
    doesn't change `advise` output or the bakeoff, so it can be built before or during the pilot.
 
-**Gate.** Go to Phase 1 only if the tool's moves beat both the chatbot's and doing nothing on
-categories helped minus hurt, and Tony rates them as more useful. Two weeks is a small sample:
-"inconclusive, keep testing" is a valid result. Otherwise rethink or stop. Record the result here
-and as a decision note in the vault.
+**Gate.** A rolling comparison per model version. Go to Phase 1 when one version, over at least
+10 scored decisions, beats both the chatbot and doing nothing on categories helped minus hurt, and
+Tony's mean rating for the tool is higher than for both. Fewer than 10 scored decisions is "too
+few, keep testing". If no version clears the gate by 2026-11-23, rethink or stop. Record the
+result here and as a decision note in the vault.
+
+**Improvement loop (Task 11b, later).** After about 2 weeks of logged decisions, a weekly report
+computed in code counts rejection reasons and unscored causes per version and replays saved
+decisions with one tunable value changed. It suggests changes and never makes them: Tony picks a
+change, it lands as a PR that bumps `MODEL_VERSION`, and the scorecard shows whether the new
+version does better.
 
 ### Phase 1: better numbers
 
@@ -222,6 +231,13 @@ prints ok or the error, without page text. It would replace the scratch script u
 
 Updated at the end of each session.
 
+**2026-10-24, continuous pilot.** Tony dropped the frozen 2-week pilot: it waited on a real move
+he accepts, and every real run so far has been hold or insufficient evidence (latest: decision
+`1d9f5a61` on the 2026-10-23 22:19 refresh). Step 5d is now a continuous pilot scored per model
+version, with a rolling gate (above) and a 2026-11-23 rethink date. Tasks 08 and 09 are merged
+(#30, #31). PR #32 (ESPN DNP flags) passes 154 tests and waits for Tony. Task 10 and Task 11a
+are being built.
+
 **2026-10-23, stream-chain spec.** Wrote [Task 10](tasks/10-stream-chain-planner.md) from a manual
 plan for the week of Oct 26 (back-to-backs: BOS Mon–Tue, ATL/CLE Wed–Thu, CHA/HOU/MIN/PHI Fri–Sat;
 7 games from 4 adds). Tony's rule: schedule efficiency never pushes a long-term pickup down the
@@ -241,7 +257,7 @@ top pair drops the center Tony agreed to withhold, while most pickup-only rate c
 Tony accepted withholding the historical drop as insufficient evidence. Acceptable real move
 and hold examples, fresh Yahoo data and the pilot freeze remain pending. The shared ESPN/Yahoo
 rehearsal packet was generated and its input hashes checked. No pilot or background watch was
-started. Task 09 depends on Task 08; both are draft PRs for review.
+started. Task 09 depends on Task 08; both were merged in #30 and #31.
 
 **2026-10-23, rate disagreement check.** Task 08 adds observed per-minute production as an
 additional sensitivity endpoint for both pickup and drop, crossed with minutes and missing

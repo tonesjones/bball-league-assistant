@@ -42,6 +42,10 @@ Carried over from Draft Lab's season manager. Treat them as tests, not suggestio
 - A task is done when its acceptance tests pass with `npm test` and the task file's "Done when" list is checked.
 - Keep pure logic (projections, simulator, planner) in `src/engine/`, free of I/O. I/O lives in `src/sources/` and `scripts/`.
 - Seed every random number generator; the same inputs must give the same output.
+- A pull request that changes recommendations or scores (projections, advice rules, lineups, replay
+  scoring) bumps `MODEL_VERSION` and says so in its description. A parser fix that only lets a
+  refresh succeed doesn't. A change to the chatbot prompt bumps the prompt version in
+  `docs/bakeoff-prompt.md`.
 - If a task's spec is wrong or impossible, stop and write what you found at the end of the task file instead of guessing.
 - Docs-only pull requests (only `tasks/`, `docs/`, `PLAN.md`, `README.md` or `AGENTS.md`) don't wait for Tony. After opening one, check that the PR head equals the local branch tip, squash-merge it, delete the branch locally and on GitHub, and update local `main`, without asking. A pull request that touches anything else, including `.claude/` settings, still waits for Tony's OK to merge.
 

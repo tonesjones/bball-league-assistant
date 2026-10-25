@@ -1,8 +1,12 @@
-# Chatbot comparison protocol (prepared, not frozen)
+# Chatbot comparison protocol (versioned)
 
-The scored pilot has not started. Review real move, hold and insufficient-evidence outcomes
-with Tony, merge the model/scoring changes, and confirm the settings before recording a pilot
-start timestamp. Existing decisions and packets are rehearsals. No retrospective start dates.
+Prompt version: 1
+
+The pilot is continuous and has no freeze (PLAN step 5d, Task 11). Every refresh after PR #32
+merges gets a decision record and three entries: tool, chatbot and do-nothing. Results are
+grouped by the tool's `MODEL_VERSION` and this prompt's version. Changing the prompt text, the
+chatbot model or its effort bumps the prompt version above. Decisions recorded before Task 11a
+have no model version and count only as rehearsals. No retrospective start dates.
 
 ## Shared evidence
 
@@ -19,8 +23,9 @@ recommendation, rankings, sensitivity scores or other chats' conclusions.
 
 Run a fresh isolated ChatGPT/Codex session outside this repository using `gpt-6.1-sol`, no memory,
 custom instructions, browsing or other input files. Copy only the packet to that directory.
-Keep the same model and effort throughout the pilot and record the observed model/effort from
-the session receipt. The preparation command does not launch a model or freeze a pilot.
+Record the prompt version and the observed model/effort from the session receipt with each
+chatbot entry. A different model or effort is a new prompt version. The preparation command
+does not launch a model.
 
 ## Fixed prompt candidate
 
@@ -70,13 +75,13 @@ baseline, so category changes use the saved-lineup counterfactual instead.
 
 Report each decision separately. Source summaries count invalid and unscored decisions and
 average each category only over scored entries. Helped/hurt totals across overlapping hypothetical
-moves are decision-level evidence, not a feasible weekly plan. Two weeks is a small sample;
-inconclusive is a valid result.
+moves are decision-level evidence, not a feasible weekly plan. Fewer than 10 scored decisions
+for a version is "too few"; inconclusive is a valid result.
 
-## Freeze record (pending)
+## Versions
 
-Before starting, save a private freeze record with the approved commit/projection version,
-clean working-tree state, options/roles, prompt hash, observed chatbot model/effort and UTC
-start time. Only decisions made after that timestamp count. Freeze these for two full weeks.
-A recommendation/scoring-changing fix or prompt/model change restarts the scored window;
-a parser repair that only permits capture does not. No watch or scheduled automation is added.
+Each decision record stores the tool's `MODEL_VERSION` beside its commit. A pull request that
+changes recommendations or scores (projections, advice rules, lineups, replay scoring) bumps
+`MODEL_VERSION`. A parser repair that only lets a refresh succeed doesn't. Nothing restarts:
+the scorecard keeps each version's decisions apart, so an older version's results never mix
+with a newer one's. No watch or scheduled automation is added.
