@@ -240,8 +240,8 @@ refresh held with "No eligible add/drop pairs": an IL move opened a spot, but `a
 scored drops, and the guardrail blocked every one. Task 12 adds add-only moves and next-week
 context (`MODEL_VERSION` 2). On that snapshot it now holds for the right reason: the best add-only
 move gains 0.017 expected categories. The pickup Tony wanted gains 0.002 this week from one
-Sunday start and shows 3 games and 3 legal starts the next week. Next: Tony reviews the Task 12
-PR, then the daily pilot routine.
+Sunday start and shows 3 games and 3 legal starts the next week. Task 12 is merged (#39). Next: the
+daily pilot routine.
 
 **2026-10-24, continuous pilot.** Tony dropped the frozen 2-week pilot: it waited on a real move
 he accepts, and every real run so far has been hold or insufficient evidence (latest: decision
