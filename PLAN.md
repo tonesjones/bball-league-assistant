@@ -262,6 +262,11 @@ the transaction history archive, the draft pages and the ad hoc research scripts
 capture, both teams get all four values. 188 tests pass. A live refresh that fetches the new page
 hasn't run yet. Next: 14b, after Tony picks the chatbot model.
 
+**2026-10-24, Task 14b merged (#43).** The chatbot arm runs on `gpt-6-sol` at medium effort as
+prompt version 2; `gpt-6.1-sol` is still rejected on Tony's account. A real run on the 10-24
+packet returned a valid HOLD once `-c windows.sandbox="elevated"` restored file reads. That entry
+was validated but not recorded. Next: 14c.
+
 **2026-10-24, empty-slot pickups.** PRs #32, #37 and #38 are merged. The 2026-10-24 21:13
 refresh held with "No eligible add/drop pairs": an IL move opened a spot, but `advise` only
 scored drops, and the guardrail blocked every one. Task 12 adds add-only moves and next-week
