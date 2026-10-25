@@ -284,6 +284,18 @@ pairs it picks the highest nominal score. `MODEL_VERSION` 4. On the 10-23 snapsh
 Next: `MODEL_VERSION` 4 stays fixed from its first refresh (target 2026-10-27), and every refresh
 after that runs the daily pilot routine.
 
+**2026-10-25, first v4 refresh.** The 14:30 capture gave decision `01375bd1`: hold, no adds left
+in week 1. No pilot entries were recorded for it. Two findings:
+
+- Tony confirmed that a Sunday add takes effect Monday and counts against the next week's adds,
+  which settles the Task 10 open question (`--adds-week effective`). `advise` scores only the
+  current matchup week, so on the last day of a week it can't score a move effective the next
+  day. A week rollover (next week's dates and opponent from the `week=N+1` matchup page, zero
+  banked, a fresh add budget) would change recommendations, so it needs `MODEL_VERSION` 5. Tony
+  deferred it.
+- Today's `week=1` matchup page has no FGM/A or FTM/A columns, though the 10-24 capture had them,
+  so FG% and FT% were unknown. Check the week 2 page on the next refresh.
+
 **2026-10-24, empty-slot pickups.** PRs #32, #37 and #38 are merged. The 2026-10-24 21:13
 refresh held with "No eligible add/drop pairs": an IL move opened a spot, but `advise` only
 scored drops, and the guardrail blocked every one. Task 12 adds add-only moves and next-week
