@@ -24,6 +24,13 @@ decision IDs and rejection notes belong in ignored `local/` records.
 
 ## Add an entry when something new appears
 
+Resolved during the October 23 refresh: ESPN can report a reserve with `didNotPlay: false`,
+`MIN: --`, a DNP reason and zero statistics. This previously stopped game-log refreshes.
+The box-score parser now recognizes that combination as a DNP, excludes it from team minutes,
+and retains the reason. Coach's-decision minutes are zero; injury/rest minutes remain unknown.
+Missing minutes without that evidence still fail. A synthetic regression test and a completed
+real refresh verified the fix.
+
 Use the next ID and record: date, evidence, affected decision, consequence, present handling,
 and the next verification or resolution. Keep private evidence in the decision/rehearsal record
 and link the public issue or fix here when available. A limitation is not resolved merely
