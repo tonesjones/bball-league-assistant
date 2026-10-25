@@ -28,10 +28,11 @@ export function strongLine(priors, { poolSize = 150 } = {}) {
   return line;
 }
 
-export function assignLineup(players, slots, preferredNames = []) {
+export function assignLineup(players, slots, preferredNames = [], lastNames = []) {
   const positions = slots.filter((p) => active(p.slot)).flatMap((p) => Array(p.count).fill(p.slot));
   const placed = Array(positions.length).fill(null);
   const preferred = new Set(preferredNames);
+  const last = new Set(lastNames);
   const fits = (p, slot) => slot === 'Util' || (p.positions ?? []).some((pos) =>
     pos === slot || slot === 'G' && ['PG', 'SG'].includes(pos) || slot === 'F' && ['SF', 'PF'].includes(pos));
   const place = (player, seen) => {
@@ -46,6 +47,7 @@ export function assignLineup(players, slots, preferredNames = []) {
     return false;
   };
   const selected = [...players].sort((a, b) => Number(preferred.has(b.name)) - Number(preferred.has(a.name))
+      || Number(last.has(a.name)) - Number(last.has(b.name))
       || priority(b) - priority(a))
     .filter((p) => place(p, new Set()));
   return selected.map((player) => ({ player, slot: positions[placed.indexOf(player)] }));
