@@ -1,12 +1,12 @@
 import { readFile, appendFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { validateEntry, realizedGain, flips, summarize } from '../src/engine/bakeoff.mjs';
+import { validateEntry, realizedGain, flips, summarize, scorecard } from '../src/engine/bakeoff.mjs';
 import { loadGameLogs } from '../src/sources/gamelogs.mjs';
 import { readDecision } from '../src/sources/decisions.mjs';
 import { attachLineups } from '../src/sources/bakeoff-records.mjs';
 
-async function linkedEntries(entries) {
-  const validated = entries.map(validateEntry);
+async function linkedEntries(entries, { requirePromptVersion = false } = {}) {
+  const validated = entries.map((entry) => validateEntry(entry, { allowLegacyPromptVersion: !requirePromptVersion }));
   for (const entry of validated) {
     const record = await readDecision(entry.decisionId);
     if (entry.week !== record.report.week || Date.parse(entry.asOf) !== Date.parse(record.report.asOf)) {
@@ -19,7 +19,7 @@ async function linkedEntries(entries) {
 const [command, ...args] = process.argv.slice(2); const get = (k) => args.includes(k) ? args[args.indexOf(k) + 1] : undefined;
 if (command === 'record') {
   const entries = JSON.parse(await readFile(args[0], 'utf8')); if (!Array.isArray(entries)) throw new Error('entries file must be an array');
-  const linked = await linkedEntries(entries); const validated = await Promise.all(linked.map(attachLineups)); const path = 'local/bakeoff.jsonl'; await mkdir(dirname(path), { recursive: true });
+  const linked = await linkedEntries(entries, { requirePromptVersion: true }); const validated = await Promise.all(linked.map(attachLineups)); const path = 'local/bakeoff.jsonl'; await mkdir(dirname(path), { recursive: true });
   let previous = [];
   try { previous = (await readFile(path, 'utf8')).trim().split(/\r?\n/).filter(Boolean).map(JSON.parse); }
   catch (e) { if (e.code !== 'ENOENT') throw e; }
@@ -50,4 +50,24 @@ if (command === 'record') {
   const cats = ['PTS', 'REB', 'AST', 'STL', 'BLK', '3PM', 'FG%', 'FT%', 'TO']; const reasons = Object.keys(summaries[0]?.rejectReasons ?? {});
   console.log(['source', 'moves', 'holds', 'scored', 'unscored', 'invalid', 'helped', 'hurt', 'net', ...cats.map((c) => `mean ${c}`), 'mean rating', ...reasons].join('\t'));
   for (const s of summaries) console.log([s.source, s.moves, s.holds, s.scored, s.unscored, s.invalid, s.helped, s.hurt, s.net, ...cats.map((c) => s.meanGain ? JSON.stringify(s.meanGain[c]) : '-'), s.meanRating ?? '-', ...reasons.map((reason) => s.rejectReasons[reason])].join('\t'));
-} else throw new Error('usage: bakeoff record <entries.json> | bakeoff score --week N --from YYYY-MM-DD (week start for logs) --to YYYY-MM-DD');
+} else if (command === 'scorecard') {
+  const to = get('--to'), last = get('--last');
+  const date = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v ?? '') && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
+  if (!date(to) || (last !== undefined && (!/^\d+$/.test(last) || Number(last) < 1))) throw new Error('Scorecard requires --to YYYY-MM-DD and optional positive --last N');
+  const entries = await linkedEntries((await readFile('local/bakeoff.jsonl', 'utf8')).trim().split(/\r?\n/).filter(Boolean).map(JSON.parse).filter((e) => e.date <= to));
+  const results = [];
+  for (const entry of entries) {
+    const record = await readDecision(entry.decisionId);
+    const end = [record.report.window.end, to].sort()[0];
+    const replay = realizedGain(entry, await loadGameLogs('2026-27', record.report.window.start, end), { to: end });
+    results.push({ entry, ...replay, flips: replay.status === 'scored' ? flips(replay.gain, replay.finalTotals, replay.finalVolume, { taken: false }) : null,
+      modelVersion: record.provenance.modelVersion ?? null, createdAt: record.createdAt ?? record.report.asOf });
+  }
+  const cards = scorecard(results, { lastN: last === undefined ? 10 : Number(last) });
+  console.log('modelVersion\tpromptVersion\tsource\tmoves\tholds\tscored\tunscored\tinvalid\thelped\thurt\tnet\tmean rating\treject reasons');
+  for (const card of cards) for (const row of card.summaries) console.log([card.modelVersion ?? 'rehearsal', card.promptVersion ?? 'rehearsal', row.source, row.moves, row.holds, row.scored, row.unscored, row.invalid, row.helped, row.hurt, row.net, row.meanRating ?? '-', JSON.stringify(row.rejectReasons)].join('\t'));
+  console.log('rolling\tmodelVersion\tpromptVersion\tsource\tpaired scored\thelped\thurt\tnet\tmean rating');
+  for (const card of cards) for (const row of card.rolling) console.log(['rolling', card.modelVersion ?? 'rehearsal', card.promptVersion ?? 'rehearsal', row.source, row.scored, row.helped, row.hurt, row.net, row.meanRating ?? '-'].join('\t'));
+  console.log('gate\tmodelVersion\tpromptVersion\tpaired decisions\tstatus\ttool net\tchatbot net\tnone net\ttool rating\tchatbot rating\tnone rating');
+  for (const card of cards) console.log(['gate', card.modelVersion ?? 'rehearsal', card.promptVersion ?? 'rehearsal', card.paired, card.gate, card.comparison.tool.net, card.comparison.chatbot.net, card.comparison.none.net, card.comparison.tool.meanRating ?? '-', card.comparison.chatbot.meanRating ?? '-', card.comparison.none.meanRating ?? '-'].join('\t'));
+} else throw new Error('usage: bakeoff record <entries.json> | bakeoff score --week N --from YYYY-MM-DD --to YYYY-MM-DD | bakeoff scorecard --to YYYY-MM-DD [--last N]');

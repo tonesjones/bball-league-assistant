@@ -68,22 +68,22 @@ results apart, so improvement over time shows up as one version scoring better t
 
 All tests use synthetic fixtures in `tests/fixtures/bakeoff/`, with no real names.
 
-- [ ] A decision record saved by `advise` carries `provenance.modelVersion` equal to
+- [x] A decision record saved by `advise` carries `provenance.modelVersion` equal to
       `MODEL_VERSION`.
-- [ ] `validateEntry` requires `promptVersion` on a chatbot entry and rejects it on tool and
+- [x] `validateEntry` requires `promptVersion` on a chatbot entry and rejects it on tool and
       `none` entries. Old entries without it still load for scoring.
-- [ ] Two model versions with entries for the same weeks are scored in separate groups, and an
+- [x] Two model versions with entries for the same weeks are scored in separate groups, and an
       older version's decisions never change the newer version's numbers.
-- [ ] Two prompt versions under one model version form separate groups.
-- [ ] A version with 9 paired scored decisions reports `too few`.
-- [ ] A constructed version with 10 paired decisions where the tool beats both arms on net and
+- [x] Two prompt versions under one model version form separate groups.
+- [x] A version with 9 paired scored decisions reports `too few`.
+- [x] A constructed version with 10 paired decisions where the tool beats both arms on net and
       rating reports `met`. The same data with the chatbot's net raised to the tool's reports
       `not met`.
-- [ ] A decision with one arm unscored is left out of the pairing and counted as unscored.
-- [ ] Unversioned decisions appear only in a rehearsal group with status `rehearsal`.
-- [ ] The rolling view holds the last N paired decisions by `createdAt`.
-- [ ] The same inputs give the same output order.
-- [ ] `npm test` passes.
+- [x] A decision with one arm unscored is left out of the pairing and counted as unscored.
+- [x] Unversioned decisions appear only in a rehearsal group with status `rehearsal`.
+- [x] The rolling view holds the last N paired decisions by `createdAt`.
+- [x] The same inputs give the same output order.
+- [x] `npm test` passes.
 
 ## 11b: improvement loop (later)
 

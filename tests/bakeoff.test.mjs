@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { realizedGain, flips, validateEntry, summarize } from '../src/engine/bakeoff.mjs';
+import { realizedGain, flips, validateEntry, summarize, scorecard } from '../src/engine/bakeoff.mjs';
 
 const entries = (await readFile(new URL('./fixtures/bakeoff/log.jsonl', import.meta.url), 'utf8')).trim().split('\n').map(JSON.parse);
 const logs = JSON.parse(await readFile(new URL('./fixtures/bakeoff/gamelogs.json', import.meta.url)));
@@ -55,6 +55,55 @@ test('validation accepts reasons and notes and rejects invalid new fields', () =
     [{ decision: 'hold' }, /add.*drop/s], [{ source: 'none', chatbot: 'Bot A' }, /chatbot/],
     [{ rejectReason: 'unknown' }, /rejectReason/], [{ note: 42 }, /note/],
   ]) assert.throws(() => validateEntry({ ...entries[0], ...fields }), error);
+});
+
+test('chatbot prompt versions are required for records but legacy scoring fills null', () => {
+  const bot = { ...entries[1] };
+  assert.equal(validateEntry(bot).promptVersion, null);
+  assert.throws(() => validateEntry(bot, { allowLegacyPromptVersion: false }), /promptVersion/);
+  assert.equal(validateEntry({ ...bot, promptVersion: 1 }, { allowLegacyPromptVersion: false }).promptVersion, 1);
+  assert.throws(() => validateEntry({ ...entries[0], promptVersion: 1 }), /promptVersion/);
+  assert.throws(() => validateEntry({ ...entries[2], source: 'none', chatbot: null, promptVersion: 1 }), /promptVersion/);
+  assert.throws(() => validateEntry({ ...bot, promptVersion: 0 }), /promptVersion/);
+});
+
+test('scorecard groups model and prompt versions, pairs scored decisions, gates and rolls deterministically', () => {
+  const paired = (version, prompt, id, createdAt, rating, helped, status = 'scored') => ['tool', 'chatbot', 'none'].map((source) => ({
+    entry: { ...entries[source === 'chatbot' ? 1 : 0], decisionId: id, source, chatbot: source === 'chatbot' ? 'Example' : null,
+      promptVersion: source === 'chatbot' ? prompt : undefined, rating: source === 'tool' ? rating : 3 },
+    status, gain: status === 'scored' ? zero : null, flips: status === 'scored' ? { helped: source === 'tool' ? Array(helped).fill('PTS') : [], hurt: [] } : null,
+    modelVersion: version, createdAt,
+  }));
+  const rows = [];
+  for (let i = 1; i <= 10; i++) rows.push(...paired(2, 1, `new-${i}`, `2026-10-${String(i).padStart(2, '0')}T00:00:00Z`, 5, 2));
+  rows.push(...paired(1, 1, 'old', '2026-10-01T00:00:00Z', 1, 0));
+  rows.push(...paired(2, 2, 'prompt-2', '2026-10-11T00:00:00Z', 4, 1));
+  rows.push(...paired(2, 1, 'unscored', '2026-10-12T00:00:00Z', 5, 0, 'unscored'));
+  const cards = scorecard(rows, { lastN: 3 });
+  assert.deepEqual(cards.map((c) => [c.modelVersion, c.promptVersion]), [[1, 1], [2, 1], [2, 2]]);
+  const v1 = cards[0], v2 = cards[1], p2 = cards[2];
+  assert.equal(v1.gate, 'too few');
+  assert.equal(v2.paired, 10); assert.equal(v2.gate, 'met');
+  assert.equal(v2.rolling[0].scored, 3);
+  assert.equal(v2.summaries.find((s) => s.source === 'tool').unscored, 1);
+  assert.equal(p2.paired, 1); assert.equal(p2.gate, 'too few');
+  assert.deepEqual(scorecard(rows, { lastN: 3 }), cards);
+  const tied = rows.map((r) => r.entry.decisionId.startsWith('new-') && r.entry.source === 'chatbot'
+    ? { ...r, flips: { helped: ['PTS', 'PTS'], hurt: [] } } : r);
+  assert.equal(scorecard(tied).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'not met');
+  const unrated = rows.map((r) => r.entry.source === 'none' ? { ...r, entry: { ...r.entry, rating: null } } : r);
+  assert.equal(scorecard(unrated).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'not met');
+  const nine = rows.filter((r) => r.entry.decisionId !== 'new-10');
+  assert.equal(scorecard(nine).find((c) => c.modelVersion === 2 && c.promptVersion === 1).paired, 9);
+  assert.equal(scorecard(nine).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'too few');
+  assert.deepEqual(scorecard(rows.filter((r) => r.entry.decisionId !== 'old'), { lastN: 3 }), cards.slice(1));
+});
+
+test('unversioned records are isolated as rehearsal data', () => {
+  const rows = entries.slice(0, 2).map((entry) => ({ entry: { ...entry, promptVersion: undefined }, status: 'scored', gain: zero,
+    flips: { helped: [], hurt: [] }, modelVersion: null, createdAt: '2026-10-20T12:00:00Z' }));
+  const [card] = scorecard(rows);
+  assert.equal(card.gate, 'rehearsal'); assert.equal(card.rehearsal, true);
 });
 
 test('summary counts holds, rejection reasons and averages each category including holds', () => {
