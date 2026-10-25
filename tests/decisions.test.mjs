@@ -116,7 +116,11 @@ test('record saves each source lineup, rejects duplicate arms and prepares a has
   execFileSync(process.execPath, [prepare, saved.id], { cwd: dir, stdio: 'pipe' });
   const folder = path.join(dir, 'local/pilot-packets', (await readdir(path.join(dir, 'local/pilot-packets')))[0]);
   const manifest = JSON.parse(await readFile(path.join(folder, 'manifest.json')));
-  assert.equal(manifest.status, 'rehearsal-not-frozen');
+  assert.equal(manifest.protocol, 'continuous');
+  assert.equal(manifest.promptVersion, 2);
+  assert.equal(manifest.chatbotModel, 'gpt-6-sol');
+  assert.equal(manifest.chatbotEffort, 'medium');
+  for (const key of ['status', 'baselineModel', 'pending']) assert.ok(!(key in manifest), `manifest still has ${key}`);
   for (const [name, expected] of Object.entries(manifest.hashes)) assert.equal(hash(await readFile(path.join(folder, name))), expected);
   assert.ok(manifest.hashes['evidence.json']);
   assert.ok(!manifest.hashes['report.json']);

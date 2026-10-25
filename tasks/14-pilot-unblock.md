@@ -48,9 +48,14 @@ The protocol pins `gpt-6.1-sol`, which the Codex CLI rejects on Tony's ChatGPT a
 
 Done when:
 
-- [ ] One real packet produces a chatbot answer that `bakeoff record` accepts with
-      `promptVersion: 2`.
-- [ ] A test shows the manifest carries the prompt version and has no rehearsal wording.
+- [x] One real packet produces a chatbot answer that `bakeoff record` accepts with
+      `promptVersion: 2`. On the 10-24 packet (decision `93947ee4`), `gpt-6-sol` at medium effort
+      read the files and replied in the HOLD format. `validateEntry` and `attachLineups` accept
+      the entry; it wasn't appended to `local/bakeoff.jsonl`.
+- [x] A test shows the manifest carries the prompt version and has no rehearsal wording.
+
+Found while testing: `--ignore-user-config` also drops the Windows sandbox setting, which blocks
+every file read. The documented command restores it with `-c windows.sandbox="elevated"`.
 
 ## 14c: ratings join and the gate tie
 
