@@ -4,7 +4,7 @@ import { CATEGORIES } from '../sources/yahoo-pages/common.mjs';
 const REJECT_REASONS = ['wrong-role', 'core-player', 'bad-data', 'injury', 'timing', 'other'];
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
 
-export function validateEntry(e) {
+export function validateEntry(e, { allowLegacyPromptVersion = true } = {}) {
   const bad = [];
   if (!e || typeof e !== 'object' || Array.isArray(e)) throw new Error('invalid entry:\n- not an object');
   if (typeof e.decisionId !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,100}$/.test(e.decisionId)) bad.push('decisionId must name a saved decision record');
@@ -17,6 +17,10 @@ export function validateEntry(e) {
   if (e.source === 'none' && e.decision !== 'hold') bad.push('none source must hold');
   if (e.invalidReason !== undefined && (typeof e.invalidReason !== 'string' || !e.invalidReason || e.decision !== 'hold')) bad.push('invalidReason needs a nonempty reason and hold');
   if (e.source === 'chatbot' && (typeof e.chatbot !== 'string' || !e.chatbot)) bad.push('chatbot source needs chatbot name');
+  if (e.source === 'chatbot') {
+    if (e.promptVersion == null && allowLegacyPromptVersion) e = { ...e, promptVersion: null };
+    else if (!Number.isInteger(e.promptVersion) || e.promptVersion < 1) bad.push('chatbot promptVersion must be a positive integer');
+  } else if (e.promptVersion !== undefined) bad.push(`${e.source} promptVersion must be omitted`);
   if (['tool', 'none'].includes(e.source) && e.chatbot !== null) bad.push(`${e.source} chatbot must be null`);
   for (const key of ['add', 'drop']) {
     if (e.decision === 'hold') { if (e[key] !== null) bad.push(`${key} must be null for hold`); }
@@ -74,5 +78,39 @@ export function summarize(results) {
     return { source, scored: scored.length, unscored: rows.length - scored.length, invalid: rows.filter((r) => r.entry.invalidReason).length, moves: rows.length - holds, holds, helped, hurt, net: helped - hurt, meanGain,
       meanRating: rated.length ? rated.reduce((n, r) => n + r.entry.rating, 0) / rated.length : null,
       rejectReasons: Object.fromEntries(REJECT_REASONS.map((reason) => [reason, rows.filter((r) => r.entry.rejectReason === reason).length])) };
+  });
+}
+
+export function scorecard(results, { lastN = 10, minScored = 10 } = {}) {
+  const decisions = new Map();
+  for (const row of results) {
+    const { decisionId } = row.entry;
+    (decisions.get(decisionId) ?? decisions.set(decisionId, []).get(decisionId)).push(row);
+  }
+  const groups = new Map();
+  for (const [decisionId, rows] of decisions) {
+    const tool = rows.find((r) => r.entry.source === 'tool');
+    const bot = rows.find((r) => r.entry.source === 'chatbot');
+    const baseline = rows.find((r) => r.entry.source === 'none');
+    const modelVersion = rows.find((r) => r.modelVersion != null)?.modelVersion ?? null;
+    const promptVersion = bot?.entry.promptVersion ?? null;
+    const key = `${modelVersion ?? 'rehearsal'}/${promptVersion ?? 'rehearsal'}`;
+    const group = groups.get(key) ?? { modelVersion, promptVersion, rehearsal: modelVersion == null, decisions: new Map() };
+    group.decisions.set(decisionId, { decisionId, createdAt: rows[0].createdAt, rows, paired: Boolean(tool && bot && baseline && [tool, bot, baseline].every((r) => r.status !== 'unscored' && r.gain)) });
+    groups.set(key, group);
+  }
+  const sortedGroups = [...groups.values()].sort((a, b) => (a.modelVersion ?? -1) - (b.modelVersion ?? -1) || (a.promptVersion ?? -1) - (b.promptVersion ?? -1));
+  return sortedGroups.map((group) => {
+    const rows = [...group.decisions.values()].flatMap((d) => d.rows);
+    const paired = [...group.decisions.values()].filter((d) => d.paired).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.decisionId.localeCompare(b.decisionId));
+    const pairedRows = (source, selected = paired) => selected.flatMap((d) => d.rows.filter((r) => r.entry.source === source));
+    const summaries = ['tool', 'chatbot', 'none'].flatMap((source) => summarize(rows.filter((r) => r.entry.source === source)));
+    const rollings = ['tool', 'chatbot', 'none'].map((source) => ({ source, ...summarize(pairedRows(source, paired.slice(-lastN)))[0] })).filter((r) => r.scored !== undefined);
+    const total = Object.fromEntries(['tool', 'chatbot', 'none'].map((source) => [source, summarize(pairedRows(source))[0]]));
+    const { tool, chatbot, none } = total;
+    const beats = (other) => tool.net > other.net && tool.meanRating != null && other.meanRating != null && tool.meanRating > other.meanRating;
+    const gate = group.rehearsal ? 'rehearsal' : paired.length < minScored ? 'too few' : beats(chatbot) && beats(none) ? 'met' : 'not met';
+    return { modelVersion: group.modelVersion, promptVersion: group.promptVersion, rehearsal: group.rehearsal, paired: paired.length, summaries,
+      rolling: rollings, gate, comparison: Object.fromEntries(['tool', 'chatbot', 'none'].map((source) => [source, { net: total[source]?.net ?? 0, meanRating: total[source]?.meanRating ?? null }])) };
   });
 }

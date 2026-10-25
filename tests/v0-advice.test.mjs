@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { tomorrow } from '../src/engine/weeks.mjs';
 import { gamesLeft } from '../src/engine/games-left.mjs';
 import { needs, projectTeam, strongLine, UNKNOWN_MPG } from '../src/engine/needs.mjs';
-import { advise, pickupStart } from '../src/engine/v0-advice.mjs';
+import { advise, pickupStart, MODEL_VERSION } from '../src/engine/v0-advice.mjs';
 import { formatAdvice, readRoles, snapshotFreshness } from '../scripts/advise.mjs';
 import { logHash, easternDate } from '../src/sources/gamelogs.mjs';
 import { projectPlayers } from '../src/engine/projections.mjs';
@@ -593,6 +593,7 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     assert.equal(report.guardrail.protectRank, 0);
     assert.equal(report.holdBelow, 0.02);
     const saved = JSON.parse(await readFile(path.join(dir, `local/decisions/${report.decisionId}.json`), 'utf8'));
+    assert.equal(saved.provenance.modelVersion, MODEL_VERSION);
     assert.equal(saved.projections.version, 'minutes-rates-pseudogames-v3');
     assert.equal(saved.projections.k, 2);
     assert.equal(saved.projections.players.length, f.priors.length);

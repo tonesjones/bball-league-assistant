@@ -48,7 +48,8 @@ must name the SAME `decisionId`, `week` and `asOf` from the saved decision. Set 
 comparison date. A move includes `start`, and `add`/`drop` objects with `name` and `espnId`.
 A hold has `decision: "hold"`, `add: null`, `drop: null`. An insufficient-evidence tool outcome
 is logged as hold; its original `toolAction` is retained automatically. Set `chatbot` to the
-observed model for the chatbot source and null for the other sources. Set Tony's `rating`
+observed model for the chatbot source and null for the other sources. Set `promptVersion` on the
+chatbot entry to the prompt version above; `record` rejects a chatbot entry without it. Set Tony's `rating`
 (1–5), or null when not yet reviewed. Record a rejection reason (`wrong-role`, `core-player`,
 `bad-data`, `injury`, `timing`, `other`) and explanation before the outcome is known.
 
@@ -76,7 +77,9 @@ baseline, so category changes use the saved-lineup counterfactual instead.
 Report each decision separately. Source summaries count invalid and unscored decisions and
 average each category only over scored entries. Helped/hurt totals across overlapping hypothetical
 moves are decision-level evidence, not a feasible weekly plan. Fewer than 10 scored decisions
-for a version is "too few"; inconclusive is a valid result.
+for a version is "too few"; inconclusive is a valid result. Run
+`npm run bakeoff -- scorecard --to YYYY-MM-DD [--last N]` for the per-version table, the
+rolling last-N view and the gate status.
 
 ## Versions
 

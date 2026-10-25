@@ -1,7 +1,7 @@
 import { readFile, readdir, stat, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
-import { advise, normalizeRoles } from '../src/engine/v0-advice.mjs';
+import { advise, normalizeRoles, MODEL_VERSION } from '../src/engine/v0-advice.mjs';
 import { estimateVolume } from '../src/engine/shooting-volume.mjs';
 import { findPlayer } from '../src/engine/names.mjs';
 import { addDays, tomorrow } from '../src/engine/weeks.mjs';
@@ -206,6 +206,7 @@ async function main(args) {
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   const gitOptions = { cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), encoding: 'utf8' };
   const provenance = {
+    modelVersion: MODEL_VERSION,
     commit: execFileSync('git', ['rev-parse', 'HEAD'], gitOptions).trim(),
     dirty: Boolean(execFileSync('git', ['status', '--porcelain', '--untracked-files=normal'], gitOptions).trim()),
     snapshotPath: path.resolve(snapshotPath), snapshotHash: hash(await readFile(snapshotPath)),

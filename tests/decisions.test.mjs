@@ -50,7 +50,7 @@ test('bakeoff records three sources against one decision and rejects broken link
   const records = path.join(dir, 'local/decisions');
   await mkdir(records, { recursive: true });
   const saved = await saveDecision({ report: { week: 1, asOf: '2026-10-20T12:00:00Z' }, options: {}, provenance: {} }, records);
-  const entries = ['tool', 'chatbot', 'none'].map((source) => ({ decisionId: saved.id, week: 1, date: '2026-10-20', decision: 'hold', add: null, drop: null, rating: null, asOf: '2026-10-20T12:00:00Z', source, chatbot: source === 'chatbot' ? 'Example' : null }));
+  const entries = ['tool', 'chatbot', 'none'].map((source) => ({ decisionId: saved.id, week: 1, date: '2026-10-20', decision: 'hold', add: null, drop: null, rating: null, asOf: '2026-10-20T12:00:00Z', source, chatbot: source === 'chatbot' ? 'Example' : null, ...(source === 'chatbot' ? { promptVersion: 1 } : {}) }));
   const input = path.join(dir, 'entries.json');
   await writeFile(input, JSON.stringify(entries));
   const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));
@@ -84,7 +84,7 @@ test('record saves each source lineup, rejects duplicate arms and prepares a has
   const base = { decisionId: saved.id, week: report.week, date: '2026-10-20', asOf: report.asOf,
     decision: 'hold', add: null, drop: null, chatbot: null, rating: null };
   const entries = [{ ...base, source: 'tool' }, { ...base, source: 'none' },
-    { ...base, source: 'chatbot', chatbot: 'Example', decision: 'move', start: '2026-10-20',
+    { ...base, source: 'chatbot', chatbot: 'Example', promptVersion: 1, decision: 'move', start: '2026-10-20',
       add: { name: 'Casey Fiction', espnId: '3' }, drop: { name: 'Alex Sample', espnId: '1' } }];
   const input = path.join(dir, 'entries.json'); await writeFile(input, JSON.stringify(entries));
   const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));

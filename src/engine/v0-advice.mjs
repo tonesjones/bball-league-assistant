@@ -5,6 +5,8 @@ import { BLOCKED, projectTeam, needs, strongLine } from './needs.mjs';
 import { seasonValues } from './season-value.mjs';
 import { minutesCase } from './projections.mjs';
 
+export const MODEL_VERSION = 1;
+
 export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
   let clears = fromDate;
   if (player.waiverClears) {
