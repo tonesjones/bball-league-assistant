@@ -251,7 +251,7 @@ daily pilot routine.
 **2026-10-24, pending claims.** Task 13 reads pending waiver claims from the team page. On the
 21:13 capture, two add-only claims need 2 adds and 2 open spots but Tony has 1 of each, so the
 report now warns that the second claim may fail and holds with no adds left after the claims.
-Next: Tony reviews the Task 13 PR.
+Task 13 is merged (#40). Next: the daily pilot routine.
 
 **2026-10-24, continuous pilot.** Tony dropped the frozen 2-week pilot: it waited on a real move
 he accepts, and every real run so far has been hold or insufficient evidence (latest: decision
