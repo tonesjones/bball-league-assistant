@@ -267,6 +267,23 @@ prompt version 2; `gpt-6.1-sol` is still rejected on Tony's account. A real run 
 packet returned a valid HOLD once `-c windows.sandbox="elevated"` restored file reads. That entry
 was validated but not recorded. Next: 14c.
 
+**2026-10-25, Task 14c merged (#44).** Ratings in `local/pilot-reviews.jsonl` now reach the
+scorecard, and a net tie with doing nothing counts as a tie broken by ratings, not a loss.
+
+**2026-10-25, Task 14d merged (#45).** `advise` moves when a pair has no missing rates, every case
+is above 0 and the nominal score reaches the bar: 0.15 with a drop, 0.05 add-only. Among qualifying
+pairs it picks the highest nominal score. `MODEL_VERSION` 4. On the 10-23 snapshot (decision
+`1d9f5a61`) it now moves: 27 pairs qualify, and the pick gains +0.287 nominally (+0.108 to
++0.325). Tony settled the two open questions and kept the code as merged:
+
+- A pair with missing per-minute rates stays `insufficient` even when every computed case is
+  positive, because the rate case that could go negative was never run.
+- The highest nominal score wins among qualifying pairs, not the best worst case. The
+  all-cases-positive filter already covers the downside.
+
+Next: `MODEL_VERSION` 4 stays fixed from its first refresh (target 2026-10-27), and every refresh
+after that runs the daily pilot routine.
+
 **2026-10-24, empty-slot pickups.** PRs #32, #37 and #38 are merged. The 2026-10-24 21:13
 refresh held with "No eligible add/drop pairs": an IL move opened a spot, but `advise` only
 scored drops, and the guardrail blocked every one. Task 12 adds add-only moves and next-week
