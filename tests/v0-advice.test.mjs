@@ -854,3 +854,43 @@ test('next-week games and starts across a Sunday/Monday boundary are shown but n
   assert.deepEqual(withoutMonday.scoreRange, withMonday.scoreRange);
   assert.match(formatAdvice(report), /Next week \(2026-11-02 to 2026-11-08, context only\)/);
 });
+
+const claim = (f, w) => { (f.snapshot.team.pending ??= { count: 0, waivers: [], proposedTrades: 0, unlisted: 0 }).waivers.push({ order: 1, bid: null, drop: null, ...w }); return f; };
+
+test('a pending add-only claim reserves its add and open spot', () => {
+  const f = claim(opened(fresh()), { date: 'Oct 22', add: 'Other Claim' }); better(f);
+  const r = run(f);
+  assert.equal(r.openSpots, 0);
+  assert.equal(r.addsLeft, 3);
+  assert.equal(r.pending.reservedAdds, 1);
+  assert.ok(r.topPairs.length && r.topPairs.every((p) => p.drop));
+  assert.match(r.notes.join(' '), /Pending claims are assumed to go through: 1 add this week/);
+  assert.match(formatAdvice(r), /Pending claim 1 \(2026-10-22\): add Other Claim\n/);
+});
+
+test('claimed players and pending drops are not offered', () => {
+  const claimed = claim(opened(fresh()), { date: 'Oct 22', add: 'Casey Fiction' }); better(claimed);
+  assert.equal(run(claimed).decision.reason, 'No eligible moves.');
+  const dropped = claim(fresh(), { date: 'Oct 22', add: 'Other Claim', bid: 2, drop: 'Alex Sample' }); better(dropped);
+  const r = run(dropped);
+  assert.equal(r.openSpots, 0);
+  assert.equal(r.decision.reason, 'No eligible moves.');
+  assert.match(formatAdvice(r), /Pending claim 1 \(2026-10-22\): add Other Claim for \$2, drop Alex Sample/);
+});
+
+test('pending claims this week use up adds; later claims and other pending items do not', () => {
+  const spent = claim(fresh(), { date: 'Oct 22', add: 'Other Claim', drop: 'Alex Sample' }); spent.snapshot.team.addsUsedThisWeek = 3;
+  assert.equal(run(spent).decision.reason, 'No adds left this week after pending claims.');
+  assert.equal(run(spent).pending.warning, null);
+  const over = claim(claim(opened(fresh()), { date: 'Oct 22', add: 'Other Claim' }), { order: 2, date: 'Oct 22', add: 'Second Claim' });
+  over.snapshot.team.addsUsedThisWeek = 3;
+  const r = run(over);
+  assert.equal(r.openSpots, 0);
+  assert.equal(r.pending.warning, 'Pending claims need 2 adds this week and 2 open spots, but only 1 add and 1 open spot are available. Yahoo processes claims in waiver order, so a later claim may fail.');
+  assert.match(formatAdvice(r), /\nWarning: Pending claims need 2 adds/);
+  const later = claim(fresh(), { date: 'Nov 05', add: 'Other Claim', drop: 'Alex Sample' }); later.snapshot.team.addsUsedThisWeek = 3;
+  assert.equal(run(later).addsLeft, 1);
+  const trades = fresh(); trades.snapshot.team.pending = { count: 2, waivers: [], proposedTrades: 1, unlisted: 1 };
+  assert.match(run(trades).notes.join(' '), /2 other pending transactions \(proposed trades or items the team page doesn't list\) are not modeled/);
+  assert.equal(run(fresh()).pending.reservedAdds, 0);
+});

@@ -5,19 +5,21 @@ import { BLOCKED, projectTeam, needs, strongLine, openRosterSpots } from './need
 import { seasonValues } from './season-value.mjs';
 import { minutesCase } from './projections.mjs';
 
-export const MODEL_VERSION = 2;
+export const MODEL_VERSION = 3;
+
+// Yahoo's "Oct 25" as a date on or after the matchup start.
+function monthDay(value, window, what) {
+  const match = /^([A-Za-z]{3})\s+(\d{1,2})$/.exec(value);
+  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(match?.[1]);
+  if (!match || month < 0) throw new Error(`invalid ${what}: ${value}`);
+  const suffix = `${String(month + 1).padStart(2, '0')}-${match[2].padStart(2, '0')}`;
+  const year = Number(window.start.slice(0, 4));
+  const date = `${year}-${suffix}`;
+  return date < window.start ? `${year + 1}-${suffix}` : date;
+}
 
 export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
-  let clears = fromDate;
-  if (player.waiverClears) {
-    const match = /^([A-Za-z]{3})\s+(\d{1,2})$/.exec(player.waiverClears);
-    const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(match?.[1]);
-    if (!match || month < 0) throw new Error(`invalid waiverClears: ${player.waiverClears}`);
-    const suffix = `${String(month + 1).padStart(2, '0')}-${match[2].padStart(2, '0')}`;
-    const year = Number(window.start.slice(0, 4));
-    clears = `${year}-${suffix}`;
-    if (clears < window.start) clears = `${year + 1}-${suffix}`;
-  }
+  const clears = player.waiverClears ? monthDay(player.waiverClears, window, 'waiverClears') : fromDate;
   return [fromDate, clears, addsFrom].sort().at(-1);
 }
 
@@ -85,7 +87,15 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   const outlooks = (lineups) => lineups.flatMap((m) => opponentScenarios.map((o) => needs(m, o, phi, scoring)));
   const range = (numbers) => [Math.min(...numbers), Math.max(...numbers)];
   const baselines = outlooks(mineScenarios), baseline = baselines[0], pairs = [], afterByPair = new Map(), swapByPair = new Map();
-  const openSpots = openRosterSpots(snapshot.settings, snapshot.team.roster);
+  // Pending claims are assumed to go through: their adds and open spots are reserved, claimed
+  // players aren't offered, and pending drops aren't offered as drops.
+  const pendingClaims = (snapshot.team.pending?.waivers ?? []).map((w) => ({ ...w, date: monthDay(w.date, window, 'pending claim date') }));
+  const claimed = new Set(pendingClaims.map((w) => normalizeName(w.add)));
+  const pendingDrops = new Set(pendingClaims.filter((w) => w.drop).map((w) => normalizeName(w.drop)));
+  const reservedAdds = pendingClaims.filter((w) => w.date <= window.end).length;
+  const spotsBefore = openRosterSpots(snapshot.settings, snapshot.team.roster), addOnlyClaims = pendingClaims.filter((w) => !w.drop).length;
+  const addsBefore = Math.max(0, (snapshot.settings.maxAddsPerWeek ?? 4) - snapshot.team.addsUsedThisWeek);
+  const openSpots = Math.max(0, spotsBefore - addOnlyClaims);
   for (const [c, category] of Object.entries(baseline.categories)) {
     category.pWinRange = category.label === 'unknown' ? null : range(baselines.map((b) => b.categories[c].pWin));
     category.complete = category.pWinRange != null && category.pWinRange[1] - category.pWinRange[0] < 1e-12;
@@ -106,10 +116,11 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     minutes: p.minutes,
     rates: p.rates,
     seasonValue: p.season?.value ?? null, seasonRank: p.season?.rank ?? null });
-  for (const pickup of freeAgents.filter((p) => p.prior && !BLOCKED.includes(p.status))) {
+  const drops = roster.filter((p) => !pendingDrops.has(normalizeName(p.name)));
+  for (const pickup of freeAgents.filter((p) => p.prior && !BLOCKED.includes(p.status) && !claimed.has(normalizeName(p.name)))) {
     const start = pickupStart(pickup, fromDate, window, addsFrom);
     // A null drop is an add-only move into an open roster spot; the drop guardrail doesn't apply.
-    for (const drop of [...(openSpots > 0 ? [null] : []), ...roster]) {
+    for (const drop of [...(openSpots > 0 ? [null] : []), ...drops]) {
       const name = drop && normalizeName(drop.name);
       const dropRole = !drop ? 'open-slot' : streamSet.has(name) ? 'stream' : 'normal';
       const blocked = !drop ? null : coreSet.has(name) ? 'core' : dropRole === 'stream' ? null
@@ -172,7 +183,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     }
   }
   pairs.sort((a, b) => b.scoreRange[0] - a.scoreRange[0] || b.score - a.score);
-  const addsLeft = Math.max(0, (snapshot.settings.maxAddsPerWeek ?? 4) - snapshot.team.addsUsedThisWeek);
+  const addsLeft = Math.max(0, addsBefore - reservedAdds);
   const best = [...pairs].sort((a, b) => b.scoreRange[1] - a.scoreRange[1])[0] ?? null;
   const robust = pairs.find((p) => !p.missingRates.length && p.scoreRange[0] > 0 && p.scoreRange[0] >= holdBelow);
   const missing = (pair) => ['mine', 'opponent'].flatMap((side) => {
@@ -186,7 +197,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     return players.filter((p) => starts.has(p.name)).map((p) => ({ name: p.name, nbaTeam: p.nbaTeam,
       side, starts: starts.get(p.name).size, reason: p.unscoredReason })).sort((a, b) => a.name.localeCompare(b.name));
   });
-  const decision = !addsLeft ? { action: 'hold', reason: 'No adds left this week.', best }
+  const decision = !addsLeft ? { action: 'hold', reason: reservedAdds ? 'No adds left this week after pending claims.' : 'No adds left this week.', best }
     : !best ? { action: 'hold', reason: 'No eligible moves.', best }
       : robust ? { action: 'move', pair: robust }
         : best.scoreRange[1] > 0 && best.scoreRange[1] >= holdBelow
@@ -201,7 +212,14 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     pair.nextWeek = { ...nextWeek, games: gamesLeft(swap.pickup, schedule, start, nextWeek.end),
       starts: lineup.started.filter((g) => g.name === swap.pickup.name).length };
   }
-  return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft, openSpots,
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  const pending = { waivers: pendingClaims, reservedAdds, proposedTrades: snapshot.team.pending?.proposedTrades ?? 0,
+    unlisted: snapshot.team.pending?.unlisted ?? 0,
+    warning: reservedAdds > addsBefore || addOnlyClaims > Math.max(0, spotsBefore)
+      ? `Pending claims need ${plural(reservedAdds, 'add')} this week and ${plural(addOnlyClaims, 'open spot')}, but only ${plural(addsBefore, 'add')} and ${plural(Math.max(0, spotsBefore), 'open spot')} are available. Yahoo processes claims in waiver order, so a later claim may fail.`
+      : null };
+  const others = pending.proposedTrades + pending.unlisted;
+  return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft, openSpots, pending,
     options: { fromDate, addsFrom, top, phi: phi ?? null, seasonMargin, protectRank, poolSize, holdBelow, roles: roleNames,
       minutesK: projections?.k ?? null },
     projection: projections ? { version: projections.version, k: projections.k, asOf: projections.asOf } : null,
@@ -209,6 +227,8 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow,
     notes: [...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
       'After making the move, refresh the league and rerun; the other pairs were scored against the current roster.',
+      ...(pendingClaims.length ? [`Pending claims are assumed to go through: ${plural(reservedAdds, 'add')} this week and their open spots are reserved, claimed players and pending drops are not offered, and their production is not in the baseline.`] : []),
+      ...(others ? [`${plural(others, 'other pending transaction')} (proposed trades or items the team page doesn't list) ${others === 1 ? 'is' : 'are'} not modeled.`] : []),
       ...(openSpots > 0 ? [`${openSpots} open roster spot${openSpots === 1 ? '' : 's'}: add-only moves need no drop and skip the drop guardrail.`] : []),
       'Next week shows the pickup\'s games and legal starts in the 7 days after this matchup, with the move applied and today\'s statuses. It is context only; the score ignores it.',
       'When the default prior-MPG lineup would bench a pickup, the advice evaluates legally starting that pickup instead; displaced starts are shown.',
