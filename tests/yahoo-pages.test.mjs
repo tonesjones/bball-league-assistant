@@ -132,6 +132,20 @@ test('live matchup: totals without volume and abbreviated players in paired slot
   assert.equal(m.opponentRoster[0].slot, 'PG');
 });
 
+test('matchup-totals page supplies banked makes and attempts for the live matchup', () => {
+  const live = { ...pages(), matchup: page('matchup-live') };
+  const s = buildSnapshot({ ...live, 'matchup-totals': page('matchup') }, ASOF);
+  assert.deepEqual(s.matchup.volume, { mine: { fgm: 120, fga: 250, ftm: 60, fta: 75 }, opponent: { fgm: 118, fga: 260, ftm: 71, fta: 90 } });
+  assert.equal(s.matchup.totals.mine.PTS, 38);
+  assert.deepEqual(buildSnapshot(live, ASOF).matchup.volume.mine, { fgm: null, fga: null, ftm: null, fta: null });
+  assert.throws(() => buildSnapshot({ ...live, 'matchup-totals': page('matchup').replace('Week 2', 'Week 3') }, ASOF),
+    /matchup-totals page does not match the matchup page: week "3" vs "2"/);
+  assert.throws(() => buildSnapshot({ ...live, 'matchup-totals': page('matchup-different-team') }, ASOF),
+    /matchup-totals page does not match the matchup page: team "Fixture Six" vs "Fixture Five"/);
+  assert.throws(() => buildSnapshot({ ...live, 'matchup-totals': page('matchup').replaceAll('Rim Runners', 'Other Club') }, ASOF),
+    /opponent "Other Club" vs "Rim Runners"/);
+});
+
 test('live matchup builds a valid snapshot with week dates', () => {
   const s = buildSnapshot({ ...pages(), matchup: page('matchup-live') }, ASOF);
   assert.deepEqual([s.matchup.start, s.matchup.end], ['2026-10-27', '2026-11-01']);

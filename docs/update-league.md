@@ -59,6 +59,7 @@ Replace `{L}` with `YAHOO_LEAGUE_ID`, `{T}` with `YAHOO_TEAM_ID`. Base URL:
 | 1 | `settings.txt` | `/{L}/settings` | Categories, roster slots, adds per week, games cap, playoff weeks. Only at setup, or when the parser says settings are missing. |
 | 2 | `team.txt` | `/{L}/{T}` | Tony's roster, slots, status and FAAB balance. |
 | 3 | `matchup.txt` | `/{L}/matchup?mid1={T}` | This week's opponent, both rosters with slots, and banked category totals. Shows the current week by default. |
+| 3b | `matchup-totals.txt` | `/{L}/matchup?mid1={T}&week={W}` | Banked makes and attempts (FGM/A, FTM/A) for both teams, which `matchup.txt` lacks once games start. `{W}` is the number in the "Week N" heading of `matchup.txt`. The snapshot takes shooting volume from this page and refuses it if its week or teams differ. |
 | 4 | `fa-1.txt` | `/{L}/players?status=A&pos=P&sort=AR&sdir=1&count=0` | Pickup candidates: available players, ranked, 25 per page. |
 | 5 | `fa-2.txt` | same, `count=25` | |
 | 6 | `fa-3.txt` | same, `count=50` | |

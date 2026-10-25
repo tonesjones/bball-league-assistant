@@ -23,7 +23,7 @@ function main() {
 
   const pages = {};
   for (const f of readdirSync(dir)) {
-    if (/^(settings|team|matchup|transactions|fa-\d+)\.txt$/.test(f)) pages[f.slice(0, -4)] = readFileSync(join(dir, f), 'utf8');
+    if (/^(settings|team|matchup|matchup-totals|transactions|fa-\d+)\.txt$/.test(f)) pages[f.slice(0, -4)] = readFileSync(join(dir, f), 'utf8');
   }
   const snapshot = buildSnapshot(pages, asOf);
 

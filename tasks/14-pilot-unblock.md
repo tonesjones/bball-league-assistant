@@ -28,11 +28,11 @@ the matchup page.
 
 Done when:
 
-- [ ] A synthetic fixture pair builds a snapshot with non-null `matchup.volume` for both sides.
-- [ ] A week or team mismatch between the two pages throws.
-- [ ] The real 2026-10-24-2129 capture builds a snapshot with all four values for both sides.
+- [x] A synthetic fixture pair builds a snapshot with non-null `matchup.volume` for both sides.
+- [x] A week or team mismatch between the two pages throws.
+- [x] The real 2026-10-24-2129 capture builds a snapshot with all four values for both sides.
       Check it locally and print no page text.
-- [ ] `npm test` passes.
+- [x] `npm test` passes.
 
 ## 14b: a chatbot arm that runs
 
