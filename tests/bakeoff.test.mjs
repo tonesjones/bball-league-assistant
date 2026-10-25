@@ -118,3 +118,8 @@ test('summary counts holds, rejection reasons and averages each category includi
   assert.deepEqual(none.meanGain, zero); assert.equal(none.meanRating, null);
   assert.deepEqual(summarize([]), []);
 });
+test('a move may omit the drop for an open roster spot but still needs an add', () => {
+  const move = entries.find((e) => (e.decision ?? 'move') === 'move');
+  assert.equal(validateEntry({ ...move, drop: null }).drop, null);
+  assert.throws(() => validateEntry({ ...move, add: null, drop: null }), /add needs name and espnId/);
+});

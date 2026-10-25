@@ -60,7 +60,7 @@ export function snapshotFreshness(asOf, { maxAgeHours = 12, allowStale = false, 
 
 export function formatAdvice(report) {
   const d = report.decision;
-  const lines = [d.action === 'move' ? `Move: pick up ${d.pair.pickup.name}, drop ${d.pair.drop.name} [${d.pair.dropRole}]`
+  const lines = [d.action === 'move' ? `Move: pick up ${d.pair.pickup.name}, ${d.pair.drop ? `drop ${d.pair.drop.name} [${d.pair.dropRole}]` : 'no drop (open roster spot)'}`
     : `${d.action === 'insufficient' ? 'Insufficient evidence' : 'Hold'}: ${d.reason}`,
     ...(d.missing ?? []).map((p) => `Missing: ${p.name} (${p.nbaTeam}, ${p.side}): ${p.starts} starts, ${p.reason}`),
     `Unknown games: mine ${report.unknownGames.mine} | opponent ${report.unknownGames.opponent}`, '',
@@ -79,7 +79,8 @@ export function formatAdvice(report) {
   lines.push('', ...report.notes, '', 'Decision details:');
   const pairLines = (pair, i) => {
     lines.push(`${i + 1}. Pick up ${pair.pickup.name} (${pair.pickup.nbaTeam}, ${pair.pickup.status ?? 'healthy'}, ${pair.pickup.games} games from ${pair.pickupStart})`,
-      `   Drop ${pair.drop.name} [${pair.dropRole}] (${pair.drop.games} games left) | Score: ${signed(pair.score)} categories`);
+      `   ${pair.drop ? `Drop ${pair.drop.name} [${pair.dropRole}] (${pair.drop.games} games left)` : 'No drop: open roster spot'} | Score: ${signed(pair.score)} categories`);
+    if (pair.nextWeek) lines.push(`   Next week (${pair.nextWeek.start} to ${pair.nextWeek.end}, context only): ${pair.nextWeek.games} games, ${pair.nextWeek.starts} legal starts`);
     lines.push(`   Unknown games (mine after move): ${pair.unknownGames}`);
     if (pair.scoreRange[0] !== pair.scoreRange[1]) lines.push(`   Score range: ${number(pair.scoreRange[0])} to ${number(pair.scoreRange[1])}`);
     if (pair.lineup.mode === 'start-pickup') {
@@ -90,17 +91,18 @@ export function formatAdvice(report) {
         : `   Lineup: deliberately start ${pair.pickup.name} ${times}; no other projected starter is displaced.`);
     }
     const season = (p) => p.seasonValue == null ? 'unknown' : `${signed(p.seasonValue)} (#${p.seasonRank})`;
-    for (const p of [pair.pickup, pair.drop]) if (p.minutes) {
+    const players = [pair.pickup, pair.drop].filter(Boolean);
+    for (const p of players) if (p.minutes) {
       const m = p.minutes;
       lines.push(`   ${p.name} minutes: games ${m.games}, starts ${m.starts}, prior ${number(m.prior)}, season ${number(m.season)}, projected ${number(m.projected)}`);
     }
     for (const scenario of pair.minuteScenarios ?? []) lines.push(
-      `   Minutes case pickup ${scenario.pickupMode} ${number(scenario.pickupMpg)} / drop ${scenario.dropMode} ${number(scenario.dropMpg)}: ${scenario.scoreRange.map(number).join(' to ')} categories`);
-    for (const p of [pair.pickup, pair.drop]) if (p.rates) lines.push(
+      `   Minutes case pickup ${scenario.pickupMode} ${number(scenario.pickupMpg)}${pair.drop ? ` / drop ${scenario.dropMode} ${number(scenario.dropMpg)}` : ''}: ${scenario.scoreRange.map(number).join(' to ')} categories`);
+    for (const p of players) if (p.rates) lines.push(
       `   ${p.name} per-minute evidence: ${p.rates.status}, ${p.rates.games} games / ${number(p.rates.minutes)} minutes`);
     if (pair.rateScenarios?.length) lines.push(`   Per-minute sensitivity: ${pair.rateScenarios.length} additional cases, score ${number(Math.min(...pair.rateScenarios.map((s) => s.scoreRange[0])))} to ${number(Math.max(...pair.rateScenarios.map((s) => s.scoreRange[1])))} categories (full cases in JSON).`);
     if (pair.missingRates?.length) lines.push(`   Missing complete per-minute evidence: ${pair.missingRates.join(', ')}`);
-    lines.push(`   Season value: pickup ${season(pair.pickup)} vs drop ${season(pair.drop)}`);
+    lines.push(`   Season value: pickup ${season(pair.pickup)}${pair.drop ? ` vs drop ${season(pair.drop)}` : ''}`);
     lines.push(`   ${Object.entries(pair.changes).map(([c, v]) => `${c}: total ${signed(v.total)}, P(win) ${signed(v.pWin)}`).join(' | ')}`);
   };
   if (d.action === 'move') pairLines(d.pair, 0);

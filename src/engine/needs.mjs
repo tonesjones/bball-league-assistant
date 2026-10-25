@@ -53,7 +53,15 @@ export function assignLineup(players, slots, preferredNames = [], lastNames = []
   return selected.map((player) => ({ player, slot: positions[placed.indexOf(player)] }));
 }
 
-// Roster entries carry their matched prior. A swap takes effect on its start date.
+// Non-IL roster spots the league allows minus rostered players outside IL slots.
+export function openRosterSpots(settings, roster) {
+  const injured = (slot) => ['IL', 'IL+'].includes(slot);
+  return settings.rosterPositions.filter((p) => !injured(p.slot)).reduce((n, p) => n + p.count, 0)
+    - roster.filter((p) => !injured(p.slot)).length;
+}
+
+// Roster entries carry their matched prior. A swap takes effect on its start date; a swap with
+// no drop adds the pickup to an open spot.
 export function projectTeam(roster, totals, volume, settings, schedule, fromDate, endDate, swap = null, fill = null) {
   const remaining = empty(), banked = empty(), started = [], unknownStarts = [];
   let unknownGames = 0;
@@ -67,7 +75,8 @@ export function projectTeam(roster, totals, volume, settings, schedule, fromDate
   }
   for (let date = fromDate; date <= endDate && started.length < cap; date = addDays(date, 1)) {
     const players = swap && date >= swap.start
-      ? roster.map((p) => p === swap.drop ? { ...swap.pickup, slot: 'BN' } : p) : roster;
+      ? swap.drop ? roster.map((p) => p === swap.drop ? { ...swap.pickup, slot: 'BN' } : p)
+        : [...roster, { ...swap.pickup, slot: 'BN' }] : roster;
     const eligible = players.filter((p) => !['IL', 'IL+'].includes(p.slot)
       && !BLOCKED.includes(p.status) && teamsByDate.get(date)?.has(p.nbaTeam));
     const preferred = swap?.startPickup && date >= swap.start ? [swap.pickup.name] : [];

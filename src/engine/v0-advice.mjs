@@ -1,11 +1,11 @@
 import { findPlayer, normalizeName } from './names.mjs';
-import { tomorrow } from './weeks.mjs';
+import { addDays, tomorrow } from './weeks.mjs';
 import { gamesLeft } from './games-left.mjs';
-import { BLOCKED, projectTeam, needs, strongLine } from './needs.mjs';
+import { BLOCKED, projectTeam, needs, strongLine, openRosterSpots } from './needs.mjs';
 import { seasonValues } from './season-value.mjs';
 import { minutesCase } from './projections.mjs';
 
-export const MODEL_VERSION = 1;
+export const MODEL_VERSION = 2;
 
 export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
   let clears = fromDate;
@@ -84,7 +84,8 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   const opponentScenarios = [opponent, filled(opponentRoster, 'opponent', opponent)];
   const outlooks = (lineups) => lineups.flatMap((m) => opponentScenarios.map((o) => needs(m, o, phi, scoring)));
   const range = (numbers) => [Math.min(...numbers), Math.max(...numbers)];
-  const baselines = outlooks(mineScenarios), baseline = baselines[0], pairs = [], afterByPair = new Map();
+  const baselines = outlooks(mineScenarios), baseline = baselines[0], pairs = [], afterByPair = new Map(), swapByPair = new Map();
+  const openSpots = openRosterSpots(snapshot.settings, snapshot.team.roster);
   for (const [c, category] of Object.entries(baseline.categories)) {
     category.pWinRange = category.label === 'unknown' ? null : range(baselines.map((b) => b.categories[c].pWin));
     category.complete = category.pWinRange != null && category.pWinRange[1] - category.pWinRange[0] < 1e-12;
@@ -107,9 +108,11 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     seasonValue: p.season?.value ?? null, seasonRank: p.season?.rank ?? null });
   for (const pickup of freeAgents.filter((p) => p.prior && !BLOCKED.includes(p.status))) {
     const start = pickupStart(pickup, fromDate, window, addsFrom);
-    for (const drop of roster) {
-      const name = normalizeName(drop.name), dropRole = streamSet.has(name) ? 'stream' : 'normal';
-      const blocked = coreSet.has(name) ? 'core' : dropRole === 'stream' ? null
+    // A null drop is an add-only move into an open roster spot; the drop guardrail doesn't apply.
+    for (const drop of [...(openSpots > 0 ? [null] : []), ...roster]) {
+      const name = drop && normalizeName(drop.name);
+      const dropRole = !drop ? 'open-slot' : streamSet.has(name) ? 'stream' : 'normal';
+      const blocked = !drop ? null : coreSet.has(name) ? 'core' : dropRole === 'stream' ? null
         : !drop.season ? 'noPrior' : drop.season.rank <= protectRank ? 'rank'
           : pickup.season.value < drop.season.value + seasonMargin ? 'seasonValue' : null;
       if (blocked) {
@@ -129,12 +132,12 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       const nominalScores = results.map((r, i) => r.expectedCategories - baselines[i].expectedCategories);
       const minuteScenarios = [], rateScenarios = [];
       const pickupRates = pickup.rates?.status === 'observed' ? ['prior', 'season'] : ['prior'];
-      const dropRates = drop.rates?.status === 'observed' ? ['prior', 'season'] : ['prior'];
+      const dropRates = !drop ? [null] : drop.rates?.status === 'observed' ? ['prior', 'season'] : ['prior'];
       if (projections) for (const pickupRate of pickupRates) for (const dropRate of dropRates)
-      for (const pickupMode of ['prior', 'season']) for (const dropMode of ['prior', 'season']) {
+      for (const pickupMode of ['prior', 'season']) for (const dropMode of drop ? ['prior', 'season'] : [null]) {
         const casePickup = { ...pickup, prior: minutesCase(pickup.prior, pickupMode, pickupRate) };
-        const caseDrop = { ...drop, prior: minutesCase(drop.prior, dropMode, dropRate) };
-        const caseRoster = roster.map((p) => p === drop ? caseDrop : p);
+        const caseDrop = drop && { ...drop, prior: minutesCase(drop.prior, dropMode, dropRate) };
+        const caseRoster = drop ? roster.map((p) => p === drop ? caseDrop : p) : roster;
         const caseSwap = { pickup: casePickup, drop: caseDrop, start };
         const before = project(caseRoster, 'mine');
         const caseBaselines = outlooks([before, filled(caseRoster, 'mine', before)]);
@@ -143,9 +146,9 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
         const force = pickupStarts(deliberate) > pickupStarts(auto);
         const proposed = force ? deliberate : auto;
         const caseResults = outlooks([proposed, filled(caseRoster, 'mine', proposed, { ...caseSwap, startPickup: force })]);
-        const scenarios = pickupRate === 'prior' && dropRate === 'prior' ? minuteScenarios : rateScenarios;
+        const scenarios = pickupRate === 'prior' && dropRate !== 'season' ? minuteScenarios : rateScenarios;
         scenarios.push({ pickupMode, dropMode, pickupRate, dropRate, pickupMpg: casePickup.prior?.mpg ?? null,
-          dropMpg: caseDrop.prior?.mpg ?? null,
+          dropMpg: caseDrop?.prior?.mpg ?? null,
           scoreRange: range(caseResults.map((r, i) => r.expectedCategories - caseBaselines[i].expectedCategories)),
           baselineStarted: before.started, proposedStarted: proposed.started });
       }
@@ -155,16 +158,17 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       const changes = Object.fromEntries(Object.keys(baseline.categories).filter((c) => baseline.categories[c].label !== 'unknown').map((c) => [c, {
         total: after.totals[c] - mine.totals[c], pWin: result.categories[c].pWin - baseline.categories[c].pWin,
       }]));
-      const pair = { pickup: describe(pickup, start), drop: describe(drop, fromDate), dropRole, pickupStart: start,
+      const pair = { pickup: describe(pickup, start), drop: drop && describe(drop, fromDate), dropRole, pickupStart: start,
         unknownGames: after.unknownGames, lineup: { mode: deliberatelyStart ? 'start-pickup' : 'automatic',
           automaticPickupStarts, pickupStarts: pickupStarts(after),
           displaced, started: after.started },
         changes, score: result.expectedCategories - baseline.expectedCategories,
         minuteScenarios, rateScenarios,
-        missingRates: [pickup, drop].filter((p) => p.rates?.status === 'unavailable').map((p) => p.name),
+        missingRates: [pickup, drop].filter((p) => p?.rates?.status === 'unavailable').map((p) => p.name),
         scoreRange: range([...nominalScores, ...minuteScenarios.flatMap((s) => s.scoreRange), ...rateScenarios.flatMap((s) => s.scoreRange)]) };
       pairs.push(pair);
       afterByPair.set(pair, after);
+      swapByPair.set(pair, swap);
     }
   }
   pairs.sort((a, b) => b.scoreRange[0] - a.scoreRange[0] || b.score - a.score);
@@ -183,12 +187,21 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       side, starts: starts.get(p.name).size, reason: p.unscoredReason })).sort((a, b) => a.name.localeCompare(b.name));
   });
   const decision = !addsLeft ? { action: 'hold', reason: 'No adds left this week.', best }
-    : !best ? { action: 'hold', reason: 'No eligible add/drop pairs.', best }
+    : !best ? { action: 'hold', reason: 'No eligible moves.', best }
       : robust ? { action: 'move', pair: robust }
         : best.scoreRange[1] > 0 && best.scoreRange[1] >= holdBelow
           ? { action: 'insufficient', reason: projections ? 'Minutes, current-season per-minute production, or missing evidence can change whether the move clears the required gain.' : 'Missing projections can change whether the move clears the required gain.', best, missing: missing(best) }
           : { action: 'hold', reason: `Best move gains ${best.scoreRange[1].toFixed(3)} expected categories; requires a positive gain of at least ${holdBelow}.`, best };
-  return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft,
+  // Context only: next week's games and legal starts never change the score or the decision.
+  const nextWeek = { start: addDays(window.end, 1), end: addDays(window.end, 7) };
+  for (const pair of new Set([...pairs.slice(0, top), best, robust])) if (pair) {
+    const swap = swapByPair.get(pair), start = [nextWeek.start, pair.pickupStart].sort().at(-1);
+    const lineup = projectTeam(roster, {}, {}, snapshot.settings, schedule, nextWeek.start, nextWeek.end,
+      { ...swap, start, startPickup: true });
+    pair.nextWeek = { ...nextWeek, games: gamesLeft(swap.pickup, schedule, start, nextWeek.end),
+      starts: lineup.started.filter((g) => g.name === swap.pickup.name).length };
+  }
+  return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft, openSpots,
     options: { fromDate, addsFrom, top, phi: phi ?? null, seasonMargin, protectRank, poolSize, holdBelow, roles: roleNames,
       minutesK: projections?.k ?? null },
     projection: projections ? { version: projections.version, k: projections.k, asOf: projections.asOf } : null,
@@ -196,6 +209,8 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow,
     notes: [...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
       'After making the move, refresh the league and rerun; the other pairs were scored against the current roster.',
+      ...(openSpots > 0 ? [`${openSpots} open roster spot${openSpots === 1 ? '' : 's'}: add-only moves need no drop and skip the drop guardrail.`] : []),
+      'Next week shows the pickup\'s games and legal starts in the 7 days after this matchup, with the move applied and today\'s statuses. It is context only; the score ignores it.',
       'When the default prior-MPG lineup would bench a pickup, the advice evaluates legally starting that pickup instead; displaced starts are shown.',
       'Unknown starts are scored at zero and at a strong rotation line (90th percentile of the top 150, 10th percentile TO); a move must win in both.',
       ...(projections ? [

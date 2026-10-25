@@ -212,6 +212,7 @@ test('strong line uses nearest ranks, low TO, attempt-weighted shooting and the 
 
 test('projectTeam fills unknown starts without changing slots, cap or start records', () => {
   const f = fresh(), unknown = { name: 'Drew Placeholder', nbaTeam: 'AAA', slot: 'BN', prior: null };
+  f.snapshot.settings.rosterPositions[0].count = 2;
   const roster = [scored(f), unknown], fill = strongLine(f.priors);
   const zero = project(f, roster);
   const filled = projectTeam(roster, {}, {}, f.snapshot.settings, f.schedule, '2026-10-20', '2026-11-01', null, fill);
@@ -256,6 +257,7 @@ test('four crossed scenarios score the chosen lineup and missing starts count ea
 
 test('pairs sort by the worst case and a robust move wins over a higher zero-fill score', () => {
   const f = fresh(); better(f); f.priors[0].perGame = null;
+  f.snapshot.settings.rosterPositions[0].count = 2;
   f.snapshot.team.roster.push({ name: 'Drew Placeholder', nbaTeam: 'AAA', slot: 'BN' });
   f.ids.players.push({ name: 'Drew Placeholder', team: 'AAA', priorName: 'Blair Old' });
   const r = run(f, { roles: { stream: ['Alex Sample', 'Drew Placeholder'] }, holdBelow: 0 });
@@ -796,4 +798,59 @@ test('roles file helper defaults empty, reads legacy protection as core, merges,
     assert.ok(path.resolve(dir).startsWith(path.resolve(tmpdir()) + path.sep));
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+// Moving the only rostered player to IL opens the fixture's one non-IL spot.
+const opened = (f) => { f.snapshot.team.roster[0].slot = 'IL+'; return f; };
+
+test('an IL move opens a spot for an add-only move that skips the drop guardrail', () => {
+  const f = opened(fresh()); better(f);
+  const r = run(f, { protectedNames: ['Alex Sample'] });
+  assert.equal(r.openSpots, 1);
+  assert.equal(r.decision.action, 'move');
+  assert.equal(r.decision.pair.drop, null);
+  assert.equal(r.decision.pair.dropRole, 'open-slot');
+  assert.equal(r.guardrail.blockedByRule.core, 1);
+  assert.ok(r.decision.pair.score > 0);
+  assert.ok(r.decision.pair.lineup.started.some((g) => g.name === 'Casey Fiction'));
+  assert.ok(r.baselineLineups.mine.every((g) => g.name !== 'Alex Sample'));
+  const text = formatAdvice(r);
+  assert.match(text, /^Move: pick up Casey Fiction, no drop \(open roster spot\)/);
+  assert.match(text, /No drop: open roster spot \| Score/);
+  assert.match(text, /Season value: pickup [+-][\d.]+ \(#\d+\)\n/);
+  assert.match(r.notes.join(' '), /1 open roster spot: add-only moves need no drop/);
+});
+
+test('a full non-IL roster gives no add-only move', () => {
+  const f = fresh(); better(f);
+  const r = run(f);
+  assert.equal(r.openSpots, 0);
+  assert.ok(r.topPairs.length && r.topPairs.every((p) => p.drop));
+  assert.equal(run(f, { protectedNames: ['Alex Sample'] }).decision.reason, 'No eligible moves.');
+});
+
+test('an open spot never forces a pickup without a legal start, an eligible status, a timely waiver or an add', () => {
+  const noStart = opened(fresh()); better(noStart);
+  noStart.snapshot.settings.rosterPositions = [{ slot: 'C', count: 1 }, { slot: 'IL+', count: 1 }];
+  noStart.snapshot.freeAgents[0].positions = ['PG'];
+  const benched = run(noStart);
+  assert.equal(benched.decision.action, 'hold');
+  assert.equal(benched.decision.best.score, 0);
+  const late = opened(fresh()); better(late); late.snapshot.freeAgents[0].waiverClears = 'Nov 05';
+  assert.equal(run(late).decision.action, 'hold');
+  const out = opened(fresh()); better(out); out.snapshot.freeAgents[0].status = 'O';
+  assert.equal(run(out).decision.reason, 'No eligible moves.');
+  const spent = opened(fresh()); better(spent); spent.snapshot.team.addsUsedThisWeek = 4;
+  assert.equal(run(spent).decision.reason, 'No adds left this week.');
+});
+
+test('next-week games and starts across a Sunday/Monday boundary are shown but not scored', () => {
+  const f = opened(fresh()); better(f);
+  const report = run(f), withMonday = report.decision.pair;
+  assert.deepEqual(withMonday.nextWeek, { start: '2026-11-02', end: '2026-11-08', games: 1, starts: 1 });
+  f.schedule.games = f.schedule.games.filter((g) => g.date !== '2026-11-02');
+  const withoutMonday = run(f).decision.pair;
+  assert.equal(withoutMonday.nextWeek.games, 0);
+  assert.deepEqual(withoutMonday.scoreRange, withMonday.scoreRange);
+  assert.match(formatAdvice(report), /Next week \(2026-11-02 to 2026-11-08, context only\)/);
 });

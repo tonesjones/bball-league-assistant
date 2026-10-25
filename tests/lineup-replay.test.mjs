@@ -76,3 +76,10 @@ test('unscored decisions do not become zero gains in source means', () => {
   assert.equal(summary.meanGain.PTS, 5);
   assert.equal(summarize([{ entry: e, ...score(e, []) }])[0].meanGain, null);
 });
+
+test('an add-only move gains the pickup production with no drop', () => {
+  const e = entry(); e.drop = null; e.lineups.proposed = [start('starter'), start('pickup')];
+  const r = score(e);
+  assert.equal(r.gain.PTS, 25);
+  assert.deepEqual(r.gamesPlayed, { add: 1, drop: 0 });
+});
