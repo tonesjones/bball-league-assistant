@@ -109,13 +109,13 @@ New rule, in `advise`:
 
 Done when:
 
-- [ ] A test: all cases positive, worst case below 0.15 and nominal above 0.15 gives `move`.
-- [ ] A test: any case at 0 or below with the best case above the bar gives `insufficient`.
-- [ ] A test: an add-only pair with nominal 0.08 and all cases positive gives `move`; the same
+- [x] A test: all cases positive, worst case below 0.15 and nominal above 0.15 gives `move`.
+- [x] A test: any case at 0 or below with the best case above the bar gives `insufficient`.
+- [x] A test: an add-only pair with nominal 0.08 and all cases positive gives `move`; the same
       pair with a drop gives `hold`.
-- [ ] The existing extreme-game test still withholds, as does the 10-22 rejected move, which
+- [x] The existing extreme-game test still withholds, as does the 10-22 rejected move, which
       reached −0.25 in a rate case.
-- [ ] `MODEL_VERSION` is 4, and `npm test` passes.
+- [x] `MODEL_VERSION` is 4, and `npm test` passes.
 
 ## The freeze
 

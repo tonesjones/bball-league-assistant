@@ -63,7 +63,8 @@ export function formatAdvice(report) {
   const lines = [d.action === 'move' ? `Move: pick up ${d.pair.pickup.name}, ${d.pair.drop ? `drop ${d.pair.drop.name} [${d.pair.dropRole}]` : 'no drop (open roster spot)'}`
     : `${d.action === 'insufficient' ? 'Insufficient evidence' : 'Hold'}: ${d.reason}`,
     ...(d.missing ?? []).map((p) => `Missing: ${p.name} (${p.nbaTeam}, ${p.side}): ${p.starts} starts, ${p.reason}`),
-    `Unknown games: mine ${report.unknownGames.mine} | opponent ${report.unknownGames.opponent}`, '',
+    `Unknown games: mine ${report.unknownGames.mine} | opponent ${report.unknownGames.opponent}`,
+    `Bars: drop ${report.holdBelow} | add-only ${report.addOnlyBelow}${d.bar ? ` | applied: ${d.bar.kind}` : ''}`, '',
     `Snapshot: ${report.asOf}`, `Week ${report.week}: ${report.window.start} to ${report.window.end}`,
     `From: ${report.fromDate} | Adds from: ${report.addsFrom} | Adds left: ${report.addsLeft}`,
     ...(report.pending?.waivers ?? []).map((w) => `Pending claim ${w.order} (${w.date}): add ${w.add}${w.bid == null ? '' : ` for $${w.bid}`}${w.drop ? `, drop ${w.drop}` : ''}`),
@@ -143,7 +144,7 @@ async function main(args) {
     if (arg === '--from') options.fromDate = date(args[++i]);
     else if (arg === '--adds-from') options.addsFrom = date(args[++i]);
     else if (arg === '--allow-stale') freshnessOptions.allowStale = true;
-    else if (arg === '--max-age-hours' || arg === '--hold-below' || arg === '--minutes-k') {
+    else if (arg === '--max-age-hours' || arg === '--hold-below' || arg === '--add-only-below' || arg === '--minutes-k') {
       const value = args[++i];
       if (!value?.trim() || !Number.isFinite(Number(value)) || Number(value) < 0) throw new Error(`${arg} must be a nonnegative finite number`);
       if (arg === '--max-age-hours') freshnessOptions.maxAgeHours = Number(value);
@@ -151,6 +152,7 @@ async function main(args) {
         if (Number(value) <= 0) throw new Error('--minutes-k must be positive');
         options.minutesK = Number(value);
       }
+      else if (arg === '--add-only-below') options.addOnlyBelow = Number(value);
       else options.holdBelow = Number(value);
     }
     else if (arg === '--margin') {
