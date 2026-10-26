@@ -24,25 +24,14 @@ function parsePending(page, L) {
   return { count, waivers, proposedTrades, unlisted };
 }
 
-export function parseTeam(text, page = 'team') {
-  rejectSignedOut(text, page);
-  const L = load(text);
+function teamName(page, L) {
   const t = indexOf(page, L, (s) => s === 'Yahoo Sports Fantasy Basketball', 'the "Yahoo Sports Fantasy Basketball" heading');
   const name = L[t + 1]?.s;
   if (!name) throw fail(page, L[t], 'no team name after the heading');
+  return name;
+}
 
-  const r = indexOf(page, L, (s) => s === 'Record' || /^\d+(?:st|nd|rd|th) Place$/.test(s), 'the record or standing label');
-  const rec = /^(\d+)-(\d+)-(\d+)$/.exec(L[r - 1]?.s ?? '');
-  if (!rec) throw fail(page, L[r - 1] ?? L[r], 'expected a W-L-T record before the standing label');
-  const rank = L[r].s === 'Record' ? null : Number(/^(\d+)/.exec(L[r].s)[1]);
-
-  const ADDS_RE = /^You have used (\d+) of your \d+ player adds for this week\.$/;
-  const addsUsedThisWeek = Number(ADDS_RE.exec(L[indexOf(page, L, (s) => ADDS_RE.test(s), 'the weekly player adds line')].s)[1]);
-
-  const b = indexOf(page, L, (s) => /^Waiver Budget: /.test(s), 'the "Waiver Budget" line');
-  const budget = /^Waiver Budget: \$(\d+(?:\.\d+)?)$/.exec(L[b].s);
-  if (!budget) throw fail(page, L[b], 'unrecognized waiver budget');
-
+function parseRoster(page, L) {
   const pos = indexOf(page, L, (s) => s === 'Pos', 'the roster table header ("Pos")');
   const hdr = indexOf(page, L, (s) => s === 'TO', 'the end of the roster table header ("TO")', pos);
   const stop = stopIndex(L, hdr);
@@ -57,6 +46,34 @@ export function parseTeam(text, page = 'team') {
     } else if (NAME_RE.test(l.s)) throw fail(page, l, 'player row without a slot before it');
   }
   if (!roster.length) throw fail(page, L[hdr], 'no roster rows');
+  return roster;
+}
+
+// Another team's page has no weekly adds or waiver budget lines, so only the name and roster are read.
+export function parseOtherTeam(text, page) {
+  rejectSignedOut(text, page);
+  const L = load(text);
+  return { name: teamName(page, L), roster: parseRoster(page, L) };
+}
+
+export function parseTeam(text, page = 'team') {
+  rejectSignedOut(text, page);
+  const L = load(text);
+  const name = teamName(page, L);
+
+  const r = indexOf(page, L, (s) => s === 'Record' || /^\d+(?:st|nd|rd|th) Place$/.test(s), 'the record or standing label');
+  const rec = /^(\d+)-(\d+)-(\d+)$/.exec(L[r - 1]?.s ?? '');
+  if (!rec) throw fail(page, L[r - 1] ?? L[r], 'expected a W-L-T record before the standing label');
+  const rank = L[r].s === 'Record' ? null : Number(/^(\d+)/.exec(L[r].s)[1]);
+
+  const ADDS_RE = /^You have used (\d+) of your \d+ player adds for this week\.$/;
+  const addsUsedThisWeek = Number(ADDS_RE.exec(L[indexOf(page, L, (s) => ADDS_RE.test(s), 'the weekly player adds line')].s)[1]);
+
+  const b = indexOf(page, L, (s) => /^Waiver Budget: /.test(s), 'the "Waiver Budget" line');
+  const budget = /^Waiver Budget: \$(\d+(?:\.\d+)?)$/.exec(L[b].s);
+  if (!budget) throw fail(page, L[b], 'unrecognized waiver budget');
+
+  const roster = parseRoster(page, L);
 
   return { name, rank, record: { wins: +rec[1], losses: +rec[2], ties: +rec[3] }, faabBalance: Number(budget[1]), addsUsedThisWeek,
     pending: parsePending(page, L), roster };
