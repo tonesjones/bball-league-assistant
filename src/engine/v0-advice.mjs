@@ -168,9 +168,10 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
           scoreRange: range(caseResults.map((r, i) => r.expectedCategories - caseBaselines[i].expectedCategories)),
           baselineStarted: before.started, proposedStarted: proposed.started });
       }
-      const startedKeys = new Set(startedPickup.started.map((g) => `${g.date}\0${g.name}`));
-      const displaced = deliberatelyStart ? automatic.started.filter((g) => !startedKeys.has(`${g.date}\0${g.name}`))
-        .map(({ name, date }) => ({ name, date })) : [];
+      // Starts the move takes from players who stay on the roster, in either lineup mode.
+      const startedKeys = new Set(after.started.map((g) => `${g.date}\0${g.name}`));
+      const displaced = mine.started.filter((g) => g.name !== drop?.name && !startedKeys.has(`${g.date}\0${g.name}`))
+        .map(({ name, date }) => ({ name, date }));
       const changes = Object.fromEntries(Object.keys(baseline.categories).filter((c) => baseline.categories[c].label !== 'unknown').map((c) => [c, {
         total: after.totals[c] - mine.totals[c], pWin: result.categories[c].pWin - baseline.categories[c].pWin,
       }]));
@@ -243,7 +244,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       ...(others ? [`${plural(others, 'other pending transaction')} (proposed trades or items the team page doesn't list) ${others === 1 ? 'is' : 'are'} not modeled.`] : []),
       ...(openSpots > 0 ? [`${openSpots} open roster spot${openSpots === 1 ? '' : 's'}: add-only moves need no drop and skip the drop guardrail.`] : []),
       'Next week shows the pickup\'s games and legal starts in the 7 days after this matchup, with the move applied and today\'s statuses. It is context only; the score ignores it.',
-      'When the default prior-MPG lineup would bench a pickup, the advice evaluates legally starting that pickup instead; displaced starts are shown.',
+      'When the default prior-MPG lineup would bench a pickup, the advice evaluates legally starting that pickup instead. Starts the move takes from rostered players are shown as displaced.',
       'Unknown starts are scored at zero and at a strong rotation line (90th percentile of the top 150, 10th percentile TO); a move must win in both.',
       ...(projections ? [
         `Minutes and production blend: k=${projections.k} prior pseudo-games (starting value, not calibrated); equal weights. Nominal per-minute rates blend current-season production with k games of prior minutes; current-season weight grows with observed minutes.`,

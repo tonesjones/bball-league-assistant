@@ -506,6 +506,26 @@ test('advice can deliberately start a lower-mpg pickup and reports the displaced
   assert.match(formatAdvice(r), /Lineup: deliberately start Casey Fiction once; displaces Alex Sample on 2026-10-21\./);
 });
 
+test('an automatically started pickup reports the rostered starter it displaces', () => {
+  const f = fresh();
+  f.snapshot.matchup.start = '2026-10-21';
+  f.snapshot.matchup.end = '2026-10-21';
+  f.snapshot.settings.rosterPositions = [{ slot: 'C', count: 1 }, { slot: 'PG', count: 1 }];
+  f.snapshot.team.roster[0].positions = ['C'];
+  f.snapshot.team.roster.push({ name: 'Guard Stream', nbaTeam: 'DDD', positions: ['PG'], status: 'NA', slot: 'PG' });
+  f.snapshot.freeAgents[0].positions = ['C'];
+  f.priors[2].mpg = 40;
+  f.priors[2].perGame.pts = 60;
+  f.schedule.games = [{ date: '2026-10-21', home: 'AAA', away: 'CCC' }];
+
+  const r = run(f, { fromDate: '2026-10-21', roles: { core: ['Alex Sample'], stream: ['Guard Stream'] } });
+  const pair = r.topPairs[0];
+  assert.equal(pair.pickup.name, 'Casey Fiction');
+  assert.equal(pair.lineup.mode, 'automatic');
+  assert.deepEqual(pair.lineup.displaced, [{ name: 'Alex Sample', date: '2026-10-21' }]);
+  assert.match(formatAdvice(r), /Lineup: Casey Fiction starts once; displaces Alex Sample on 2026-10-21\./);
+});
+
 test('a deliberately started pickup keeps its real tradeoff when the automatic bench scores better', () => {
   const f = fresh();
   f.snapshot.matchup.start = '2026-10-21';
