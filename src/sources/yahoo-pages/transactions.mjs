@@ -2,6 +2,9 @@ import { load, fail, indexOf, rejectSignedOut } from './common.mjs';
 
 const MOVE_RE = /^(.+?)\s+([A-Z]{2,3}) - ([A-Z]{1,2}(?:,[A-Z]{1,2})*)(?:\s+(INJ|GTD|DTD|SUSP|NA|O|P|Q|D))?$/;
 const TIME_RE = /^[A-Z][a-z]{2} \d{1,2}, \d{1,2}:\d{2} (?:am|pm)$/;
+// Yahoo adds a pager above and below the list once the league has more than 25 transactions.
+const PAGER_RE = /^Previous \d+ Next \d+$/;
+const isEnd = (s) => /^Yahoo Sports - NBC/.test(s) || PAGER_RE.test(s);
 
 export function parseTransactions(text, page = 'transactions') {
   rejectSignedOut(text, page);
@@ -14,8 +17,8 @@ export function parseTransactions(text, page = 'transactions') {
   }
 
   const transactions = [];
-  let i = f + 1;
-  while (i < L.length && !/^Yahoo Sports - NBC/.test(L[i].s)) {
+  let i = PAGER_RE.test(L[f + 1]?.s) ? f + 2 : f + 1;
+  while (i < L.length && !isEnd(L[i].s)) {
     const moves = [];
     let m;
     while (i < L.length && (m = MOVE_RE.exec(L[i].s))) {
@@ -31,7 +34,7 @@ export function parseTransactions(text, page = 'transactions') {
     }
     if (!moves.length) throw fail(page, L[i] ?? L.at(-1), 'transactions layout not seen yet');
     const team = L[i++];
-    if (!team || TIME_RE.test(team.s) || /^Yahoo Sports - NBC/.test(team.s)) throw fail(page, team ?? L.at(-1), 'transactions layout not seen yet');
+    if (!team || TIME_RE.test(team.s) || isEnd(team.s)) throw fail(page, team ?? L.at(-1), 'transactions layout not seen yet');
     const time = L[i++];
     if (!time || !TIME_RE.test(time.s)) throw fail(page, time ?? L.at(-1), 'transactions layout not seen yet');
     transactions.push({ team: team.s, time: time.s, moves });

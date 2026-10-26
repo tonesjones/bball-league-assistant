@@ -1,5 +1,5 @@
 import { parseSettings } from './settings.mjs';
-import { parseTeam } from './team.mjs';
+import { parseTeam, parseOtherTeam } from './team.mjs';
 import { parseMatchup } from './matchup.mjs';
 import { parseFreeAgents } from './free-agents.mjs';
 import { parseTransactions } from './transactions.mjs';
@@ -44,7 +44,7 @@ export function buildSnapshot(pages, asOf) {
   // Other teams' pages exist only after a --trades refresh. Tony's own page is not repeated.
   const teams = Object.keys(pages)
     .filter((k) => /^teams\/\d+$/.test(k))
-    .map((k) => ({ teamNumber: Number(k.slice(6)), page: parseTeam(pages[k], k) }))
+    .map((k) => ({ teamNumber: Number(k.slice(6)), page: parseOtherTeam(pages[k], k) }))
     .filter(({ page }) => page.name !== team.name)
     .sort((a, b) => a.teamNumber - b.teamNumber)
     .map(({ teamNumber, page }) => ({ teamNumber, roster: page.roster }));

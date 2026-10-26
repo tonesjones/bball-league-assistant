@@ -218,6 +218,13 @@ test('transactions: live moves are grouped and classified', () => {
   assert.throws(() => parseTransactions(bad), /transactions: line \d+: transactions layout not seen yet: "Free Agent"/);
 });
 
+test('transactions: the pager above and below a full page is skipped', () => {
+  const text = page('transactions-live')
+    .replace('FAB Offers', 'FAB Offers\nPrevious 25 Next 25')
+    .replace('Yahoo Sports - NBC', 'Previous 25 Next 25\nYahoo Sports - NBC');
+  assert.deepEqual(parseTransactions(text), parseTransactions(page('transactions-live')));
+});
+
 test('transactions: unclassified content throws with the line', () => {
   const text = page('transactions').replace('No recent transactions', 'Added Some Player to Fixture Five');
   assert.throws(() => parseTransactions(text), /transactions: line \d+: transactions layout not seen yet: "Added Some Player/);
@@ -350,11 +357,13 @@ test('team: pending waiver claims, proposed trades and unlisted items', () => {
 });
 
 test('other teams\' pages parse into league.teams; a routine build has none', () => {
-  const other = page('team').replaceAll('Fixture Five', 'Fixture Other');
+  // Another team's page has no weekly adds or waiver budget lines.
+  const other = without(without(page('team'), 'You have used 0 of your 4 player adds for this week.'), 'Waiver Budget: $91')
+    .replaceAll('Fixture Five', 'Fixture Other');
   const own = page('team');
   const s = buildSnapshot({ ...pages(), 'teams/9': other, 'teams/3': other, 'teams/7': own }, ASOF);
   assert.deepEqual(s.league.teams.map((t) => t.teamNumber), [3, 9]);
-  assert.deepEqual(s.league.teams[0].roster, parseTeam(other).roster);
+  assert.deepEqual(s.league.teams[0].roster, parseTeam(own).roster);
   assert.doesNotThrow(() => validate(JSON.parse(JSON.stringify(s))));
   assert.equal('league' in buildSnapshot(pages(), ASOF), false);
 });
