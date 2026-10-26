@@ -18,9 +18,21 @@ function pairLine(pair) {
     + `${drop}. Score ${signed(pair.score)} categories. Changes: ${changes || 'unknown'}.`;
 }
 
+const STATE_SECTIONS = ['Standing preferences', 'Decisions', 'Open questions'];
+
+// Copies Tony's own sections from the vault state note word for word. League data never comes
+// from the note.
+export function standingDecisions(note) {
+  const body = note.replace(/\r\n/g, '\n').replace(/^---\n[\s\S]*?\n---\n/, '');
+  const sections = body.split(/^(?=## )/m);
+  const kept = STATE_SECTIONS.map((title) => sections.find((s) => s.trim().split('\n')[0] === `## ${title}`));
+  if (kept.some((s) => !s)) throw new Error(`state note needs these sections: ${STATE_SECTIONS.map((t) => `## ${t}`).join(', ')}`);
+  return kept.map((s) => s.trim().replace(/^## /, '### ')).join('\n\n');
+}
+
 // Formats a saved decision as one Markdown brief for a chat window. Every number comes from the
 // decision and its inputs; nothing here scores or ranks.
-export function buildBrief({ record, snapshot, schedule, prompt, promptVersion, now, faLimit = 40 }) {
+export function buildBrief({ record, snapshot, schedule, prompt, promptVersion, now, faLimit = 40, standing = null }) {
   const r = record.report, { start, end } = r.window;
   const teamsByDate = new Map();
   for (const g of schedule.games) {
@@ -41,6 +53,8 @@ export function buildBrief({ record, snapshot, schedule, prompt, promptVersion, 
     `- Brief written: ${now} (snapshot ${known(ageHours) ? ageHours.toFixed(1) : 'unknown'} hours old)`,
     `- Model version: ${text(record.provenance?.modelVersion)} | Brief prompt version: ${promptVersion}`,
     `- Week ${r.week}: ${start} to ${end}. Games counted from ${r.fromDate}. Adds left this week: ${text(r.addsLeft)}`,
+    '', '## Standing decisions', '',
+    standing ?? 'None supplied. Run `npm run brief -- --state <note>` to include the vault state note.',
     '', '## Matchup', '',
     ...table(['Category', 'Mine', 'Opponent', 'P(win)', 'Need'], Object.entries(r.baseline.categories).map(([c, v]) => {
       const incomplete = v.pWinRange && !v.complete;

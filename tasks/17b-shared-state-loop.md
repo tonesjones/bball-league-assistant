@@ -57,9 +57,19 @@ corrections. ChatGPT's answers go nowhere afterward.
 
 ## Done when
 
-- [ ] The state note template exists in the vault and the October 20 brief points to `npm run brief`.
-- [ ] Preference tests: a lineup lock fixes that day's slot; a non-candidate never opens an IL
+- [x] The state note template exists in the vault and the October 20 brief points to `npm run brief`.
+- [x] Preference tests: a lineup lock fixes that day's slot; a non-candidate never opens an IL
   spot; an unknown name fails; no file changes nothing.
-- [ ] Brief tests: `--state` copies the sections word for word; without it the section says none.
-- [ ] The prompt version is 2 and asks for the carry-forward section.
-- [ ] `MODEL_VERSION` is bumped and `npm test` passes.
+- [x] Brief tests: `--state` copies the sections word for word; without it the section says none.
+- [x] The prompt version is 2 and asks for the carry-forward section.
+- [x] `MODEL_VERSION` is bumped and `npm test` passes.
+
+## Notes
+
+- The state note is `10 Projects/bball-league-assistant state.md`, with `type: area` because the
+  vault has no note type for it. Its first entries came from Sol and wait for Tony's check.
+- Only listed IL candidates with status O, INJ or NA and a free IL or IL+ slot move to IL. The
+  engine never assumed any IL move before, so `notIlCandidates` only guards against a
+  contradictory list.
+- `MODEL_VERSION` is 5. The unmerged Tasks 15-16 branch also uses 5 and must move to 6 when it
+  merges.

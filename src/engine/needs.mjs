@@ -28,13 +28,14 @@ export function strongLine(priors, { poolSize = 150 } = {}) {
   return line;
 }
 
+export const fits = (p, slot) => slot === 'Util' || (p.positions ?? []).some((pos) =>
+  pos === slot || slot === 'G' && ['PG', 'SG'].includes(pos) || slot === 'F' && ['SF', 'PF'].includes(pos));
+
 export function assignLineup(players, slots, preferredNames = [], lastNames = []) {
   const positions = slots.filter((p) => active(p.slot)).flatMap((p) => Array(p.count).fill(p.slot));
   const placed = Array(positions.length).fill(null);
   const preferred = new Set(preferredNames);
   const last = new Set(lastNames);
-  const fits = (p, slot) => slot === 'Util' || (p.positions ?? []).some((pos) =>
-    pos === slot || slot === 'G' && ['PG', 'SG'].includes(pos) || slot === 'F' && ['SF', 'PF'].includes(pos));
   const place = (player, seen) => {
     for (let i = 0; i < positions.length; i++) {
       if (seen.has(i) || !fits(player, positions[i])) continue;
@@ -80,7 +81,11 @@ export function projectTeam(roster, totals, volume, settings, schedule, fromDate
     const eligible = players.filter((p) => !['IL', 'IL+'].includes(p.slot)
       && !BLOCKED.includes(p.status) && teamsByDate.get(date)?.has(p.nbaTeam));
     const preferred = swap?.startPickup && date >= swap.start ? [swap.pickup.name] : [];
-    for (const { player: p, slot } of assignLineup(eligible, settings.rosterPositions, preferred)) {
+    // Tony's lineup locks take their slot first; the rest fill the remaining slots.
+    const locked = eligible.flatMap((p) => (p.locks ?? []).filter((l) => l.date === date).map((l) => ({ player: p, slot: l.slot })));
+    const open = settings.rosterPositions.map((p) => ({ ...p, count: p.count - locked.filter((l) => l.slot === p.slot).length }));
+    const rest = eligible.filter((p) => !locked.some((l) => l.player === p));
+    for (const { player: p, slot } of [...locked, ...assignLineup(rest, open, preferred)]) {
       if (started.length >= cap) break;
       started.push({ name: p.name, espnId: p.espnId ?? null, date, slot });
       if (!p.prior) { unknownGames++; unknownStarts.push({ name: p.name, date }); }

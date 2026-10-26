@@ -118,9 +118,21 @@ test('brief CLI writes once and refuses a changed snapshot', async (t) => {
   const run = (...args) => execFileSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8', stdio: 'pipe' });
   assert.equal(run(), `Brief: ${path.join('local/briefs', 'sample.md')}\n`);
   const brief = await readFile(path.join(dir, 'local/briefs/sample.md'), 'utf8');
-  assert.match(brief, /Brief prompt version: 1/);
+  assert.match(brief, /Brief prompt version: 2/);
   assert.throws(() => run('sample'), /already exists/);
   await rm(path.join(dir, 'local/briefs/sample.md'));
   await writeFile(snapshotPath, JSON.stringify({ ...snapshot, asOf: '2026-10-21T00:00:00Z' }));
   assert.throws(() => run('sample'), /snapshot hash changed/);
+});
+
+test('--state copies the standing sections word for word; without it the brief says none', async () => {
+  const { standingDecisions } = await import('../src/engine/brief.mjs');
+  const note = '---\ntags: [x]\n---\n# State\n\n## Standing preferences\n\n- 2026-10-25: Cason Sample is the IL opening.\n\n'
+    + '## Decisions\n\n- 2026-10-25 proposed: add Casey Fiction.\n\n## Open questions\n\nNone.\n\n## ChatGPT carry-forward\n\n- unreviewed: skip me\n';
+  const standing = standingDecisions(note);
+  assert.match(standing, /^### Standing preferences\n\n- 2026-10-25: Cason Sample is the IL opening\.\n\n### Decisions/);
+  assert.doesNotMatch(standing, /skip me|tags/);
+  assert.throws(() => standingDecisions('## Decisions\n'), /needs these sections/);
+  assert.match(buildBrief({ ...inputs(), standing }), /## Standing decisions\n\n### Standing preferences/);
+  assert.match(buildBrief(inputs()), /## Standing decisions\n\nNone supplied\./);
 });
