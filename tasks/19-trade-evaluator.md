@@ -3,7 +3,7 @@
 Requested by Tony on 2026-10-25. Needs Task 18. Adds a new command and doesn't change `advise`,
 so `MODEL_VERSION` stays the same. Two PRs: capture (19a), then scoring (19b).
 
-Settle the open questions at the end with Tony before building 19b.
+Tony settled the open questions on 2026-10-25; see "Decisions" at the end.
 
 ## Problem
 
@@ -47,9 +47,10 @@ Nothing scores a trade. ChatGPT can suggest names, but its arithmetic can't be t
 - [ ] A 2-for-1 that overfills Tony's roster names a drop; with no legal drop it is excluded.
 - [ ] `npm test` passes.
 
-## Open questions for Tony
+## Decisions (Tony, 2026-10-25)
 
-- Horizon: rest of the regular season, or weighted toward the playoff weeks?
-- Partner acceptance: is "partner doesn't lose value by their own needs" the right bar, or
-  should it require a margin?
-- Should 2-for-2 trades be in scope?
+- Horizon: rest of the regular season, weighted toward the playoff weeks.
+- Partner acceptance: the trade must favor Tony, and the partner must get a meaningful
+  incentive by their own needs, such as filling a position where their roster is short.
+  "Partner doesn't lose value" alone isn't enough.
+- Scope: 1-for-1 and 2-for-1 first. 2-for-2 is out of scope for now.
