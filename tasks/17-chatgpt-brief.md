@@ -12,8 +12,8 @@ fit either: it withholds the tool's recommendation so the scored chatbot arm sta
 
 ## Behavior
 
-- `npm run brief [-- <decisionId>]` reads a saved decision (default: the newest by `createdAt`
-  in `local/decisions/`). It loads the snapshot, schedule and IDs through `decisionInputs`, so a
+- `npm run brief [-- <decisionId>]` reads a saved decision (default: the newest file in
+  `local/decisions/`; records are written once). It loads the snapshot, schedule and IDs through `decisionInputs`, so a
   changed input fails instead of being silently replaced. It makes no network calls.
 - It writes one Markdown file, `local/briefs/<decisionId>.md`, and prints only its path. It
   refuses to overwrite an existing brief.
@@ -54,12 +54,12 @@ fit either: it withholds the tool's recommendation so the scored chatbot arm sta
 
 ## Done when
 
-- [ ] `buildBrief` tests with synthetic fixtures cover: the prompt and its version, the as-of
+- [x] `buildBrief` tests with synthetic fixtures cover: the prompt and its version, the as-of
   block, a move and a hold, games left per player, an over-slot day, and "unknown" for a
   missing value.
-- [ ] The script refuses a changed snapshot hash and an existing brief file.
-- [ ] Running it on the newest real decision writes a brief. The check prints the path and line
+- [x] The script refuses a changed snapshot hash and an existing brief file.
+- [x] Running it on the newest real decision writes a brief. The check prints the path and line
   count only, never the brief text.
-- [ ] `docs/update-league.md` and `README.md` add the step after `advise`: run `npm run brief`
+- [x] `docs/update-league.md` and `README.md` add the step after `advise`: run `npm run brief`
   and paste the file into ChatGPT.
-- [ ] `npm test` passes.
+- [x] `npm test` passes.

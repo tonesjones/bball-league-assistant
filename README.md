@@ -52,6 +52,12 @@ It prints a compact summary with newly observed transaction details and saves fu
 privately. Browser collection is still a separate read-only step. Known evidence and model
 limits are tracked in [the limitations register](docs/limitations.md).
 
+Then run `npm run brief` to write `local/briefs/<decisionId>.md` from the newest decision, and
+paste that file into a ChatGPT chat. It holds the tool's numbers and a fixed prompt that asks for
+news, role changes, trade ideas and packed days. ChatGPT's answer is context for you; nothing feeds
+it back into the engine. Don't use a brief for the pilot: it shows the tool's recommendation. See
+[the brief prompt](docs/chatgpt-brief.md).
+
 Refresh on demand after completed game slates, when Tony requests it. No daily watch or
 background monitor is needed. At each refresh, compare watched players' minutes, starts and
 production with the prior capture, keeping the sample size visible. User-reported pending

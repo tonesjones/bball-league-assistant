@@ -109,6 +109,9 @@ diagnostics are saved in ignored `local/refreshes/<timestamp>/`; evidence remain
 that reaches the final summary is complete. Reruns deduplicate transactions and produce a new
 decision record. The step logs and evidence for that timestamp are replaced on rerun.
 
+After a complete run, `npm run brief` writes `local/briefs/<decisionId>.md` for Tony to paste
+into ChatGPT, and prints only its path. It reads the saved decision and makes no network calls.
+
 Newly archived events can include backfilled history. They are not guaranteed to have happened
 since the previous refresh. Both your team's and other teams' observed moves are shown.
 
