@@ -30,12 +30,12 @@ who sits, how often, or what it costs.
 
 ## Done when
 
-- [ ] A synthetic day with more players than slots benches the lowest-priority player, the same
+- [x] A synthetic day with more players than slots benches the lowest-priority player, the same
   one `projectTeam` leaves out.
-- [ ] A position-only conflict (a free slot the player can't fill) shows "no eligible position".
-- [ ] The games cap shows "games cap" for games after it is reached.
-- [ ] Lost production equals games sat times the per-game line; an unknown line shows "unknown".
-- [ ] `advise` output and saved decisions are otherwise unchanged: existing advice tests pass
+- [x] A position-only conflict (a free slot the player can't fill) shows "no eligible position".
+- [x] The games cap shows "games cap" for games after it is reached.
+- [x] Lost production equals games sat times the per-game line; an unknown line shows "unknown".
+- [x] `advise` output and saved decisions are otherwise unchanged: existing advice tests pass
   without edits to expected scores.
-- [ ] The brief shows who sits and the chronic sitters.
-- [ ] `npm test` passes.
+- [x] The brief shows who sits and the chronic sitters.
+- [x] `npm test` passes.

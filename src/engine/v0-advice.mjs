@@ -1,6 +1,7 @@
 import { findPlayer, normalizeName } from './names.mjs';
 import { addDays, tomorrow } from './weeks.mjs';
 import { gamesLeft } from './games-left.mjs';
+import { rosterCrunch } from './crunch.mjs';
 import { BLOCKED, projectTeam, needs, strongLine, openRosterSpots } from './needs.mjs';
 import { seasonValues } from './season-value.mjs';
 import { minutesCase } from './projections.mjs';
@@ -220,6 +221,9 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     pair.nextWeek = { ...nextWeek, games: gamesLeft(swap.pickup, schedule, start, nextWeek.end),
       starts: lineup.started.filter((g) => g.name === swap.pickup.name).length };
   }
+  const crunchLines = Object.fromEntries(roster.filter((p) => p.prior).map((p) => [p.name, p.prior.perGame]));
+  const crunch = { current: rosterCrunch({ snapshot, schedule, lines: crunchLines, fromDate, endDate: window.end }),
+    nextWeek: rosterCrunch({ snapshot, schedule, lines: crunchLines, fromDate: nextWeek.start, endDate: nextWeek.end }) };
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const pending = { waivers: pendingClaims, reservedAdds, proposedTrades: snapshot.team.pending?.proposedTrades ?? 0,
     unlisted: snapshot.team.pending?.unlisted ?? 0,
@@ -255,5 +259,5 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       ...Object.fromEntries(['fgm', 'fga', 'ftm', 'fta'].map((k) => [k,
         !banked ? 0 : scoring.shootingKnown ? snapshot.matchup.volume?.[side]?.[k] : null])),
     }])),
-    decision, topPairs: pairs.slice(0, top), unscored, guardrail };
+    crunch, decision, topPairs: pairs.slice(0, top), unscored, guardrail };
 }

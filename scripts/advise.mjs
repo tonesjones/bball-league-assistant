@@ -1,3 +1,4 @@
+import { crunchText } from '../src/engine/crunch.mjs';
 import { readFile, readdir, stat, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
@@ -89,6 +90,8 @@ export function formatAdvice(report) {
     const probability = incomplete ? v.pWinRange.map((p) => p.toFixed(2)).join('-') : number(v.pWin);
     lines.push(`${c.padEnd(8)} ${number(v.mine).padStart(10)} ${number(v.opponent).padStart(10)} ${probability.padStart(8)}   ${incomplete ? 'incomplete' : v.label}`);
   }
+  if (report.crunch) lines.push('', ...crunchText(report.crunch.current, 'Roster crunch'),
+    ...crunchText(report.crunch.nextWeek, 'Next week crunch (context only)'));
   lines.push('', ...report.notes, '', 'Decision details:');
   const pairLines = (pair, i) => {
     lines.push(`${i + 1}. Pick up ${pair.pickup.name} (${pair.pickup.nbaTeam}, ${pair.pickup.status ?? 'healthy'}, ${pair.pickup.games} games from ${pair.pickupStart})`,

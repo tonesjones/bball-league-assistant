@@ -61,6 +61,17 @@ export function openRosterSpots(settings, roster) {
     - roster.filter((p) => !injured(p.slot)).length;
 }
 
+// One day's legal lineup. Tony's lineup locks take their slot first; the rest fill the remaining
+// slots. `eligible` is every player with a game who isn't on IL or ruled out.
+export function dayLineup(players, settings, teams, date, preferred = []) {
+  const eligible = players.filter((p) => !['IL', 'IL+'].includes(p.slot)
+    && !BLOCKED.includes(p.status) && teams?.has(p.nbaTeam));
+  const locked = eligible.flatMap((p) => (p.locks ?? []).filter((l) => l.date === date).map((l) => ({ player: p, slot: l.slot })));
+  const open = settings.rosterPositions.map((p) => ({ ...p, count: p.count - locked.filter((l) => l.slot === p.slot).length }));
+  const rest = eligible.filter((p) => !locked.some((l) => l.player === p));
+  return { eligible, starters: [...locked, ...assignLineup(rest, open, preferred)] };
+}
+
 // Roster entries carry their matched prior. A swap takes effect on its start date; a swap with
 // no drop adds the pickup to an open spot.
 export function projectTeam(roster, totals, volume, settings, schedule, fromDate, endDate, swap = null, fill = null) {
@@ -78,14 +89,8 @@ export function projectTeam(roster, totals, volume, settings, schedule, fromDate
     const players = swap && date >= swap.start
       ? swap.drop ? roster.map((p) => p === swap.drop ? { ...swap.pickup, slot: 'BN' } : p)
         : [...roster, { ...swap.pickup, slot: 'BN' }] : roster;
-    const eligible = players.filter((p) => !['IL', 'IL+'].includes(p.slot)
-      && !BLOCKED.includes(p.status) && teamsByDate.get(date)?.has(p.nbaTeam));
     const preferred = swap?.startPickup && date >= swap.start ? [swap.pickup.name] : [];
-    // Tony's lineup locks take their slot first; the rest fill the remaining slots.
-    const locked = eligible.flatMap((p) => (p.locks ?? []).filter((l) => l.date === date).map((l) => ({ player: p, slot: l.slot })));
-    const open = settings.rosterPositions.map((p) => ({ ...p, count: p.count - locked.filter((l) => l.slot === p.slot).length }));
-    const rest = eligible.filter((p) => !locked.some((l) => l.player === p));
-    for (const { player: p, slot } of [...locked, ...assignLineup(rest, open, preferred)]) {
+    for (const { player: p, slot } of dayLineup(players, settings, teamsByDate.get(date), date, preferred).starters) {
       if (started.length >= cap) break;
       started.push({ name: p.name, espnId: p.espnId ?? null, date, slot });
       if (!p.prior) { unknownGames++; unknownStarts.push({ name: p.name, date }); }

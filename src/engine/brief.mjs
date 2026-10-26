@@ -1,5 +1,5 @@
-import { BLOCKED } from './needs.mjs';
-import { addDays } from './weeks.mjs';
+import { rosterCrunch } from './crunch.mjs';
+import { applyPreferences } from './preferences.mjs';
 import { normalizeName } from './names.mjs';
 
 const known = (n) => Number.isFinite(n);
@@ -78,16 +78,22 @@ export function buildBrief({ record, snapshot, schedule, prompt, promptVersion, 
   lines.push('', '## Opponent roster', '', ...table(['Player', 'Team', 'Slot', 'Status', 'Games left'],
     snapshot.matchup.opponentRoster.map((p) => [p.name, text(p.nbaTeam), text(p.slot), status(p), left(p)])));
 
-  const slots = snapshot.settings.rosterPositions.filter((p) => !['BN', 'IL', 'IL+'].includes(p.slot)).reduce((n, p) => n + p.count, 0);
-  const available = snapshot.team.roster.filter((p) => !['IL', 'IL+'].includes(p.slot) && !BLOCKED.includes(p.status));
-  const days = [];
-  for (let date = r.fromDate; date <= end; date = addDays(date, 1)) {
-    const playing = available.filter((p) => plays(p, date));
-    days.push([date, playing.length, slots, playing.length > slots ? `over by ${playing.length - slots}` : '', playing.map((p) => p.name).join(', ')]);
-  }
-  lines.push('', '## Daily games', '',
-    'My players with a game, outside IL slots and not ruled out, against active lineup slots. This is a count only: it does not check positions.', '',
-    ...table(['Date', 'Playing', 'Active slots', 'Crunch', 'Players'], days));
+  // Decisions saved before Task 18 have no crunch; rebuild the days from the snapshot (losses unknown).
+  const crunch = r.crunch?.current ?? rosterCrunch({ lines: {}, snapshot: record.options?.preferences
+    ? applyPreferences(snapshot, record.options.preferences).snapshot : snapshot, schedule, fromDate: r.fromDate, endDate: end });
+  lines.push('', '## Roster crunch', '',
+    'Days when a player with a game sits, from the same daily lineup fit the advice uses (locks, positions, games cap). IL and ruled-out players are not counted.', '');
+  const sitDays = crunch.days.filter((d) => d.sits.length);
+  if (sitDays.length) lines.push(...table(['Date', 'Playing', 'Starting', 'Sits (reason)'],
+    sitDays.map((d) => [d.date, d.playing.length, d.starts.length, d.sits.map((s) => `${s.name} (${s.reason})`).join(', ')])));
+  else lines.push('No one sits.');
+  lines.push('', '### Chronic sitters (2 or more games sat)', '');
+  const chronic = crunch.byPlayer.filter((e) => e.sat >= 2);
+  if (chronic.length) lines.push(...table(['Player', 'Games', 'Starts', 'Sat', 'Lost PTS', 'Lost REB', 'Lost AST', 'Lost 3PM', 'Lost STL', 'Lost BLK', 'Lost TO', 'Lost FGM/FGA', 'Lost FTM/FTA'],
+    chronic.map((e) => { const l = e.lost, f = (v) => typeof v === 'number' ? +v.toFixed(2) : v;
+      const pair = (m, a) => typeof l[m] === 'number' && typeof l[a] === 'number' ? `${f(l[m])}/${f(l[a])}` : 'unknown';
+      return [e.name, e.games, e.starts, e.sat, f(l.pts), f(l.reb), f(l.ast), f(l.fg3m), f(l.stl), f(l.blk), f(l.to), pair('fgm', 'fga'), pair('ftm', 'fta')]; })));
+  else lines.push('None.');
 
   const agents = (snapshot.freeAgents ?? []).slice(0, faLimit);
   lines.push('', `## Free agents (first ${agents.length}, Yahoo page order)`, '',
