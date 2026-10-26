@@ -68,10 +68,11 @@ test('brief counts games left from the first counted date and marks roles', () =
   assert.match(brief, /\| Hale Waiver \| AAA \| C \| GTD \| 2026-10-22 \| 2 \|/);
 });
 
-test('daily games flag a day with more players than active slots and skip IL and out players', () => {
+test('the crunch section shows who sits and why, skipping IL and out players', () => {
   const brief = buildBrief(inputs());
-  assert.match(brief, /\| 2026-10-21 \| 2 \| 1 \| over by 1 \| Alex Sample, Drew Bench \|/);
-  assert.match(brief, /\| 2026-10-22 \| 0 \| 1 \|  \|  \|/);
+  assert.match(brief, /\| 2026-10-21 \| 2 \| 1 \| Drew Bench \(no open slot\) \|/);
+  assert.doesNotMatch(brief, /Ellis Hurt \(|Finn Out \(/);
+  assert.match(brief, /### Chronic sitters[^]*None\./);
   assert.doesNotMatch(brief, /2026-10-30/);
 });
 
