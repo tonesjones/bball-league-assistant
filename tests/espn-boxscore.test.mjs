@@ -49,13 +49,13 @@ test('usage context requires complete player totals and uses reported team turno
   assert.equal(parseBoxScore(copy, { date: '2026-01-15', standardCode: map })[0].teamContext, null);
 });
 
-test('placeholder minutes with a DNP reason and zero stats normalize inconsistent ESPN flags', () => {
+for (const placeholder of ['--', '-']) test(`placeholder ${placeholder} minutes with a DNP reason and zero stats normalize inconsistent ESPN flags`, () => {
   const copy = structuredClone(summary);
   copy.boxscore.players = [copy.boxscore.players[0]];
   const group = copy.boxscore.players[0].statistics[0];
   const player = { athlete: { id: 'example', displayName: 'Sample Reserve' }, starter: false,
     didNotPlay: false, reason: "COACH'S DECISION",
-    stats: group.labels.map((label) => label === 'MIN' ? '--' : ['FG', '3PT', 'FT'].includes(label) ? '0-0' : '0') };
+    stats: group.labels.map((label) => label === 'MIN' ? placeholder : ['FG', '3PT', 'FT'].includes(label) ? '0-0' : '0') };
   group.athletes.push(player);
   const rows = parseBoxScore(copy, { date: '2026-01-15', standardCode: map });
   assert.equal(rows.at(-1).didNotPlay, true);

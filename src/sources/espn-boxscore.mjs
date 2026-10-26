@@ -13,7 +13,7 @@ export function parseBoxScore(json, { date, standardCode }) {
       for (const label of ['MIN', 'PTS', 'FG', '3PT', 'FT', 'REB', 'AST', 'TO', 'STL', 'BLK']) {
         if (positions[label] === undefined) throw new Error(`event ${eventId}: missing label ${label}`);
       }
-      const didNotPlay = (p) => p.didNotPlay || (p.stats?.[positions.MIN] === '--' && Boolean(p.reason)
+      const didNotPlay = (p) => p.didNotPlay || (/^--?$/.test(p.stats?.[positions.MIN] ?? '') && Boolean(p.reason)
         && labels.every((label, i) => label === 'MIN' || /^(?:0|0-0)$/.test(p.stats[i])));
       const playing = (group.athletes ?? []).filter((p) => !didNotPlay(p));
       const teamMinutes = playing.every((p) => p.stats[positions.MIN] !== '' && Number.isFinite(Number(p.stats[positions.MIN])))
