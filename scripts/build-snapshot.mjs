@@ -1,6 +1,6 @@
 // Usage: node scripts/build-snapshot.mjs [rawDir]
 // Parses a raw refresh folder (default: newest in local/raw/) into local/snapshots/<folder>.json.
-import { readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildSnapshot } from '../src/sources/yahoo-pages/index.mjs';
@@ -24,6 +24,12 @@ function main() {
   const pages = {};
   for (const f of readdirSync(dir)) {
     if (/^(settings|team|matchup|matchup-totals|transactions|fa-\d+)\.txt$/.test(f)) pages[f.slice(0, -4)] = readFileSync(join(dir, f), 'utf8');
+  }
+  const teamsDir = join(dir, 'teams');
+  if (existsSync(teamsDir)) {
+    for (const f of readdirSync(teamsDir)) {
+      if (/^\d+\.txt$/.test(f)) pages[`teams/${f.slice(0, -4)}`] = readFileSync(join(teamsDir, f), 'utf8');
+    }
   }
   const snapshot = buildSnapshot(pages, asOf);
 

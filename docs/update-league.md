@@ -87,10 +87,12 @@ and `ok`, `skipped` or `sign-in`. Then tell Tony the folder path and any page th
 
 ## Trade research pages (only when Tony asks)
 
-Not part of a routine refresh. For trade research, read each team page `/{L}/{1..12}` and the
-draft pages `/{L}/draft` and `/{L}/draftresults`, the same way as the pages above, and save
-their text unchanged under `local/raw/<timestamp>/` (`team-<n>.txt`, `draft.txt`,
-`draftresults.txt`). The draft pages accept no query parameters. Trade proposal, draft editing,
+Not part of a routine refresh. Fetch these only when Tony asks for trades (`--trades`). Read
+each other team's page `/{L}/{N}` (every team number from 1 to the league size except `{T}`) and
+save its text unchanged as `local/raw/<timestamp>/teams/<N>.txt`. `build-snapshot` parses them
+into `league.teams` (team number and roster only). Without `--trades`, no team pages are
+fetched and the snapshot has no `league` field. The draft pages `/{L}/draft` and
+`/{L}/draftresults` are optional, saved as `draft.txt` and `draftresults.txt`. The draft pages accept no query parameters. Trade proposal, draft editing,
 lineup and transaction pages stay blocked, and no trade is submitted.
 
 ## Build current-season evidence

@@ -39,7 +39,7 @@ Nothing scores a trade. ChatGPT can suggest names, but its arithmetic can't be t
 
 ## Done when
 
-- [ ] 19a: a synthetic team page parses into `league.teams`; a routine refresh fetches no team
+- [x] 19a: a synthetic team page parses into `league.teams`; a routine refresh fetches no team
   pages.
 - [ ] 19b: a synthetic trade that helps Tony and hurts the partner is excluded; one that helps
   both is ranked.
