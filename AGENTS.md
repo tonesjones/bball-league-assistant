@@ -38,6 +38,7 @@ Carried over from Draft Lab's season manager. Treat them as tests, not suggestio
 
 - Node 20+, ES modules, no runtime dependencies unless a task says otherwise. Tests use `node:test`.
 - One task from `tasks/` at a time, in the order in `PLAN.md`, on its own branch off `main`, as one pull request.
+- One session per working directory. A session that writes code works in its own git worktree (`git worktree add ../bball-wt-<task> -b <branch> origin/main`) and leaves the main folder on `main`. Never switch branches in a folder another session may be using. A refresh edits nothing outside `local/` (see `docs/codex-refresh.md`).
 - Write each task so Sonnet or Haiku can do it. Codex is optional and may not always be available.
 - A task is done when its acceptance tests pass with `npm test` and the task file's "Done when" list is checked.
 - Keep pure logic (projections, simulator, planner) in `src/engine/`, free of I/O. I/O lives in `src/sources/` and `scripts/`.

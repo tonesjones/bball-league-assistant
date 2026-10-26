@@ -111,7 +111,7 @@ decision record. The step logs and evidence for that timestamp are replaced on r
 
 After a complete run, `npm run brief` writes `local/briefs/<decisionId>.md` for Tony to paste
 into ChatGPT, and prints only its path. It reads the saved decision and makes no network calls. Pass
-`--state "<vault> Projectsball-league-assistant state.md"` to include Tony's standing
+`--state "<vault>/10 Projects/bball-league-assistant state.md"` to include Tony's standing
 decisions. Before advising or reviewing, Claude and Codex read that note, name the snapshot they
 used, and flag any entry that conflicts with it.
 
