@@ -261,8 +261,20 @@ Updated at the end of each session.
 
 **2026-10-25, new workflow.** Codex runs refreshes; Tony pastes a brief into ChatGPT for news and
 trade ideas. Wrote Tasks 17-19 (step 10, #47). Task 17 (`npm run brief`) is open for review;
-Task 18 is next. The uncommitted Tasks 15-16 work is
-committed on the local branch `task-15-16-current-season-projections`, not pushed or opened as a PR.
+Task 18 is next.
+
+**2026-10-25, calibration check.** Task 16 uses 2024-25 priors and 20,518 historical 2025-26
+appearances, with nine tuning and fourteen held-out validation weeks. The tuning winner k=8
+did not beat k=2 on validation; keep k=2 under model 6. No replacement was established.
+Repeated results and report are byte-identical. See docs/backtest-01.md.
+This conditions on observed appearances and does not validate injuries, future roles, legal
+lineup decisions or opening-week optimality.
+
+**2026-10-25, current-season weighting requested.** Task 15 changes nominal production to the
+existing blend of current-season rates and two prior games of minutes, instead of prior-only
+rates. MODEL_VERSION 6 supersedes the model-4 freeze for this requested change (Task 17b took 5).
+Prior/blended sensitivity checks remain conservative; missing priors remain unknown. The
+weighting is uncalibrated.
 
 **2026-10-24, scope audit.** No paired, scored decision exists yet. Four causes: the 21:13
 decision saved banked shooting as null, so every arm is unscorable; the chatbot model is

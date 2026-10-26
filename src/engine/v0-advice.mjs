@@ -6,7 +6,7 @@ import { seasonValues } from './season-value.mjs';
 import { minutesCase } from './projections.mjs';
 import { applyPreferences } from './preferences.mjs';
 
-export const MODEL_VERSION = 5;
+export const MODEL_VERSION = 6;
 
 // Yahoo's "Oct 25" as a date on or after the matchup start.
 function monthDay(value, window, what) {
@@ -242,9 +242,9 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
       'When the default prior-MPG lineup would bench a pickup, the advice evaluates legally starting that pickup instead; displaced starts are shown.',
       'Unknown starts are scored at zero and at a strong rotation line (90th percentile of the top 150, 10th percentile TO); a move must win in both.',
       ...(projections ? [
-        `Minutes blend: k=${projections.k} prior pseudo-games (starting value, not calibrated); equal weights. Per-minute rates remain at the prior.`,
+        `Minutes and production blend: k=${projections.k} prior pseudo-games (starting value, not calibrated); equal weights. Nominal per-minute rates blend current-season production with k games of prior minutes; current-season weight grows with observed minutes.`,
         'Fixed prior-MPG and season-MPG cases are crossed for pickup/drop, alongside missing-production cases; a move must gain in every case, and its nominal score must reach the bar. These endpoints do not converge with more games.',
-        'Current-season per-minute production is an additional sensitivity check for pickup and drop: the observed rate is shrunk toward the prior with the same k pseudo-games, crossed with minutes and missing-production cases. It can withhold a move; nominal projections still use prior rates. No games uses the prior; incomplete observed box scores withhold an otherwise supported move. Usage remains descriptive.',
+        'Pickup/drop sensitivity checks cross prior and blended current-season rates with minutes and missing-production cases. These checks can withhold a move even when the nominal blend favors it. No games uses the prior; incomplete observed box scores fall back to prior rates and withhold an otherwise supported move. Usage remains descriptive.',
       ] : ['Projections use prior-season production and do not capture current role changes or breakout upside.']),
       'Season guardrail: core players are never dropped; stream players bypass season checks. Other players need a prior, rank outside the protect rank, and pickup season value at least the drop value plus the margin.',
       'Expected categories are an approximation for H2H most categories; matchup/title win probabilities are unavailable.'],

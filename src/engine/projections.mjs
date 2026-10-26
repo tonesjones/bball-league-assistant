@@ -40,9 +40,12 @@ export function projectPlayers(priors, ids, logs, { k = 2, asOf = null } = {}) {
         observedSum[stat] / playedMinutes])) : null,
       perMinute: usable && complete ? Object.fromEntries(STATS.map((stat) => [stat,
         (k * prior.perGame[stat] + observedSum[stat]) / (priorMinutes + playedMinutes)])) : null };
-    return { ...prior, original: prior, mpg, minutes, rates, perGame: usable ? scale(prior, mpg) : null };
+    const perGame = !usable ? null : rates.perMinute
+      ? { ...prior.perGame, ...Object.fromEntries(STATS.map((stat) => [stat, rates.perMinute[stat] * mpg])) }
+      : scale(prior, mpg);
+    return { ...prior, original: prior, mpg, minutes, rates, perGame };
   });
-  return { players, k, asOf, version: 'minutes-rates-pseudogames-v3' };
+  return { players, k, asOf, version: 'current-season-rates-v4' };
 }
 
 // These endpoints deliberately stay fixed; more games update the blend, not the prior endpoint.

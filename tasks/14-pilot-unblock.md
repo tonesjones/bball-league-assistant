@@ -119,6 +119,8 @@ Done when:
 
 ## The freeze
 
+Superseded for the current-season projection change requested on 2026-10-25; see Task 15.
+
 After 14d merges, `MODEL_VERSION` 4 stays fixed from its first refresh (target 2026-10-27, the
 start of week 2) until the gate is read on 2026-11-23. Only parser fixes that let a refresh
 succeed may land. Anything that changes recommendations or scores waits.

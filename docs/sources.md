@@ -61,6 +61,16 @@ Rejected:
 
 ## NBA game logs
 
+For offline projection-weight calibration, ESPN's historical endpoints are also used:
+`https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?season={year}&seasontype=2&limit=1000`
+and `https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/{id}/gamelog?season={year}`.
+The year is the season's ending year. Verify requested season and complete pagination; cache
+historical responses for a year, use the shared 500 ms request spacing and 429/5xx backoff.
+These are unofficial, undocumented ESPN endpoints under the same personal-use terms below.
+Game logs include appearances but do not reliably identify absent games or DNP reasons;
+calibration therefore conditions on actual appearances and does not validate availability.
+League-filter-only responses are recorded as unavailable, never zero production.
+
 - **What:** ESPN scoreboard and game summary box scores: `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=YYYYMMDD` and `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={eventId}`.
 - **Terms:** undocumented and unofficial. Personal, low-volume requests only; cache responses and back off on 429 and 5xx. Final game summaries are cached for a year.
 

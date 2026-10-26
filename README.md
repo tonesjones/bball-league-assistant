@@ -11,7 +11,7 @@ The first version has to beat a simple baseline: roster screenshots posted into 
 Phase 0 of [`PLAN.md`](PLAN.md): v0 advice, not yet tested against the chatbot baseline. The
 league read, schedule, player ID map and legal daily lineups work. Advice gives one move,
 hold or insufficient evidence, and saves an immutable decision record. Current-season minutes
-update projections, while rates per minute still come from last season. Scores are approximate
+and production update projections, with last season contributing two prior games of minutes. Scores are approximate
 category estimates, not win probabilities. Descriptive player evidence and observed transaction
 history are also available. Steps 5a–5c are implemented; the scored pilot has not started.
 
@@ -24,8 +24,10 @@ The pre-pilot rate disagreement check now tests observed season per-minute produ
 toward the prior with the minutes blend's same k pseudo-games, alongside prior rates for
 pickup/drop at the fixed minutes endpoints. The prior contributes `k * prior.mpg` pseudo-minutes;
 raw observed rates remain descriptive. A conflicting case withholds the move, and the endpoints
-remain in the check as more games update the blend. Nominal projections still use prior rates;
-k is uncalibrated. No games uses prior rates; incomplete observed production prevents an
+remain in the check as more games update the blend. Model version 6 uses the blended rates for
+nominal projections, lineup production and season value; current-season weight grows with minutes.
+k=2 was retained after a historical tuning/validation check found no superior replacement;
+see [the calibration report](docs/backtest-01.md) for its limited scope. No games uses prior rates; incomplete observed production prevents an
 otherwise supported move. Real examples still need Tony's review before the pilot starts.
 
 Rules for coding agents: [`AGENTS.md`](AGENTS.md).
