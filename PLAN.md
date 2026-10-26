@@ -188,6 +188,17 @@ No UI. Run from Claude Code.
    rule that withholds only moves that could lose, with a lower bar for add-only moves (14d,
    `MODEL_VERSION` 4). Then `MODEL_VERSION` 4 is frozen until the gate is read.
 
+10. Codex and ChatGPT workflow (Tony, 2026-10-25). Codex runs the refresh and `advise`; Claude
+    builds and tunes the engine and runs a refresh only as a backup. Three tasks, in order, none
+    of which changes `advise` scores:
+    - ChatGPT brief ([Task 17](tasks/17-chatgpt-brief.md)): one Markdown file per decision with
+      the tool's numbers and a fixed prompt. Tony pastes it into ChatGPT for news, roles and
+      trade ideas. Nothing ChatGPT says feeds back into the engine.
+    - Packed-day roster crunch ([Task 18](tasks/18-roster-crunch.md)): who sits each day, why,
+      and the production lost.
+    - Trade evaluator ([Task 19](tasks/19-trade-evaluator.md)): other teams' rosters on request
+      (19a), then trades scored in code for both sides (19b). Open questions in the task file.
+
 **Gate.** A rolling comparison per model version. Go to Phase 1 when one version, over at least
 10 scored decisions, does at least as well as both the chatbot and doing nothing on categories
 helped minus hurt, and Tony's mean rating for the tool is strictly higher than for both. A tie on
@@ -247,6 +258,10 @@ prints ok or the error, without page text. It would replace the scratch script u
 ## Status
 
 Updated at the end of each session.
+
+**2026-10-25, new workflow.** Codex runs refreshes; Tony pastes a brief into ChatGPT for news and
+trade ideas. Wrote Tasks 17-19 (step 10). Task 17 is next. The uncommitted Tasks 15-16 work is
+committed on the local branch `task-15-16-current-season-projections`, not pushed or opened as a PR.
 
 **2026-10-24, scope audit.** No paired, scored decision exists yet. Four causes: the 21:13
 decision saved banked shooting as null, so every arm is unscorable; the chatbot model is
