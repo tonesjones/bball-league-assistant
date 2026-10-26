@@ -260,7 +260,8 @@ prints ok or the error, without page text. It would replace the scratch script u
 Updated at the end of each session.
 
 **2026-10-25, new workflow.** Codex runs refreshes; Tony pastes a brief into ChatGPT for news and
-trade ideas. Wrote Tasks 17-19 (step 10). Task 17 is next. The uncommitted Tasks 15-16 work is
+trade ideas. Wrote Tasks 17-19 (step 10, #47). Task 17 (`npm run brief`) is open for review;
+Task 18 is next. The uncommitted Tasks 15-16 work is
 committed on the local branch `task-15-16-current-season-projections`, not pushed or opened as a PR.
 
 **2026-10-24, scope audit.** No paired, scored decision exists yet. Four causes: the 21:13
