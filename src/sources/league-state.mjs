@@ -9,7 +9,8 @@
 //   matchup: { week, start, end (YYYY-MM-DD), opponentName, totals: {mine, opponent}, volume: {mine, opponent},
 //              score: {mine, opponent}, opponentRoster: [player] },
 //   freeAgents: [{ rank, name, nbaTeam, positions, status, waiverClears|null }],
-//   transactions: [{ team, time, moves: [{ player, nbaTeam, type: add|drop|trade, faab: number|null }] }]
+//   transactions: [{ team, time, moves: [{ player, nbaTeam, type: add|drop|trade, faab: number|null }] }],
+//   league?: { teams: [{ teamNumber, roster: [player] }] }   only after a --trades refresh; names stay in local/raw
 // }
 // player = { name, nbaTeam, positions: [], status|null, slot }
 
@@ -95,6 +96,15 @@ export function validate(s) {
     need(isObj(t) && isStr(t.team) && isStr(t.time) && Array.isArray(t.moves) && t.moves.length > 0, `transactions[${i}] has a bad shape`);
     for (const m of t.moves ?? []) need(isObj(m) && isStr(m.player) && isStr(m.nbaTeam) && ['add', 'drop', 'trade'].includes(m.type) && (m.faab === null || isNum(m.faab)), `transactions[${i}] has a bad move`);
   });
+
+  if (s.league !== undefined) {
+    const teams = s.league?.teams;
+    if (!Array.isArray(teams)) need(false, 'league.teams must be a list');
+    else teams.forEach((t, i) => {
+      need(Number.isInteger(t?.teamNumber) && t.teamNumber > 0, `league.teams[${i}].teamNumber is missing`);
+      players(t?.roster, `league.teams[${i}].roster`);
+    });
+  }
 
   if (bad.length) throw new Error(`invalid snapshot:\n- ${bad.join('\n- ')}`);
   return s;

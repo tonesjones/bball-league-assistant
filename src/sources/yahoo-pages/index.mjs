@@ -13,7 +13,8 @@ function isoDay(md, asOf) {
   return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-// pages: { settings, team, matchup, transactions, 'fa-1': text, 'fa-2': text, ..., optional 'matchup-totals' }
+// pages: { settings, team, matchup, transactions, 'fa-1': text, 'fa-2': text, ..., optional 'matchup-totals',
+//           optional 'teams/<N>': text for each other team (a --trades refresh) }
 export function buildSnapshot(pages, asOf) {
   const missing = ['settings', 'team', 'matchup', 'transactions'].filter((k) => typeof pages[k] !== 'string');
   const faKeys = Object.keys(pages).filter((k) => /^fa-\d+$/.test(k)).sort((a, b) => a.slice(3) - b.slice(3));
@@ -40,6 +41,14 @@ export function buildSnapshot(pages, asOf) {
     .flatMap((k) => parseFreeAgents(pages[k], k))
     .map((p, i) => ({ rank: i + 1, ...p }));
 
+  // Other teams' pages exist only after a --trades refresh. Tony's own page is not repeated.
+  const teams = Object.keys(pages)
+    .filter((k) => /^teams\/\d+$/.test(k))
+    .map((k) => ({ teamNumber: Number(k.slice(6)), page: parseTeam(pages[k], k) }))
+    .filter(({ page }) => page.name !== team.name)
+    .sort((a, b) => a.teamNumber - b.teamNumber)
+    .map(({ teamNumber, page }) => ({ teamNumber, roster: page.roster }));
+
   const snapshot = {
     asOf,
     settings,
@@ -56,6 +65,7 @@ export function buildSnapshot(pages, asOf) {
     },
     freeAgents,
     transactions,
+    ...(teams.length ? { league: { teams } } : {}),
   };
   validate(snapshot);
   return snapshot;

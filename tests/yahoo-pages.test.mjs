@@ -348,3 +348,20 @@ test('team: pending waiver claims, proposed trades and unlisted items', () => {
   s.team.pending.waivers[0].add = '';
   assert.throws(() => validate(s), /team\.pending has a bad shape/);
 });
+
+test('other teams\' pages parse into league.teams; a routine build has none', () => {
+  const other = page('team').replaceAll('Fixture Five', 'Fixture Other');
+  const own = page('team');
+  const s = buildSnapshot({ ...pages(), 'teams/9': other, 'teams/3': other, 'teams/7': own }, ASOF);
+  assert.deepEqual(s.league.teams.map((t) => t.teamNumber), [3, 9]);
+  assert.deepEqual(s.league.teams[0].roster, parseTeam(other).roster);
+  assert.doesNotThrow(() => validate(JSON.parse(JSON.stringify(s))));
+  assert.equal('league' in buildSnapshot(pages(), ASOF), false);
+});
+
+test('a mangled other-team page throws with its page name; validate rejects a bad league', () => {
+  const bad = page('team').replaceAll('Fixture Five', 'Fixture Other').replace('TOR - SG,SF,PF', 'Toronto');
+  assert.throws(() => buildSnapshot({ ...pages(), 'teams/4': bad }, ASOF), /teams\/4: line \d+/);
+  const s = buildSnapshot(pages(), ASOF);
+  assert.throws(() => validate({ ...s, league: { teams: [{ teamNumber: 0, roster: [] }] } }), /league\.teams\[0\]/);
+});
