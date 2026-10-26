@@ -99,13 +99,13 @@ export function formatAdvice(report) {
     if (pair.nextWeek) lines.push(`   Next week (${pair.nextWeek.start} to ${pair.nextWeek.end}, context only): ${pair.nextWeek.games} games, ${pair.nextWeek.starts} legal starts`);
     lines.push(`   Unknown games (mine after move): ${pair.unknownGames}`);
     if (pair.scoreRange[0] !== pair.scoreRange[1]) lines.push(`   Score range: ${number(pair.scoreRange[0])} to ${number(pair.scoreRange[1])}`);
+    const times = pair.lineup.pickupStarts === 1 ? 'once' : `${pair.lineup.pickupStarts} times`;
+    const displaced = pair.lineup.displaced.map((g) => `${g.name} on ${g.date}`).join(', ');
     if (pair.lineup.mode === 'start-pickup') {
-      const times = pair.lineup.pickupStarts === 1 ? 'once' : `${pair.lineup.pickupStarts} times`;
-      const displaced = pair.lineup.displaced.map((g) => `${g.name} on ${g.date}`).join(', ');
       lines.push(displaced
         ? `   Lineup: deliberately start ${pair.pickup.name} ${times}; displaces ${displaced}.`
         : `   Lineup: deliberately start ${pair.pickup.name} ${times}; no other projected starter is displaced.`);
-    }
+    } else if (displaced) lines.push(`   Lineup: ${pair.pickup.name} starts ${times}; displaces ${displaced}.`);
     const season = (p) => p.seasonValue == null ? 'unknown' : `${signed(p.seasonValue)} (#${p.seasonRank})`;
     const players = [pair.pickup, pair.drop].filter(Boolean);
     for (const p of players) if (p.minutes) {
