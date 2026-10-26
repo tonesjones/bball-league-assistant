@@ -68,7 +68,7 @@ test('lineup order uses projected minutes from the same player lines as the guar
   assert.equal(assignLineup(roster, [{ slot: 'C', count: 1 }])[0].player.name, prior.name);
 });
 
-test('observed rates retain raw production and shrink toward the prior without changing nominal rates', () => {
+test('observed rates blend current production into nominal projections with two prior games of minutes', () => {
   const played = (min, fields = {}) => row(min, { ...prior.perGame, ...fields });
   const p = project([played(30, { pts: 30 }), played(10, { pts: 20, espnEventId: 'second' }),
     row(0, { espnEventId: 'coach', didNotPlay: true, reason: "COACH'S DECISION" }),
@@ -82,7 +82,9 @@ test('observed rates retain raw production and shrink toward the prior without c
     assert.equal(p.rates.observedPerMinute[stat], sum / 40);
     assert.equal(p.rates.perMinute[stat], (2 * prior.perGame[stat] + sum) / (2 * prior.mpg + 40));
   }
-  assert.equal(p.perGame.pts / p.mpg, prior.perGame.pts / prior.mpg);
+  for (const stat of Object.keys(prior.perGame).filter((stat) => stat !== 'g')) {
+    assert.equal(p.perGame[stat], p.rates.perMinute[stat] * p.mpg);
+  }
   assert.equal(minutesCase(p, 'prior', 'season').perGame.pts, prior.mpg * p.rates.perMinute.pts);
   assert.equal(minutesCase(p, 'season', 'season').perGame.pts, (40 / 3) * p.rates.perMinute.pts);
   const custom = project([played(30, { pts: 30 })], { k: 4 });
@@ -101,4 +103,17 @@ test('observed rates retain raw production and shrink toward the prior without c
   assert.equal(project([]).rates.status, 'no-games');
   assert.equal(project([]).rates.observedPerMinute, null);
   assert.equal(project([]).rates.perMinute, null);
+});
+
+test('current production overtakes the prior as minutes accumulate and updates season value', () => {
+  const cold = (i) => row(20, { ...Object.fromEntries(Object.keys(prior.perGame).filter((k) => k !== 'g').map((k) => [k, 0])),
+    fga: 8, fta: 3, espnEventId: `cold-${i}` });
+  const one = project([cold(0)]), five = project(Array.from({ length: 5 }, (_, i) => cold(i)));
+  assert.equal(one.perGame.pts, (2 * prior.perGame.pts) / (2 * prior.mpg + 20) * one.mpg);
+  assert.equal(five.perGame.pts, (2 * prior.perGame.pts) / (2 * prior.mpg + 100) * five.mpg);
+  assert.ok(five.perGame.pts < one.perGame.pts);
+  assert.ok(five.perGame.fgm / five.perGame.fga < one.perGame.fgm / one.perGame.fga);
+  const rival = { ...structuredClone(prior), name: 'Steady Rival', perGame: { ...prior.perGame, pts: 9 } };
+  assert.equal(seasonValues([prior, rival]).get(prior.name).rank, 1);
+  assert.equal(seasonValues([five, rival]).get(prior.name).rank, 2);
 });

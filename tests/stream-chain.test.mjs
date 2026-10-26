@@ -116,13 +116,14 @@ test('waivers can start on clearing date but never earlier; dropped players cann
   for (const p of run(x).plans) assert.equal(new Set(p.links.map((l) => l.player.name)).size, p.links.length);
 });
 
-test('shrunk-rate-only protectRank hold is first, reserves an add, and is absent from chains and alternatives', () => {
+test('current-season rates promote a protectRank hold, reserve an add, and exclude it from chains', () => {
   const s = setup(), hot = line('Stream Beta', 1), rival = line('Stream Reference', 3);
   const ids = { players: [{ espnId: '1', priorName: hot.name }] };
   s.projections = projectPlayers([hot, rival], ids, [{ ...hot.perGame, pts: 100, reb: 100, ast: 100, stl: 100, blk: 100,
     fg3m: 100, fgm: 100, fga: 200, ftm: 100, fta: 200, espnId: '1', espnEventId: '1', date: from, min: 20 }]);
   s.advice.options.protectRank = 1;
-  assert.equal(seasonValues(s.projections.players).get(hot.name).rank, 2);
+  assert.equal(seasonValues(s.projections.players.map((p) => minutesCase(p, 'prior', 'prior'))).get(hot.name).rank, 2);
+  assert.equal(seasonValues(s.projections.players).get(hot.name).rank, 1);
   assert.equal(seasonValues(s.projections.players.map((p) => minutesCase(p, 'prior', 'season'))).get(hot.name).rank, 1);
   const r = run(s);
   assert.equal(r.holds[0].name, hot.name); assert.equal(r.reservedAdds, 1);

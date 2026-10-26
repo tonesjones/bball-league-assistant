@@ -647,7 +647,7 @@ test('CLI reads synthetic inputs, prints advice, and writes equivalent JSON', as
     assert.equal(report.addOnlyBelow, 0.03);
     const saved = JSON.parse(await readFile(path.join(dir, `local/decisions/${report.decisionId}.json`), 'utf8'));
     assert.equal(saved.provenance.modelVersion, MODEL_VERSION);
-    assert.equal(saved.projections.version, 'minutes-rates-pseudogames-v3');
+    assert.equal(saved.projections.version, 'current-season-rates-v4');
     assert.equal(saved.projections.k, 2);
     assert.equal(saved.projections.players.length, f.priors.length);
     assert.equal(saved.projections.players[0].original.mpg, f.priors[0].mpg);
