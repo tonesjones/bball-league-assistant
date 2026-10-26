@@ -58,6 +58,19 @@ news, role changes, trade ideas and packed days. ChatGPT's answer is context for
 it back into the engine. Don't use a brief for the pilot: it shows the tool's recommendation. See
 [the brief prompt](docs/chatgpt-brief.md).
 
+Add `--state <path>` to copy your standing preferences, decisions and open questions from the
+vault state note into the brief. ChatGPT ends with a carry-forward section; paste it back into
+that note, where it stays unreviewed until checked. Preferences that should change advice (IL
+candidates and lineup locks) go in `local/preferences.json`, which `advise` enforces:
+
+```json
+{ "ilCandidates": ["Name"], "notIlCandidates": ["Name"],
+  "lineupLocks": [{ "date": "2026-10-26", "slot": "Util", "player": "Name" }] }
+```
+
+Every name must be on your roster. Only listed IL candidates with an IL-eligible status (O, INJ
+or NA) and a free IL slot are assumed to move to IL.
+
 Refresh on demand after completed game slates, when Tony requests it. No daily watch or
 background monitor is needed. At each refresh, compare watched players' minutes, starts and
 production with the prior capture, keeping the sample size visible. User-reported pending

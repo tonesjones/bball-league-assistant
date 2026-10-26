@@ -5,6 +5,7 @@ import { findPlayer, normalizeName } from '../engine/names.mjs';
 import { projectTeam, BLOCKED, openRosterSpots } from '../engine/needs.mjs';
 import { pickupStart } from '../engine/v0-advice.mjs';
 import { tomorrow } from '../engine/weeks.mjs';
+import { applyPreferences } from '../engine/preferences.mjs';
 
 export const hash = (value) => createHash('sha256').update(value).digest('hex');
 const read = async (file) => JSON.parse(await readFile(file, 'utf8'));
@@ -25,7 +26,8 @@ export async function attachLineups(entry) {
   if (entry.week !== r.week || Date.parse(entry.asOf) !== Date.parse(r.asOf)) throw new Error(`entry does not match decision ${entry.decisionId}: week/asOf must match`);
   // Old rehearsal records remain readable, but cannot become scored decisions by reconstruction.
   if (!r.banked || !record.projections?.players) return { ...entry, lineups: null };
-  const { snapshot, ids, schedule } = await decisionInputs(record);
+  const inputs = await decisionInputs(record), { ids, schedule } = inputs;
+  const snapshot = r.options.preferences ? applyPreferences(inputs.snapshot, r.options.preferences).snapshot : inputs.snapshot;
   if (entry.source === 'none' && entry.decision !== 'hold') throw new Error('Do-nothing baseline must hold');
   if (entry.source === 'tool') {
     const actual = r.decision;

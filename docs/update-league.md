@@ -110,7 +110,10 @@ that reaches the final summary is complete. Reruns deduplicate transactions and 
 decision record. The step logs and evidence for that timestamp are replaced on rerun.
 
 After a complete run, `npm run brief` writes `local/briefs/<decisionId>.md` for Tony to paste
-into ChatGPT, and prints only its path. It reads the saved decision and makes no network calls.
+into ChatGPT, and prints only its path. It reads the saved decision and makes no network calls. Pass
+`--state "<vault> Projectsball-league-assistant state.md"` to include Tony's standing
+decisions. Before advising or reviewing, Claude and Codex read that note, name the snapshot they
+used, and flag any entry that conflicts with it.
 
 Newly archived events can include backfilled history. They are not guaranteed to have happened
 since the previous refresh. Both your team's and other teams' observed moves are shown.

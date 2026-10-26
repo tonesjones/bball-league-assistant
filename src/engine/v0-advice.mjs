@@ -4,8 +4,9 @@ import { gamesLeft } from './games-left.mjs';
 import { BLOCKED, projectTeam, needs, strongLine, openRosterSpots } from './needs.mjs';
 import { seasonValues } from './season-value.mjs';
 import { minutesCase } from './projections.mjs';
+import { applyPreferences } from './preferences.mjs';
 
-export const MODEL_VERSION = 4;
+export const MODEL_VERSION = 5;
 
 // Yahoo's "Oct 25" as a date on or after the matchup start.
 function monthDay(value, window, what) {
@@ -40,8 +41,10 @@ export function normalizeRoles(roles = {}, protectedNames = []) {
 
 export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedNames = [],
   fromDate = tomorrow(snapshot.asOf), addsFrom = fromDate, top = 10, phi,
-  seasonMargin = 0, protectRank = 120, poolSize = 150, volumeStatus = {}, holdBelow = 0.15, addOnlyBelow = 0.05, projections = null } = {}) {
+  seasonMargin = 0, protectRank = 120, poolSize = 150, volumeStatus = {}, holdBelow = 0.15, addOnlyBelow = 0.05, projections = null, preferences = null } = {}) {
   if (projections) priors = projections.players;
+  let preferenceNotes = [];
+  if (preferences) ({ snapshot, notes: preferenceNotes } = applyPreferences(snapshot, preferences));
   if (!Number.isFinite(holdBelow) || holdBelow < 0) throw new Error('holdBelow must be a nonnegative finite number');
   if (!Number.isFinite(addOnlyBelow) || addOnlyBelow < 0) throw new Error('addOnlyBelow must be a nonnegative finite number');
   const window = { start: snapshot.matchup.start, end: snapshot.matchup.end };
@@ -226,11 +229,11 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   const others = pending.proposedTrades + pending.unlisted;
   return { asOf: snapshot.asOf, week: snapshot.matchup.week, window, fromDate, addsFrom, addsLeft, openSpots, pending,
     options: { fromDate, addsFrom, top, phi: phi ?? null, seasonMargin, protectRank, poolSize, holdBelow, addOnlyBelow, roles: roleNames,
-      minutesK: projections?.k ?? null },
+      minutesK: projections?.k ?? null, preferences },
     projection: projections ? { version: projections.version, k: projections.k, asOf: projections.asOf } : null,
     volumeStatus: shootingVolume,
     unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow, addOnlyBelow,
-    notes: [...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
+    notes: [...preferenceNotes, ...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
       'After making the move, refresh the league and rerun; the other pairs were scored against the current roster.',
       ...(pendingClaims.length ? [`Pending claims are assumed to go through: ${plural(reservedAdds, 'add')} this week and their open spots are reserved, claimed players and pending drops are not offered, and their production is not in the baseline.`] : []),
       ...(others ? [`${plural(others, 'other pending transaction')} (proposed trades or items the team page doesn't list) ${others === 1 ? 'is' : 'are'} not modeled.`] : []),

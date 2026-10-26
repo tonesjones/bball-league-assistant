@@ -14,6 +14,7 @@ import { execFileSync } from 'node:child_process';
 const readJson = async (file) => JSON.parse(await readFile(file, 'utf8'));
 const PROTECTED_FILE = 'local/protected.json';
 const ROLES_FILE = 'local/roles.json';
+const PREFERENCES_FILE = 'local/preferences.json';
 
 // Tony's protected names are private, so they live in git-ignored local/. No file means none.
 async function readProtected(file) {
@@ -43,6 +44,15 @@ export async function readRoles(rolesFile = ROLES_FILE, protectedFile = PROTECTE
     return normalizeRoles(roles, protectedNames);
   } catch (err) {
     throw new Error(`${rolesFile}: ${err.message}`);
+  }
+}
+// Lineup locks and IL candidates, private like roles. No file means none.
+export async function readPreferences(file = PREFERENCES_FILE) {
+  try {
+    return await readJson(file);
+  } catch (err) {
+    if (err.code === 'ENOENT') return null;
+    throw new Error(`${file}: ${err.message}`);
   }
 }
 const number = (n) => n == null ? 'unknown' : n.toFixed(3);
@@ -185,7 +195,7 @@ async function main(args) {
   const [ids, priors, schedule] = await Promise.all([
     'data/ids.json', 'data/priors/players.json', 'data/schedule-2026-27.json',
   ].map(readJson));
-  const roles = await readRoles();
+  const roles = await readRoles(), preferences = await readPreferences();
   const season = schedule.season ?? '2026-27';
   const seasonStart = schedule.games.map((g) => g.date).sort()[0];
   const { logs, coverage } = await loadProjectionLogs(season, { asOf: snapshot.asOf, from: seasonStart });
@@ -208,7 +218,7 @@ async function main(args) {
       }
     }
   }
-  const report = { ...advise(snapshot, { ...options, ids, priors, schedule, roles, projections }), freshness };
+  const report = { ...advise(snapshot, { ...options, ids, priors, schedule, roles, projections, preferences }), freshness };
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   const gitOptions = { cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), encoding: 'utf8' };
   const provenance = {

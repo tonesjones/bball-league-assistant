@@ -3,7 +3,7 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { readDecision, DECISIONS_DIR } from '../src/sources/decisions.mjs';
 import { decisionInputs } from '../src/sources/bakeoff-records.mjs';
-import { buildBrief } from '../src/engine/brief.mjs';
+import { buildBrief, standingDecisions } from '../src/engine/brief.mjs';
 
 const PROMPT_FILE = fileURLToPath(new URL('../docs/chatgpt-brief.md', import.meta.url));
 
@@ -24,19 +24,23 @@ async function newestDecision(dir = DECISIONS_DIR) {
 }
 
 async function main(args) {
-  let id, faLimit;
+  let id, faLimit, statePath;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--fa') {
       const value = args[++i];
       if (!/^\d+$/.test(value ?? '')) throw new Error('--fa must be a nonnegative integer');
       faLimit = Number(value);
+    } else if (args[i] === '--state') {
+      statePath = args[++i];
+      if (!statePath) throw new Error('--state needs a path to the vault state note');
     } else if (args[i].startsWith('-') || id) throw new Error(`unexpected argument: ${args[i]}`);
     else id = args[i];
   }
   const record = await readDecision(id ?? await newestDecision());
   const { snapshot, schedule } = await decisionInputs(record);
   const { prompt, version } = readPrompt(await readFile(PROMPT_FILE, 'utf8'));
-  const brief = buildBrief({ record, snapshot, schedule, prompt, promptVersion: version, now: new Date().toISOString(), faLimit });
+  const standing = statePath ? standingDecisions(await readFile(statePath, 'utf8')) : null;
+  const brief = buildBrief({ record, snapshot, schedule, prompt, promptVersion: version, now: new Date().toISOString(), faLimit, standing });
   const file = path.join('local/briefs', `${record.id}.md`);
   await mkdir(path.dirname(file), { recursive: true });
   try {
