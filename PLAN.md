@@ -259,6 +259,12 @@ prints ok or the error, without page text. It would replace the scratch script u
 
 Updated at the end of each session.
 
+**2026-10-26, after 17b.** Merged: worktree rule and Codex refresh prompt (#51), Tasks 15-16
+(current-season blend, k=2, MODEL_VERSION 6, #52), Task 18 roster crunch in the brief (#53),
+Tony's Task 19 decisions (#54) and Task 19a other teams' rosters on `--trades` (#55). 218 tests
+pass. Next: 19b trade scoring (playoff-weighted, partner must gain a real need, 1-for-1 and
+2-for-1), and a routine Codex briefing prompt. Open: none.
+
 **2026-10-25, new workflow.** Codex runs refreshes; Tony pastes a brief into ChatGPT for news and
 trade ideas. Wrote Tasks 17-19 (step 10, #47). Task 17 (`npm run brief`) is open for review;
 Task 18 is next.
