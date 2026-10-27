@@ -81,7 +81,17 @@ comparison. Record known action disposition in `taken`; it does not change repla
 Later action notes belong in a separate private log; never rewrite the original prediction
 or change a rating after the week ends. Pending ratings remain pending, not a pilot pass.
 
-Save the three entries as a JSON array and run `npm run bakeoff -- record <entries.json>`.
+The usual way is `npm run bakeoff -- pilot <packetFolder> --reply <reply.txt>`, with the
+chatbot's raw final message saved to the reply file (`codex exec --output-last-message`). It
+builds all three entries in code: the tool arm from the saved decision, `none` as a hold, and the
+chatbot arm from the reply, with names matched to the snapshot and ESPN ids. A reply in neither
+format, a name it can't match, or a move `record` would reject becomes an invalid hold with the
+reason, and the raw reply goes in `note`. Ratings stay null until Tony runs `rate`.
+`npm run pilot:prepare -- <decisionId> --chatbot-dir <new folder>` copies only the hashed files
+for the chatbot session. [`codex-briefing.md`](codex-briefing.md) runs both after each refresh.
+
+To write entries by hand instead, save the three as a JSON array and run
+`npm run bakeoff -- record <entries.json>`.
 This appends source-specific saved legal lineups, rather than applying the tool's proposal to
 the chatbot's move. Do not record the same arm twice for one decision.
 

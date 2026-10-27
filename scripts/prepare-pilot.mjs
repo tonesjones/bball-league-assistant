@@ -1,12 +1,13 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { constants, copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { readDecision } from '../src/sources/decisions.mjs';
 import { decisionInputs, hash } from '../src/sources/bakeoff-records.mjs';
 import { playerEvidence } from '../src/engine/player-evidence.mjs';
 
-const [id] = process.argv.slice(2);
-if (!id) throw new Error('usage: npm run pilot:prepare -- <decisionId>');
+const [id, ...rest] = process.argv.slice(2);
+const chatbotDir = rest[0] === '--chatbot-dir' ? rest[1] : undefined;
+if (!id || (rest.length && !chatbotDir)) throw new Error('usage: npm run pilot:prepare -- <decisionId> [--chatbot-dir <new empty folder>]');
 const record = await readDecision(id), { snapshot, ids, schedule } = await decisionInputs(record);
 const coverage = record.provenance.gameLogCoverage;
 if (!coverage?.hashes) throw new Error('Decision has no hashed game-log coverage');
@@ -46,4 +47,10 @@ const manifest = { protocol: 'continuous', decisionId: id, preparedAt: new Date(
   promptVersion: Number(field('Prompt version')), chatbotModel: field('Chatbot model'),
   chatbotEffort: field('Chatbot effort'), hashes };
 await writeFile(path.join(folder, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n', { flag: 'wx' });
+if (chatbotDir) {
+  // The chatbot sees only the hashed files: no manifest, which names the decision and commit.
+  await mkdir(chatbotDir, { recursive: true });
+  for (const name of Object.keys(hashes)) await copyFile(path.join(folder, name), path.join(chatbotDir, name), constants.COPYFILE_EXCL);
+  console.log(`Copied the chatbot's files to: ${chatbotDir}`);
+}
 console.log(`Prepared pilot packet: ${folder}\nRun the chatbot arm (prompt version ${manifest.promptVersion}, ${manifest.chatbotModel}, ${manifest.chatbotEffort}) in a fresh isolated session with only the files in manifest.hashes; withhold the tool recommendation.`);

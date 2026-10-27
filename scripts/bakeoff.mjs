@@ -1,9 +1,10 @@
 import { readFile, appendFile, mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { validateEntry, validateReview, applyReviews, realizedGain, flips, summarize, scorecard } from '../src/engine/bakeoff.mjs';
 import { loadGameLogs } from '../src/sources/gamelogs.mjs';
 import { readDecision } from '../src/sources/decisions.mjs';
-import { attachLineups } from '../src/sources/bakeoff-records.mjs';
+import { attachLineups, decisionInputs } from '../src/sources/bakeoff-records.mjs';
+import { pilotEntries } from '../src/engine/pilot-entries.mjs';
 
 async function linkedEntries(entries, { requirePromptVersion = false } = {}) {
   const validated = entries.map((entry) => validateEntry(entry, { allowLegacyPromptVersion: !requirePromptVersion }));
@@ -17,6 +18,20 @@ async function linkedEntries(entries, { requirePromptVersion = false } = {}) {
 }
 
 const REVIEWS = 'local/pilot-reviews.jsonl';
+async function appendEntries(entries) {
+  const path = 'local/bakeoff.jsonl'; await mkdir(dirname(path), { recursive: true });
+  let previous = [];
+  try { previous = (await readFile(path, 'utf8')).trim().split(/\r?\n/).filter(Boolean).map(JSON.parse); }
+  catch (e) { if (e.code !== 'ENOENT') throw e; }
+  const keys = new Set(previous.map((e) => `${e.decisionId}/${e.source}`));
+  for (const entry of entries) {
+    const key = `${entry.decisionId}/${entry.source}`;
+    if (keys.has(key)) throw new Error(`Decision/source already recorded: ${key}`);
+    keys.add(key);
+  }
+  await appendFile(path, entries.map((e) => JSON.stringify({ taken: false, ...e, recordedAt: new Date().toISOString() })).join('\n') + '\n');
+}
+
 async function readReviews() {
   try { return (await readFile(REVIEWS, 'utf8')).trim().split(/\r?\n/).filter(Boolean).map(JSON.parse); }
   catch (e) { if (e.code === 'ENOENT') return []; throw e; }
@@ -33,17 +48,32 @@ if (command === 'rate') {
   console.log(`Rated ${source} ${review.rating} for decision ${decisionId}.`);
 } else if (command === 'record') {
   const entries = JSON.parse(await readFile(args[0], 'utf8')); if (!Array.isArray(entries)) throw new Error('entries file must be an array');
-  const linked = await linkedEntries(entries, { requirePromptVersion: true }); const validated = await Promise.all(linked.map(attachLineups)); const path = 'local/bakeoff.jsonl'; await mkdir(dirname(path), { recursive: true });
-  let previous = [];
-  try { previous = (await readFile(path, 'utf8')).trim().split(/\r?\n/).filter(Boolean).map(JSON.parse); }
-  catch (e) { if (e.code !== 'ENOENT') throw e; }
-  const keys = new Set(previous.map((e) => `${e.decisionId}/${e.source}`));
-  for (const entry of validated) {
-    const key = `${entry.decisionId}/${entry.source}`;
-    if (keys.has(key)) throw new Error(`Decision/source already recorded: ${key}`);
-    keys.add(key);
+  const linked = await linkedEntries(entries, { requirePromptVersion: true });
+  await appendEntries(await Promise.all(linked.map(attachLineups)));
+} else if (command === 'pilot') {
+  const packet = args[0], replyFile = get('--reply');
+  if (!packet || !replyFile) throw new Error('usage: bakeoff pilot <packetFolder> --reply <reply.txt>');
+  const manifest = JSON.parse(await readFile(join(packet, 'manifest.json'), 'utf8'));
+  const record = await readDecision(manifest.decisionId);
+  if (Date.parse(manifest.asOf) !== Date.parse(record.report.asOf)) throw new Error('Packet does not match its decision record');
+  const { snapshot, ids } = await decisionInputs(record);
+  const entries = pilotEntries({ record, snapshot, ids, manifest, reply: await readFile(replyFile, 'utf8') });
+  const linked = await linkedEntries(entries, { requirePromptVersion: true });
+  const attached = [];
+  for (const entry of linked) {
+    try { attached.push(await attachLineups(entry)); }
+    catch (e) {
+      // An illegal chatbot move is an invalid hold, kept in the comparison; a tool or none failure is a bug.
+      if (entry.source !== 'chatbot') throw e;
+      attached.push(await attachLineups({ ...entry, decision: 'hold', start: undefined, add: null, drop: null, invalidReason: `illegal move: ${e.message}` }));
+    }
   }
-  await appendFile(path, validated.map((e) => JSON.stringify({ taken: false, ...e, recordedAt: new Date().toISOString() })).join('\n') + '\n');
+  await appendEntries(attached);
+  const describe = (e) => e.invalidReason ? `invalid, logged as hold (${e.invalidReason})`
+    : e.decision === 'hold' ? 'hold' : `add ${e.add.name}, drop ${e.drop?.name ?? 'none (open spot)'}, start ${e.start}`;
+  console.log(`Recorded decision ${record.id} (week ${record.report.week}).`);
+  for (const e of attached) console.log(`${e.source}: ${describe(e)}${e.toolAction === 'insufficient' ? ' [tool said insufficient evidence]' : ''}`);
+  console.log(`Rate each arm 1-5 before the week ends:\n${['tool', 'chatbot', 'none'].map((s) => `  npm run bakeoff -- rate ${record.id} ${s} <1-5> [--reason R] [--note N]`).join('\n')}`);
 } else if (command === 'score') {
   const week = Number(get('--week')); const from = get('--from'); const to = get('--to');
   const date = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v ?? '') && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
@@ -87,4 +117,4 @@ if (command === 'rate') {
   for (const card of cards) for (const row of card.rolling) console.log(['rolling', card.modelVersion ?? 'rehearsal', card.promptVersion ?? 'rehearsal', row.source, row.scored, row.helped, row.hurt, row.net, row.meanRating ?? '-'].join('\t'));
   console.log('gate\tmodelVersion\tpromptVersion\tpaired decisions\tstatus\ttool net\tchatbot net\tnone net\ttool rating\tchatbot rating\tnone rating');
   for (const card of cards) console.log(['gate', card.modelVersion ?? 'rehearsal', card.promptVersion ?? 'rehearsal', card.paired, card.gate, card.comparison.tool.net, card.comparison.chatbot.net, card.comparison.none.net, card.comparison.tool.meanRating ?? '-', card.comparison.chatbot.meanRating ?? '-', card.comparison.none.meanRating ?? '-'].join('\t'));
-} else throw new Error('usage: bakeoff rate <decisionId> <tool|chatbot|none> <1-5> [--reason R] [--note N] | bakeoff record <entries.json> | bakeoff score --week N --from YYYY-MM-DD --to YYYY-MM-DD | bakeoff scorecard --to YYYY-MM-DD [--last N]');
+} else throw new Error('usage: bakeoff rate <decisionId> <tool|chatbot|none> <1-5> [--reason R] [--note N] | bakeoff record <entries.json> | bakeoff pilot <packetFolder> --reply <reply.txt> | bakeoff score --week N --from YYYY-MM-DD --to YYYY-MM-DD | bakeoff scorecard --to YYYY-MM-DD [--last N]');
