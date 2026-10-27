@@ -1,8 +1,13 @@
 # Codex briefing prompt
 
-Paste this prompt into Codex for each scheduled league check. It extends
-[the refresh prompt](codex-refresh.md) with a private run log that Claude can read later.
-The vault contains plain Markdown files with YAML frontmatter, tracked in git.
+Paste this prompt into Codex for each league check, or keep a Codex skill whose only instruction
+is "follow the prompt in docs/codex-briefing.md", so the skill never drifts from this file. It
+extends [the refresh prompt](codex-refresh.md) with the pilot arms
+([bakeoff protocol](bakeoff-prompt.md)) and a private run log that Claude can read later. The
+vault contains plain Markdown files with YAML frontmatter, tracked in git.
+
+At the end of a run Tony has the ChatGPT brief on his clipboard and the pilot's three arms
+recorded. His only steps are pasting the brief into ChatGPT and rating the three arms.
 
 ```text
 Run one league check in C:\TestCode\bball-league-assistant. Do not install a schedule or poll.
@@ -17,11 +22,28 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    Only after success, run:
    npm run brief -- --state "C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant state.md"
    Stop processing at the first failure. Do not run later processing commands or fix anything.
-   Still record the failed run in step 3. A sign-in stop also takes this failure path.
+   Still record the failed run in step 5. A sign-in stop also takes this failure path.
    Take the decision ID and action from this run's script output. Take the brief path
    from the brief command. Verify that it belongs to that decision ID.
    Never substitute an older decision or brief. Use - for a missing ID or brief path.
-3. Log this run in the vault file:
+3. Pilot. Only after the brief succeeded, record the three pilot arms for this decision:
+   a. Run: npm run pilot:prepare -- <decisionId> --chatbot-dir "$env:TEMP\bball-pilot\<decisionId>"
+      Take the packet folder from its output.
+   b. In PowerShell, from that chatbot folder, run the chatbot arm exactly as below. Take the
+      model and effort from the "Chatbot model" and "Chatbot effort" lines in
+      docs/bakeoff-prompt.md. Use absolute paths into the league repo for the two output files:
+      Get-Content prompt.txt -Raw | codex exec --json --ephemeral --ignore-user-config --ignore-rules --skip-git-repo-check -s read-only -m <model> -c model_reasoning_effort="<effort>" -c windows.sandbox="elevated" --disable memories --disable apps --disable browser_use --disable browser_use_external --disable in_app_browser --disable computer_use --output-last-message <repo>\local\pilot-replies\<decisionId>.txt - > <repo>\local\pilot-replies\<decisionId>.events.jsonl
+      Create local\pilot-replies first if it is missing. Never give that session any other file,
+      the brief, the tool's recommendation or this conversation.
+   c. If the command failed, the reply file is empty, or the events file contains
+      "blocked by policy", stop the pilot step and report it as failed: chatbot-run. Do not
+      record anything; the run can be retried on the same decision.
+   d. Otherwise run: npm run bakeoff -- pilot <packet folder> --reply local\pilot-replies\<decisionId>.txt
+      The script reads the reply and writes all three entries. Never write or edit entries
+      yourself, and never reword the reply.
+   A pilot failure does not undo the refresh or the brief. Record it in step 5.
+4. Copy the brief to the clipboard: Get-Content -Raw "<brief path>" | Set-Clipboard
+5. Log this run in the vault file:
    C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant runs.md
    Read only what is needed to preserve this note. If missing, create it with:
    ---
@@ -30,7 +52,8 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    ---
    Append ONE line under ## Runs. Create the heading if missing. Preserve existing content.
    Use the current local date and time, and this exact line format:
-   - YYYY-MM-DD HH:MM capture=<folder> decision=<id> result=<move|hold|failed: step> brief=<path>
+   - YYYY-MM-DD HH:MM capture=<folder> decision=<id> result=<move|hold|failed: step> brief=<path> pilot=<recorded|skipped|failed: step>
+   Use pilot=skipped when step 3 did not run because an earlier step failed.
    Use move or hold only when both commands succeeded and the script reports that action.
    Otherwise use failed: <step>, with a short, generic step name. If the script reports
    insufficient evidence, use failed: insufficient-evidence; never relabel it hold.
@@ -45,12 +68,18 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    git -C C:/TestCode/Obsidian/Claude push
    Run these commands separately. Stop at the first logging, commit or push failure.
    Report the failed step without appending another line or retrying the refresh.
-4. Report in chat: capture folder, decision ID, brief path and the one-line log entry.
-   If logging failed, label the entry unsaved or unpushed as appropriate.
-   Report failures by step name. Never paste page text, brief text or league details.
+6. Report in chat, in this order:
+   - "Brief copied to clipboard: paste it into ChatGPT." with the brief path, or the failed step.
+   - The output of the bakeoff pilot command, unchanged: each arm's answer and the three
+     rating commands. Or the failed pilot step.
+   - Capture folder, decision ID and the one-line log entry. If logging failed, label the
+     entry unsaved or unpushed as appropriate.
+   Report failures by step name. Never paste page text or brief text. The pilot output is the
+   only league detail allowed in chat.
 
 Rules:
 - In the league repo, edit no files outside local/. Report parser or script failures; do not fix them.
+- The chatbot folder under %TEMP% is the only other place you may write.
 - Never switch branches, commit, stash or push in the league repo. Leave its git state unchanged.
 - Only the named vault runs note may be edited and committed outside local/.
 - Never use git add -A. Never switch vault branches, stash, reset or force-push.
@@ -64,14 +93,29 @@ Paste the prompt above with this instruction first. Replace the folder with Tony
 ```text
 Dry run: replace step 1's capture with the existing local/raw/<timestamp>/ folder I name.
 Read the same guides, but do not open Yahoo or capture pages. Use that exact folder in step 2.
-Keep the stale-data checks. Run the remaining steps, including the vault log, commit and push.
+Keep the stale-data checks. Skip step 3: a dry run's decision is a rehearsal, not a pilot entry.
+Run the remaining steps, including the vault log, commit and push.
 Use the current run time for the log and commit timestamp, and the existing folder for capture=.
+```
+
+## Catch up a decision
+
+If a refresh produced a decision and brief but the pilot step was skipped or failed, paste the
+prompt above with this instruction first. Do it before the move's start date.
+
+```text
+Catch-up: do not capture or refresh. Use decision <decisionId>. Read the same guides, then run
+only steps 3 and 6 for that decision. Report the pilot output as in step 6.
 ```
 
 ## Why these rules
 
 - **Yahoo stays read-only.** Tony makes every transaction and does every Yahoo sign-in.
 - **Scripts compute the advice.** Failed runs must not reuse an older decision or brief.
+- **Scripts write the pilot entries.** `bakeoff pilot` turns the chatbot's raw reply into an
+  entry; a reply it can't read or an illegal move is kept as an invalid hold, not fixed by hand.
+- **The chatbot arm is isolated.** It must not see the brief, which shows the tool's call, or
+  the manifest, which names the decision. A sandbox failure is retried, not recorded.
 - **The repo stays unchanged outside `local/`.** Other sessions may share the folder.
 - **The vault gets only run metadata.** It may sync. League evidence stays in `local/`.
 - **Only the runs note is committed.** Other vault work must stay out of the commit.
