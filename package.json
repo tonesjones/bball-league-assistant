@@ -20,6 +20,7 @@
     "brief": "node scripts/brief.mjs",
     "evidence": "node scripts/player-evidence.mjs",
     "refresh:analyze": "node scripts/analyze-refresh.mjs",
-    "stream": "node scripts/stream-plan.mjs"
+    "stream": "node scripts/stream-plan.mjs",
+    "review": "node scripts/review.mjs"
   }
 }

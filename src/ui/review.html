@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>League check · Review</title><link rel="stylesheet" href="/review.css"><script defer src="/review.js"></script></head>
+<body><main><header><div><p class="eyebrow">BASKETBALL ASSISTANT / PRIVATE LOCAL REVIEW</p><h1>Tonight’s league check</h1><p class="subtitle">Read the answers. Make your call. Keep the record.</p></div><button id="reload" class="secondary">Reload saved data</button></header>
+<div id="message" role="status" aria-live="polite"></div>
+<section class="toolbar"><label for="decision">Saved league check</label><select id="decision"></select><p id="meta"></p></section>
+<div id="empty" hidden>No saved decisions yet. Run $league-refresh in the main project first, then reload this screen.</div>
+<div id="content" hidden><ol id="progress" class="progress"></ol>
+<section class="brief"><div><p class="eyebrow">01 / TAKE IT TO CHATGPT</p><h2>Your league brief, ready to go</h2><p>Copy the brief, then paste it into your regular ChatGPT chat. That conversation stays separate from the comparison below.</p><p id="copy-status" class="muted"></p></div><button id="copy">Copy ChatGPT brief</button></section>
+<section><p class="eyebrow">02 / YOUR JUDGMENT</p><h2>Which advice would you trust?</h2><p class="muted">Rate each answer from 1 (poor) to 5 (excellent), using what you know now. Results are scored separately after the matchup.</p><p id="pilot-status"></p><form id="ratings"><div id="arms" class="cards"></div><div class="savebar"><div><strong id="rating-status"></strong><p class="muted">Your scores and notes stay in this project’s private records.</p></div><button id="save" type="submit">Save all three ratings</button></div></form></section>
+<section class="results"><p class="eyebrow">03 / CLOSE THE LOOP</p><h2>How did the options turn out?</h2><p id="results-status"></p><div id="outcomes"></div><p class="muted">Results replay the saved lineups against making no move. They do not prove a Yahoo transaction happened. After the matchup, run a league refresh to update game logs, then reload this screen. Missing evidence stays unscored.</p></section>
+<details><summary>Engine notes and data limits</summary><ul id="notes"></ul></details>
+</div><footer>One league. One decision at a time. Every Yahoo move is yours to make.</footer></main></body></html>

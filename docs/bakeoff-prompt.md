@@ -69,7 +69,13 @@ chatbot entry to the prompt version above; `record` rejects a chatbot entry with
 (1–5), or null when not yet reviewed. Record a rejection reason (`wrong-role`, `core-player`,
 `bad-data`, `injury`, `timing`, `other`) and explanation before the outcome is known.
 
-To rate after recording, run `npm run bakeoff -- rate <decisionId> <tool|chatbot|none> <1-5>
+The local review screen is the usual rating interface: `npm run review -- <decisionId>`.
+It shows all three saved answers, provides 1-5 buttons with optional notes/reasons, and writes
+the same private review log. It opens from the league-refresh briefing after the pilot attempt.
+Missing pilot arms disable rating, and closed matchups are read-only. The regular ChatGPT chat
+where Tony pastes the brief is separate from the isolated chatbot arm.
+
+To rate from the command line instead, run `npm run bakeoff -- rate <decisionId> <tool|chatbot|none> <1-5>
 [--reason R] [--note N]`. It appends to `local/pilot-reviews.jsonl`. Rate all three arms,
 "none" included: the gate compares mean ratings. `score` and `scorecard` use the last review
 for each decision and arm in place of the entry's rating. A review dated (Pacific time) after
