@@ -47,7 +47,19 @@ add it to `src/sources/yahoo-urls.mjs` and its test, and say why in the PR.
   reach the page. Mark it `skipped` with the reason and go on.
 - **One read per page.** If a page fails to load, wait at least one minute before one retry. If it
   fails again, skip it, note it in `_log.txt`, and go on.
-- **No changes to text.** Save exactly what the browser's page-text tool returns.
+- **No changes to text.** Save exactly what the browser's page-text read returns.
+
+### Page-text read by host
+
+| Host | Page-text read | Notes |
+|---|---|---|
+| Claude | `get_page_text`, with up to 200000 characters | The tool deny list blocks everything else. |
+| Codex in-app browser | `locator('body').innerText()` on the open tab | The one allowed read. It returns text only and changes nothing. No `evaluate`, no other locator, no `getByRole('body')` (it timed out on 2026-10-26). |
+
+The Codex read differs a little from Claude's: it keeps button labels and non-breaking spaces.
+The parsers accept both. Captures read this way on 2026-10-26 built a snapshot and ran advice.
+In Codex nothing enforces these rules, so follow them exactly. If the read fails, mark the page
+`skipped`; don't try another read method.
 
 ## Pages
 
@@ -76,8 +88,7 @@ For each page:
 2. Wait for the page to finish loading. If the main content (roster table, player list) is
    missing, wait 3 seconds once more.
 3. Check for a sign-in screen (see Rules).
-4. Read the page text with the browser's page-text tool. Ask for up to 200000 characters so
-   nothing is cut off.
+4. Read the page text with this host's page-text read (see "Page-text read by host").
 5. Write the text to `local/raw/<timestamp>/<save as>`.
 
 ## After the last page

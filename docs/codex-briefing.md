@@ -16,7 +16,8 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
 1. Read AGENTS.md, docs/update-league.md and docs/chatgpt-brief.md. Follow
    docs/update-league.md to capture Yahoo into a new local/raw/<timestamp>/ folder.
    Use the current local time for <timestamp>. Open allowed URLs and read only.
-   Save page text unchanged. Never click, type, submit, run page scripts or change Yahoo.
+   Read each page only with locator('body').innerText() in the in-app browser and save the
+   text unchanged. Never click, type, submit, evaluate or run other page scripts, or change Yahoo.
    If a sign-in page appears, stop capture and tell me. Never sign in or enter credentials.
    Do not bypass blocked tools or URLs. Keep capture diagnostics in local/.
 2. Run: npm run refresh:analyze -- local/raw/<timestamp>
