@@ -2,12 +2,12 @@ import { findPlayer, normalizeName } from './names.mjs';
 import { addDays, tomorrow } from './weeks.mjs';
 import { gamesLeft } from './games-left.mjs';
 import { rosterCrunch } from './crunch.mjs';
-import { BLOCKED, projectTeam, needs, strongLine, openRosterSpots } from './needs.mjs';
+import { BLOCKED, STAT, projectTeam, needs, strongLine, openRosterSpots } from './needs.mjs';
 import { seasonValues } from './season-value.mjs';
 import { minutesCase } from './projections.mjs';
 import { applyPreferences } from './preferences.mjs';
 
-export const MODEL_VERSION = 6;
+export const MODEL_VERSION = 7;
 
 // Yahoo's "Oct 25" as a date on or after the matchup start.
 function monthDay(value, window, what) {
@@ -56,7 +56,9 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
         ? { ...volumeStatus[side], status: 'unknown', reason: volumeStatus[side]?.reason ?? 'banked makes and attempts unavailable' }
         : volumeStatus[side] ?? { status: 'reported' }]));
   const unknownVolume = Object.entries(shootingVolume).filter(([, v]) => v.status === 'unknown');
-  const scoring = { shootingKnown: !unknownVolume.length };
+  const unknownCounting = banked ? Object.keys(STAT).filter((c) =>
+    ['mine', 'opponent'].some((side) => snapshot.matchup.totals?.[side]?.[c] === null)) : [];
+  const scoring = { shootingKnown: !unknownVolume.length, unknownCategories: unknownCounting };
   const shootingNotes = unknownVolume.length
     ? [`FG% and FT% are not scored: ${unknownVolume.map(([side, v]) => `${side}: ${v.reason}`).join('; ')}.`]
     : banked && Object.values(shootingVolume).some((v) => v.status === 'matched')
@@ -110,7 +112,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   const coreSet = new Set(roleNames.core.map(normalizeName)), streamSet = new Set(roleNames.stream.map(normalizeName));
   const isNormal = (p) => !coreSet.has(normalizeName(p.name)) && !streamSet.has(normalizeName(p.name));
   const guardrail = { seasonMargin, protectRank, poolSize, blockedPairs: 0,
-    ...roleNames, blockedByRule: { core: 0, noPrior: 0, rank: 0, seasonValue: 0 },
+    ...roleNames, blockedByRule: { core: 0, ilCapacity: 0, lineupLock: 0, noPrior: 0, rank: 0, seasonValue: 0 },
     protectedByRank: roster.filter((p) => isNormal(p) && p.season && p.season.rank <= protectRank)
       .map((p) => ({ name: p.name, ...p.season })).sort((a, b) => a.rank - b.rank),
     protectedNoPrior: roster.filter((p) => isNormal(p) && !p.season)
@@ -128,7 +130,9 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     for (const drop of [...(openSpots > 0 ? [null] : []), ...drops]) {
       const name = drop && normalizeName(drop.name);
       const dropRole = !drop ? 'open-slot' : streamSet.has(name) ? 'stream' : 'normal';
-      const blocked = !drop ? null : coreSet.has(name) ? 'core' : dropRole === 'stream' ? null
+      const blocked = !drop ? null : coreSet.has(name) ? 'core'
+        : ['IL', 'IL+'].includes(drop.slot) && openSpots <= 0 ? 'ilCapacity'
+          : drop.locks?.some((lock) => lock.date >= start) ? 'lineupLock' : dropRole === 'stream' ? null
         : !drop.season ? 'noPrior' : drop.season.rank <= protectRank ? 'rank'
           : pickup.season.value < drop.season.value + seasonMargin ? 'seasonValue' : null;
       if (blocked) {
@@ -238,7 +242,9 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     projection: projections ? { version: projections.version, k: projections.k, asOf: projections.asOf } : null,
     volumeStatus: shootingVolume,
     unknownGames: { mine: mine.unknownGames, opponent: opponent.unknownGames }, holdBelow, addOnlyBelow,
-    notes: [...preferenceNotes, ...shootingNotes, ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
+    notes: [...preferenceNotes, ...shootingNotes,
+      ...(unknownCounting.length ? [`${unknownCounting.join(', ')} not scored: banked counting totals are unknown for at least one team.`] : []),
+      ...(snapshot.settings.maxGamesPerWeek != null ? ['The games cap ignores games already used this week; those are unknown.'] : []),
       'After making the move, refresh the league and rerun; the other pairs were scored against the current roster.',
       ...(pendingClaims.length ? [`Pending claims are assumed to go through: ${plural(reservedAdds, 'add')} this week and their open spots are reserved, claimed players and pending drops are not offered, and their production is not in the baseline.`] : []),
       ...(others ? [`${plural(others, 'other pending transaction')} (proposed trades or items the team page doesn't list) ${others === 1 ? 'is' : 'are'} not modeled.`] : []),

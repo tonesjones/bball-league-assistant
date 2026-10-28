@@ -812,9 +812,9 @@ test('core roles and legacy protected names never drop and count blocked pairs',
     assert.equal(r.decision.action, 'hold');
     assert.deepEqual(r.topPairs, []);
     assert.equal(r.guardrail.blockedPairs, 1);
-    assert.deepEqual(r.guardrail.blockedByRule, { core: 1, noPrior: 0, rank: 0, seasonValue: 0 });
+    assert.deepEqual(r.guardrail.blockedByRule, { core: 1, ilCapacity: 0, lineupLock: 0, noPrior: 0, rank: 0, seasonValue: 0 });
     assert.match(formatAdvice(r), /Core players: /);
-    assert.match(formatAdvice(r), /core 1 \| noPrior 0 \| rank 0 \| seasonValue 0/);
+    assert.match(formatAdvice(r), /core 1 \| ilCapacity 0 \| lineupLock 0 \| noPrior 0 \| rank 0 \| seasonValue 0/);
   }
 });
 
@@ -934,7 +934,9 @@ test('a pending add-only claim reserves its add and open spot', () => {
   assert.equal(r.openSpots, 0);
   assert.equal(r.addsLeft, 3);
   assert.equal(r.pending.reservedAdds, 1);
-  assert.ok(r.topPairs.length && r.topPairs.every((p) => p.drop));
+  assert.deepEqual(r.topPairs, []);
+  assert.equal(r.guardrail.blockedByRule.ilCapacity, 1);
+  assert.equal(r.decision.reason, 'No eligible moves.');
   assert.match(r.notes.join(' '), /Pending claims are assumed to go through: 1 add this week/);
   assert.match(formatAdvice(r), /Pending claim 1 \(2026-10-22\): add Other Claim\n/);
 });

@@ -109,10 +109,10 @@ export function normalCdf(z) {
   return z > 0 ? 1 - tail : tail;
 }
 
-export function needs(mine, opponent, phi = DEFAULT_PHI, { shootingKnown = true } = {}) {
+export function needs(mine, opponent, phi = DEFAULT_PHI, { shootingKnown = true, unknownCategories = [] } = {}) {
   const byCategory = {};
   for (const c of CATEGORIES) {
-    if (!shootingKnown && (c === 'FG%' || c === 'FT%')) {
+    if (unknownCategories.includes(c) || !shootingKnown && (c === 'FG%' || c === 'FT%')) {
       byCategory[c] = { mine: null, opponent: null, margin: null, spread: null, pWin: null, label: 'unknown' };
       continue;
     }
