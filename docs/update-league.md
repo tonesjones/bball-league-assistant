@@ -114,6 +114,21 @@ For a complete capture, process that exact folder in one command:
 npm run refresh:analyze -- local/raw/<timestamp>
 ```
 
+The analysis command needs outbound HTTPS to `site.api.espn.com`. In Codex, run it with
+network-enabled shell execution; if the shell has restricted network access, request the normal
+`require_escalated` tool approval before running. This applies only to the public ESPN fetches,
+not Yahoo collection. If approval is denied or access is unavailable, stop and report the failure.
+Do not change DNS/proxy settings, bypass denied access, or mark cached logs fresh without checks.
+A DNS error such as `ENOTFOUND` can be caused by the run's network restrictions; it is not by
+itself proof that ESPN is down.
+
+If Tony requests another attempt after a network-only failure, the same complete capture can
+be processed again without reading Yahoo again, provided the snapshot still passes the existing
+freshness checks and Tony has made no roster changes. Preserve the original failed-step log
+before rerunning, because the pipeline replaces step logs for that timestamp. Do not use
+`--allow-stale` without Tony's explicit override. The failed vault log remains historical evidence;
+a successful retry is a separate run, not a reason to rewrite it.
+
 This builds the snapshot, refreshes ESPN logs, archives observed transactions, writes player
 evidence and runs advice, stopping at the first failed step. It prints the computed decision,
 adds remaining, unknown starts and newly archived transaction details. Full advice and step
