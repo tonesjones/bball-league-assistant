@@ -21,6 +21,11 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    If a sign-in page appears, stop capture and tell me. Never sign in or enter credentials.
    Do not bypass blocked tools or URLs. Keep capture diagnostics in local/.
 2. Run: npm run refresh:analyze -- local/raw/<timestamp>
+   This command fetches public ESPN data. In Codex, use network-enabled shell execution
+   (request the normal tool approval with require_escalated when network access is restricted).
+   Do not first run it in a known network-restricted shell. If access is denied or unavailable,
+   stop and report game-logs; do not change network settings, bypass a denial, or treat old logs
+   as freshly checked. Yahoo collection remains browser-only and follows step 1.
    Only after success, take <decisionId> from this run's analysis output, then run:
    npm run brief -- <decisionId> --state "C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant state.md"
    Stop processing at the first failure. Do not run later processing commands or fix anything.
