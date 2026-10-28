@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
-import { randomBytes } from 'node:crypto';
-import { readFile, writeFile, mkdir, open } from 'node:fs/promises';
+import { randomBytes, createHash } from 'node:crypto';
+import { readFile, readdir, writeFile, mkdir, open } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -12,7 +12,15 @@ const defaultRoot = path.resolve(path.dirname(script), '..');
 const assets = path.join(defaultRoot, 'src/ui');
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function startReviewServer({ root = defaultRoot, token = randomBytes(32).toString('hex') } = {}) {
+// Hash of the server-side modules, so the launcher can replace a server running older code.
+export async function codeVersion(root = defaultRoot) {
+  const files = (await readdir(path.join(root, 'src'), { recursive: true })).filter((f) => f.endsWith('.mjs')).map((f) => path.join('src', f));
+  const hash = createHash('sha256');
+  for (const file of [...files.sort(), path.join('scripts', 'review.mjs')]) hash.update(file).update(await readFile(path.join(root, file)));
+  return hash.digest('hex').slice(0, 16);
+}
+
+export async function startReviewServer({ root = defaultRoot, token = randomBytes(32).toString('hex'), version = '' } = {}) {
   let origin;
   let writing = Promise.resolve();
   const server = createServer(async (req, res) => {
@@ -26,7 +34,11 @@ export async function startReviewServer({ root = defaultRoot, token = randomByte
       const url = new URL(req.url, origin);
       if (url.pathname.startsWith('/api/')) {
         if (req.headers.authorization !== `Bearer ${token}`) return json(403, { error: 'Open this screen using the link from npm run review.' });
-        if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { root });
+        if (req.method === 'GET' && url.pathname === '/api/health') return json(200, { root, version });
+        if (req.method === 'POST' && url.pathname === '/api/stop') {
+          res.once('finish', () => { server.close(); server.closeAllConnections(); });
+          return json(200, { stopped: true });
+        }
         if (req.method === 'GET' && url.pathname === '/api/state') return json(200, await reviewState(root, url.searchParams.get('decision')));
         if (req.method !== 'POST' || req.headers.origin !== origin || req.headers['content-type'] !== 'application/json') return json(403, { error: 'Invalid local request.' });
         req.setEncoding('utf8');
@@ -53,29 +65,36 @@ export async function startReviewServer({ root = defaultRoot, token = randomByte
 }
 
 async function launch(args) {
-  const serve = args.includes('--serve'), noOpen = args.includes('--no-open');
-  const positional = args.filter((arg) => !['--serve', '--no-open'].includes(arg));
-  if (positional.length > 1 || positional[0] && !validDecisionId(positional[0])) throw new Error('Usage: npm run review -- [decisionId] [--no-open]');
+  const serve = args.includes('--serve'), noOpen = args.includes('--no-open'), stop = args.includes('--stop');
+  const positional = args.filter((arg) => !['--serve', '--no-open', '--stop'].includes(arg));
+  if (positional.length > 1 || positional[0] && !validDecisionId(positional[0]) || stop && positional.length) throw new Error('Usage: npm run review -- [decisionId] [--no-open] | npm run review -- --stop');
   const id = positional[0], root = defaultRoot, dir = path.join(root, 'local/review-ui');
   await mkdir(dir, { recursive: true });
   const descriptor = path.join(dir, 'server.json');
+  const version = await codeVersion(root);
   if (serve) {
-    const service = await startReviewServer({ root });
+    const service = await startReviewServer({ root, version });
     await writeFile(descriptor, JSON.stringify({ origin: service.origin, token: service.token, root, pid: process.pid }));
     return;
   }
-  // Select an exact decision before opening; refresh callers always pass the current ID.
-  const state = await reviewState(root, id);
-  const selectedId = state.selected?.id;
-  let service;
+  let service, running;
   try {
     const saved = JSON.parse(await readFile(descriptor, 'utf8'));
     const address = new URL(saved.origin);
     if (saved.root === root && address.protocol === 'http:' && address.hostname === '127.0.0.1') {
       const result = await fetch(`${saved.origin}/api/health`, { headers: { Authorization: `Bearer ${saved.token}` }, signal: AbortSignal.timeout(1000) });
-      if (result.ok && (await result.json()).root === root) service = saved;
+      const health = result.ok ? await result.json() : {};
+      if (health.root === root) { running = saved; if (health.version === version) service = saved; }
     }
   } catch { /* A stopped server is restarted below. */ }
+  if (running && (stop || !service)) {
+    await fetch(`${running.origin}/api/stop`, { method: 'POST', headers: { Authorization: `Bearer ${running.token}` }, signal: AbortSignal.timeout(1000) });
+    service = undefined;
+  }
+  if (stop) { console.log(running ? 'Review screen stopped.' : 'No review screen was running.'); return; }
+  // Select an exact decision before opening; refresh callers always pass the current ID.
+  const state = await reviewState(root, id);
+  const selectedId = state.selected?.id;
   if (!service) {
     const log = await open(path.join(dir, 'server.log'), 'a');
     const child = spawn(process.execPath, [script, '--serve'], { cwd: root, detached: true, windowsHide: true, stdio: ['ignore', log.fd, log.fd] });

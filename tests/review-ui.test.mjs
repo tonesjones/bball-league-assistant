@@ -5,7 +5,7 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { get } from 'node:http';
 import { reviewState, saveRatings, recordBriefCopy } from '../src/sources/review-ui.mjs';
-import { startReviewServer } from '../scripts/review.mjs';
+import { startReviewServer, codeVersion } from '../scripts/review.mjs';
 import { applyReviews } from '../src/engine/bakeoff.mjs';
 
 const now = '2026-10-28T05:00:00Z';
@@ -123,4 +123,28 @@ test('an explicitly selected check keeps its own brief when a newer decision exi
   const older = (await reviewState(root, 'check-one', { now })).selected;
   assert.equal(older.id, 'check-one');
   assert.equal(older.brief, 'Synthetic ChatGPT brief');
+});
+
+test('the code version changes with server modules and a token-checked stop closes the server', async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), 'bball-review-code-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(path.join(root, 'src/engine'), { recursive: true });
+  await mkdir(path.join(root, 'scripts'), { recursive: true });
+  await writeFile(path.join(root, 'src/engine/score.mjs'), 'export const a = 1;');
+  await writeFile(path.join(root, 'scripts/review.mjs'), '');
+  const before = await codeVersion(root);
+  assert.equal(await codeVersion(root), before);
+  await writeFile(path.join(root, 'src/engine/score.mjs'), 'export const a = 2;');
+  assert.notEqual(await codeVersion(root), before);
+
+  const { server, origin, token } = await startReviewServer({ root, version: before });
+  t.after(() => server.listening && new Promise((resolve) => { server.closeAllConnections(); server.close(resolve); }));
+  const headers = { Authorization: `Bearer ${token}` };
+  assert.deepEqual(await (await fetch(`${origin}/api/health`, { headers })).json(), { root, version: before });
+  assert.equal((await fetch(`${origin}/api/stop`, { method: 'POST' })).status, 403);
+  assert.ok(server.listening);
+  const closed = new Promise((resolve) => server.once('close', resolve));
+  assert.deepEqual(await (await fetch(`${origin}/api/stop`, { method: 'POST', headers })).json(), { stopped: true });
+  await closed;
+  await assert.rejects(fetch(`${origin}/api/health`, { headers }));
 });

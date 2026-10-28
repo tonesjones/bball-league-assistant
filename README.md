@@ -180,6 +180,8 @@ Reopen a saved check with `npm run review -- <decisionId>`, or use `npm run revi
 newest saved decision and select another. The command starts or reuses a server on 127.0.0.1,
 with a private access link. No hosting, Yahoo writes, or new runtime dependencies are involved.
 The screen reads this checkout's `local/` data; normally launch it from the main project.
+If the server's code has changed since it started, the command replaces it. Stop it with
+`npm run review -- --stop`.
 
 Ratings are appended to `local/pilot-reviews.jsonl`, the same log the scorecard reads. Repeated
 unchanged saves do not duplicate reviews; changed ratings add a new review before the matchup

@@ -19,6 +19,7 @@ Use a small loopback-only Node server and plain HTML/CSS/JS, with no runtime dep
 - [x] Browser check verifies copy, rating save/reload, safe text rendering and narrow-screen layout using synthetic data only.
 - [x] `npm test` passes.
 - [x] Refresh instructions and usage docs include the review command and exact decision ID.
+- [x] The launcher replaces a server running older code, and `npm run review -- --stop` stops it.
 
 Verification: 232 tests pass. Browser QA used synthetic records only: saved ratings 4/3/4,
 reloaded the saved values, copied and read back the exact synthetic brief, verified that copying
