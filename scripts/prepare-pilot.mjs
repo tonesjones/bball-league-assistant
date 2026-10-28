@@ -19,6 +19,7 @@ for (const [date, expected] of Object.entries(coverage.hashes).sort()) {
 }
 const folder = path.join('local/pilot-packets', `${id}-${randomUUID()}`);
 await mkdir(folder, { recursive: true });
+await mkdir('local/pilot-replies', { recursive: true });
 const files = {
   'snapshot.json': snapshot, 'projections.json': record.projections, 'ids.json': ids,
   'schedule.json': schedule, 'roles.json': record.options.roles,
