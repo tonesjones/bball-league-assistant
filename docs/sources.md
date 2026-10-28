@@ -33,6 +33,7 @@ Notes from the first fetch:
 - All pages had their data in the first render; no page needed an extra wait.
 - The page-text tool omits button labels that the DOM's `innerText` shows, and turns non-breaking
   spaces into plain spaces. Parsers should normalize whitespace and not expect button text.
+  Codex captures use `innerText` (see `update-league.md`), so both forms reach the parsers.
 - Adds used this week isn't shown on the team page. Count it from the transactions page.
 
 ## NBA schedule, 2026-27
