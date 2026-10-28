@@ -248,6 +248,47 @@ A `npm run check:raw <dir>` script that runs each page parser on a saved refresh
 prints ok or the error, without page text. It would replace the scratch script used on
 2026-10-21 to check parser changes against a real capture before opening a PR.
 
+### Parked: evals over saved decisions
+
+**Status:** Parked until the refresh pipeline is stable.
+
+**Goal:** Grade recommendation quality from the saved record instead of rating each suggestion by
+hand, and check that the hard rules hold on every real refresh, not only on test fixtures.
+
+**Already built (don't rebuild):**
+- Snapshot logging. Every refresh saves a decision record in `local/decisions/` with the snapshot
+  path and hashes of the snapshot, IDs and schedule. The snapshot holds my roster, other teams'
+  rosters, free agents, FAAB balance and adds used this week. Records can't be recreated later,
+  so they are the eval data.
+- Outcome grading. `npm run bakeoff -- scorecard` replays game logs for each decision's week and
+  reports realized category gain per model version ([Task 11](tasks/11-continuous-pilot-and-scorecard.md)).
+- Hard-rule tests on synthetic fixtures (`tests/advice-correctness.test.mjs` and others).
+
+**Gaps, in order (when unparked):**
+1. Rule check over real decisions: a Node script that reads every record in `local/decisions/`
+   and its saved snapshot, and fails if the saved recommendation breaks a guardrail in
+   `AGENTS.md` (adds left this week, protected drops, pickup already rostered or out, bid above
+   value, pacing cap or on a free agent, more than one move). Prints decision IDs and rule names
+   only, no player names. Done when it runs on the saved records and on a synthetic fixture with
+   one planted violation of each rule.
+2. Matchup calibration, after [Task 03](tasks/03-matchup-odds.md) lands: Brier score per
+   category from the saved P(win) and the final matchup result (0.25 is a coin flip). Meaningful
+   from about week 8.
+3. Collection accuracy, only if comparing refresh models (Terra, Sol, Luna). The models collect
+   Yahoo pages; code computes the advice, so the same snapshot gives the same advice under any
+   model. Compare what each model captured with what Yahoo shows (rosters, matchup totals, FAAB,
+   adds used). Keep one model live and run the others on the same nights; never rotate by day.
+   Default to the cheapest model whose captures match.
+
+**Design rules:**
+- No leakage: grade a decision only with data available at its `asOf`.
+- Punted categories are a grader setting, not counted against a move.
+- Judge on volume, not single results; good decisions can have bad outcomes.
+- Node scripts in this repo, reading and writing only under `local/`. Build with Codex or plain
+  scripts, not Claude usage.
+- A draft Python harness was reviewed on 2026-10-27 and not kept: it assumed a list of moves per
+  refresh, used the wrong category names and committed snapshots outside `local/`.
+
 ## How we prove it works
 
 | What | Proof |
