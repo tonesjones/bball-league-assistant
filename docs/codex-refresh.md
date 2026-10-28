@@ -12,7 +12,8 @@ Run a league refresh in C:\TestCode\bball-league-assistant.
 2. If a Yahoo sign-in page appears, stop. Don't sign in or enter credentials. Tell me.
 3. Run: npm run refresh:analyze -- local/raw/<timestamp>
    Stop at the first failed step and report it with the step name and error.
-4. Run: npm run brief -- --state "C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant state.md"
+4. Use the decision ID printed by step 3:
+   npm run brief -- <decisionId> --state "C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant state.md"
 5. Report the capture folder, the decision ID, the brief path and the refresh summary.
    Don't paste page text or the brief into the chat.
 
