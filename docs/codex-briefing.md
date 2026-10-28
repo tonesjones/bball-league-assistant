@@ -35,7 +35,8 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    Never substitute an older decision or brief. Use - for a missing ID or brief path.
 3. Pilot. Only after the brief succeeded, record the three pilot arms for this decision:
    a. Run: npm run pilot:prepare -- <decisionId> --chatbot-dir "$env:TEMP\bball-pilot\<decisionId>"
-      Take the packet folder from its output.
+      Take the packet folder from its output. Preparation also creates local/pilot-replies
+      before the chatbot command redirects output there.
    b. In PowerShell, from that chatbot folder, run the chatbot arm exactly as below. Take the
       model and effort from the "Chatbot model" and "Chatbot effort" lines in
       docs/bakeoff-prompt.md. Use absolute paths into the league repo for the two output files:

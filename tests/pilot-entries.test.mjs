@@ -70,6 +70,7 @@ test('pilot builds and records all three arms from the packet and the raw chatbo
   const { dir, report, decision, prepare, pilot, rows } = await setup(t);
   const id = await decision(), chatbotDir = path.join(dir, 'chatbot');
   const packet = await prepare(id, chatbotDir);
+  assert.ok((await readdir(path.join(dir, 'local'))).includes('pilot-replies'), 'preparation creates the chatbot output folder before shell redirection');
   const copied = (await readdir(chatbotDir)).sort();
   assert.ok(!copied.includes('manifest.json'));
   assert.deepEqual(copied, Object.keys(JSON.parse(await readFile(path.join(packet, 'manifest.json'))).hashes).sort());
