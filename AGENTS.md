@@ -49,6 +49,7 @@ Carried over from Draft Lab's season manager. Treat them as tests, not suggestio
   `docs/bakeoff-prompt.md`.
 - If a task's spec is wrong or impossible, stop and write what you found at the end of the task file instead of guessing.
 - Docs-only pull requests (only `tasks/`, `docs/`, `PLAN.md`, `README.md` or `AGENTS.md`) don't wait for Tony. After opening one, check that the PR head equals the local branch tip, squash-merge it, delete the branch locally and on GitHub, and update local `main`, without asking. A pull request that touches anything else, including `.claude/` settings, still waits for Tony's OK to merge.
+- After every confirmed PR merge, clean up its branch as part of finishing the task. GitHub's automatic deletion of merged PR branches should stay enabled. Fetch with `--prune`, verify the merge is on `origin/main`, and verify each branch tip matches the merged PR head before deleting it. Squash merges may require `git branch -D` after that verification; ancestry alone does not identify a squash-merged branch. Keep branches with new commits, open PRs, or uncertain merge status. Never switch or remove another chat's worktree to free a branch; report checked-out branches as deferred. In this chat's own clean worktree, detach at `origin/main` before deleting the completed branch. Fast-forward the main checkout without disturbing local edits; if blocked, report it rather than resetting or stashing. Prune stale remote references again and report anything retained.
 
 ## Layout
 
