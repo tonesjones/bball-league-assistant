@@ -5,6 +5,8 @@ detail; this file says why each one exists and in what order.
 
 ## Current workflow additions
 
+- [Task 22](tasks/22-refresh-verification.md): project-local refresh verification and isolated review HTTP smoke checks (in review).
+
 - [Task 20](tasks/20-advice-correctness.md): model-7 roster legality, unknown counting totals and lineup-lock fixes (merged).
 - [Task 21](tasks/21-local-review-ui.md): local post-refresh review, brief copy, saved pilot ratings and outcome replay (in review). This is a small local interface around existing records; the broader Task 06 application remains deferred.
 
