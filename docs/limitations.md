@@ -27,7 +27,9 @@ decision IDs and rejection notes belong in ignored `local/` records.
 
 ESPN can return HTTP 200 with an empty body for a historical scoreboard date while another
 date returns valid JSON. This fails JSON decoding before snapshot analysis can finish; a
-successful HTTP status is not proof of usable game-log evidence. The source reader now retries
+successful HTTP status is not proof of usable game-log evidence. The empty body persisted for
+the bare `?dates=20261026` URL while `?dates=20261026&limit=100` returned all 9 finals, so the
+game-log fetch now adds `&limit=100` to every scoreboard request. The source reader also retries
 invalid/empty JSON with the existing exponential backoff, up to four total requests, and reports
 the URL and HTTP status on exhaustion. Only successfully parsed JSON is cached. Persistent
 source failure still stops the refresh; previous cached logs are not relabeled fresh. No
