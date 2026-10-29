@@ -14,17 +14,23 @@ export async function getJson(url, { cacheFile, maxAgeHours = 24 } = {}) {
       if (Date.now() - (await stat(cacheFile)).mtimeMs < maxAgeHours * 3600000) return JSON.parse(await readFile(cacheFile, 'utf8'));
     } catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
-  let response;
+  let json;
   for (let attempt = 0; attempt <= 3; attempt++) {
     const wait = 500 - (Date.now() - lastRequest);
     if (wait > 0) await delay(wait);
     lastRequest = Date.now();
-    response = await fetch(url);
-    if (response.ok) break;
-    if (![429, 500, 502, 503, 504].includes(response.status) || attempt === 3) throw new Error(`ESPN request failed: ${url} (${response.status})`);
+    const response = await fetch(url);
+    if (response.ok) {
+      try { json = await response.json(); break; }
+      catch (cause) {
+        if (attempt === 3) throw new Error(`ESPN invalid JSON: ${url} (HTTP ${response.status}, 4 attempts): ${cause.message}`, { cause });
+      }
+    } else {
+      await response.body?.cancel();
+      if (![429, 500, 502, 503, 504].includes(response.status) || attempt === 3) throw new Error(`ESPN request failed: ${url} (${response.status})`);
+    }
     await delay(2000 * (2 ** attempt));
   }
-  const json = await response.json();
   if (cacheFile) {
     await mkdir(dirname(cacheFile), { recursive: true });
     await writeFile(cacheFile, JSON.stringify(json, null, 2));
