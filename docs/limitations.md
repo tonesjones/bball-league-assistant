@@ -23,6 +23,18 @@ decision IDs and rejection notes belong in ignored `local/` records.
 | L13 | The full team-page parser expects your weekly-adds metadata, which opponent pages omit. | Shared player-row parsing can check saved research rosters; a routine snapshot parser is not yet a general all-team importer. |
 | L14 | Historical athlete game logs provide appearances without reliable absent-game/DNP classifications. Conditional production validation can look better than a full next-week forecast that must predict availability, new roles and actual starts. | The 2026-10-25 calibration excludes absent games and unavailable histories, reports counts and uses earlier-season priors. It does not calibrate injuries, opening-week weights, win probabilities or pickup outcomes; see docs/backtest-01.md. |
 
+## ESPN empty-response failure (2026-10-28)
+
+ESPN can return HTTP 200 with an empty body for a historical scoreboard date while another
+date returns valid JSON. This fails JSON decoding before snapshot analysis can finish; a
+successful HTTP status is not proof of usable game-log evidence. The empty body persisted for
+the bare `?dates=20261026` URL while `?dates=20261026&limit=100` returned all 9 finals, so the
+game-log fetch now adds `&limit=100` to every scoreboard request. The source reader also retries
+invalid/empty JSON with the existing exponential backoff, up to four total requests, and reports
+the URL and HTTP status on exhaustion. Only successfully parsed JSON is cached. Persistent
+source failure still stops the refresh; previous cached logs are not relabeled fresh. No
+recommendation or brief is available until the required evidence refresh succeeds.
+
 ## Add an entry when something new appears
 
 Resolved during the October 23 refresh: ESPN can report a reserve with `didNotPlay: false`,

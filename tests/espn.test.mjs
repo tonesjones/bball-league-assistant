@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, utimes, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import teams from './fixtures/espn/teams.json' with { type: 'json' };
@@ -39,4 +39,34 @@ test('getJson returns a fresh cache without fetching', async () => {
   globalThis.fetch = async () => { throw new Error('network used'); };
   try { assert.deepEqual(await getJson('https://example.invalid', { cacheFile: path }), { cached: true }); }
   finally { globalThis.fetch = oldFetch; await rm(dir, { recursive: true, force: true }); }
+});
+
+
+test('getJson retries an empty or truncated successful response and caches only valid JSON', async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), 'espn-json-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const cacheFile = join(dir, 'cache.json');
+  let calls = 0;
+  const pauses = [];
+  t.mock.method(globalThis, 'setTimeout', (fn, ms) => { pauses.push(ms); queueMicrotask(fn); return 0; });
+  t.mock.method(globalThis, 'fetch', async () => new Response(['', '{"events":', '{"events":[]}'][calls++], { status: 200 }));
+  assert.deepEqual(await getJson('https://example.invalid/scoreboard?dates=20261026', { cacheFile }), { events: [] });
+  assert.equal(calls, 3);
+  assert.ok(pauses.some((ms) => ms >= 2000));
+  assert.deepEqual(JSON.parse(await readFile(cacheFile, 'utf8')), { events: [] });
+});
+
+test('persistent invalid JSON stops after bounded retries, identifies the URL and preserves the previous cache', async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), 'espn-json-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const cacheFile = join(dir, 'cache.json'), previous = '{"previous":true}';
+  await writeFile(cacheFile, previous);
+  await utimes(cacheFile, new Date(0), new Date(0));
+  let calls = 0;
+  t.mock.method(globalThis, 'setTimeout', (fn) => { queueMicrotask(fn); return 0; });
+  t.mock.method(globalThis, 'fetch', async () => { calls++; return new Response('', { status: 200 }); });
+  await assert.rejects(getJson('https://example.invalid/scoreboard?dates=20261026', { cacheFile, maxAgeHours: 0 }),
+    /https:\/\/example\.invalid\/scoreboard\?dates=20261026.*HTTP 200.*4 attempts/);
+  assert.equal(calls, 4);
+  assert.equal(await readFile(cacheFile, 'utf8'), previous);
 });

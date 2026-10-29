@@ -24,7 +24,8 @@ test('fetch CLI reparses cached finals, keeps DNPs, and records checked empty da
   const preload = path.join(dir, 'mock-source.mjs');
   await writeFile(preload, `globalThis.fetch = async (url) => {
     if (!url.includes('/scoreboard?dates=')) throw new Error('Final summary should come from cache');
-    const events = url.endsWith('20261021') ? [{ id: 'synthetic-game', status: { type: { name: 'STATUS_FINAL' } } }] : [];
+    if (!url.endsWith('&limit=100')) throw new Error('Scoreboard URL must carry &limit=100');
+    const events = url.includes('dates=20261021&') ? [{ id: 'synthetic-game', status: { type: { name: 'STATUS_FINAL' } } }] : [];
     return { ok: true, json: async () => ({ events }) };
   };`);
   const snapshot = path.join(dir, 'snapshot.json');

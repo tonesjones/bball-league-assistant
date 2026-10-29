@@ -22,7 +22,8 @@ const hashes = {};
 for (let d = new Date(`${from}T00:00:00Z`); d <= new Date(`${to}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
   const date = d.toISOString().slice(0, 10); const file = join(dir, `${date}.json`);
   const day = date.replaceAll('-', '');
-  const board = await getJson(`${BASE}/scoreboard?dates=${day}`, { cacheFile: `local/cache/espn/scoreboard-${day}.json`, maxAgeHours: 0 });
+  // The bare ?dates= URL can stay stuck on an empty 200 at ESPN's edge (2026-10-26); &limit=100 bypasses it.
+  const board = await getJson(`${BASE}/scoreboard?dates=${day}&limit=100`, { cacheFile: `local/cache/espn/scoreboard-${day}.json`, maxAgeHours: 0 });
   if (!Array.isArray(board.events)) throw new Error(`scoreboard ${date} has no events array`);
   const events = parseScoreboard(board);
   const lines = [];
