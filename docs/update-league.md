@@ -61,6 +61,21 @@ The parsers accept both. Captures read this way on 2026-10-26 built a snapshot a
 In Codex nothing enforces these rules, so follow them exactly. If the read fails, mark the page
 `skipped`; don't try another read method.
 
+### Saving pages
+
+The read result has to reach a file unchanged. On 2026-10-28 a Codex run read every page, then
+lost all of them passing the text through the browser clipboard to PowerShell. Rules:
+
+- **Never pass page text through the clipboard.** Write the string returned by the read
+  straight to the file.
+- **Test the save before the first Yahoo page.** Write a short known string to
+  `local/raw/<timestamp>/_write-test.txt`, read the file back, and check it matches. Delete the
+  test file after the check. If the check fails, stop before opening Yahoo and tell Tony which
+  write failed and the error.
+- **Check every page after saving.** Read the saved file back. It must exist and have the same
+  length as the string the read returned. Only then log the page `ok`. A failed save is
+  `skipped` with the reason, not `ok`.
+
 ## Pages
 
 Replace `{L}` with `YAHOO_LEAGUE_ID`, `{T}` with `YAHOO_TEAM_ID`. Base URL:
@@ -89,7 +104,7 @@ For each page:
    missing, wait 3 seconds once more.
 3. Check for a sign-in screen (see Rules).
 4. Read the page text with this host's page-text read (see "Page-text read by host").
-5. Write the text to `local/raw/<timestamp>/<save as>`.
+5. Write the text to `local/raw/<timestamp>/<save as>` and check the file (see "Saving pages").
 
 ## After the last page
 

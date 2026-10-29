@@ -212,6 +212,28 @@ same as doing nothing. Fewer than 10 scored decisions is "too
 few, keep testing". If no version clears the gate by 2026-11-23, rethink or stop. Record the
 result here and as a decision note in the vault.
 
+**Usability trial (2026-10-30 to 2026-11-12).** The gate can't clear by 2026-11-23: matchups
+score weekly and nightly decisions in one week overlap, so the 11-23 call will be a judgment.
+This trial gives that judgment better evidence than the scorecard. Decided 2026-10-29 after an
+outside review of the workflow.
+
+- Refresh only when a decision is pending: an open roster spot, an injury, a waiver claim or a
+  streaming deadline. No refresh just because a day passed.
+- Use the engine as a checker of starts, displaced production, category effects and unknowns.
+  News, roles and long-term holds stay with Tony and ChatGPT.
+- Budget: about five minutes of Tony's attention per decision and one short maintenance
+  session per week.
+- After each decision, Tony adds one line to `local/trial-log.md` (git-ignored):
+  `YYYY-MM-DD <decisionId> changed-decision|caught-mistake|no-effect|wasted-time <note>`.
+- No new features during the trial. Fixes to capture reliability and the comparison prompt only.
+- Done when: on 2026-11-12, the log is counted and the result is written here. If the workflow
+  needed rescue more than once a week, stop the nightly pipeline and keep the code as an
+  occasional schedule and category calculator.
+
+Open decisions for the trial: whether the vault run log and the isolated chatbot arm stay in
+every refresh (`docs/codex-briefing.md` steps 3 and 5), and whether the chatbot arm should get
+news so it matches Tony's real alternative.
+
 **Improvement loop (Task 11b, later).** After about 2 weeks of logged decisions, a weekly report
 computed in code counts rejection reasons and unscored causes per version and replays saved
 decisions with one tunable value changed. It suggests changes and never makes them: Tony picks a

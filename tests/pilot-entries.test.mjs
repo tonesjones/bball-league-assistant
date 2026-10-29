@@ -84,7 +84,7 @@ test('pilot builds and records all three arms from the packet and the raw chatbo
   assert.equal(tool.decision, report.decision.action === 'move' ? 'move' : 'hold');
   assert.equal(none.decision, 'hold');
   assert.equal(chatbot.chatbot, 'gpt-6-sol');
-  assert.equal(chatbot.promptVersion, 2);
+  assert.equal(chatbot.promptVersion, 3);
   assert.deepEqual([chatbot.add, chatbot.drop], [{ name: 'Casey Fiction', espnId: '3' }, { name: 'Alex Sample', espnId: '1' }]);
   assert.equal(chatbot.note, reply);
   assert.throws(() => execFileSync(process.execPath, [fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url)), 'pilot', packet,

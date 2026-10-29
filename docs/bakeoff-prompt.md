@@ -1,12 +1,15 @@
 # Chatbot comparison protocol (versioned)
 
-Prompt version: 2
+Prompt version: 3
 Chatbot model: gpt-6-sol
 Chatbot effort: medium
 
 Version 1 named `gpt-6.1-sol`, which the Codex CLI rejects on Tony's ChatGPT account
 (`model_not_found`, 2026-10-24), so no version 1 chatbot entry exists. Version 2 keeps the
-prompt text and changes only the model and the pinned effort.
+prompt text and changes only the model and the pinned effort. Version 3 (2026-10-29) shows
+`DROP: <player or none>` in the reply format. The parser already accepted `none`, but the format
+line showed only `<player>`, which may have pushed the chatbot toward drops when a roster spot
+was open.
 
 The pilot is continuous and has no freeze (PLAN step 5d, Task 11). Every refresh after PR #32
 merges gets a decision record and three entries: tool, chatbot and do-nothing. Results are
@@ -53,7 +56,7 @@ Use only the supplied files: snapshot.json contains Yahoo league settings, roste
 Recommend ONE best legal add/drop for the rest of this Yahoo week, or HOLD if the evidence does not support one. Respect core protection, available adds, eligible roster slots, injury/status restrictions and waiver processing dates. Adds start no earlier than the next Los Angeles calendar day after the snapshot or their waiver clear date, whichever is later; also respect the later effective dates in options.json. Account for bench congestion and displaced starters. Explain expected categories helped and hurt; treat opening samples cautiously.
 
 Reply in exactly one format:
-ADD: <player> | DROP: <player> | START: <YYYY-MM-DD> | HELPS: <cats> | HURTS: <cats> | WHY: <one sentence>
+ADD: <player> | DROP: <player or none> | START: <YYYY-MM-DD> | HELPS: <cats> | HURTS: <cats> | WHY: <one sentence>
 HOLD | WHY: <one sentence>
 <!-- PROMPT END -->
 

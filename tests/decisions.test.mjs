@@ -117,7 +117,7 @@ test('record saves each source lineup, rejects duplicate arms and prepares a has
   const folder = path.join(dir, 'local/pilot-packets', (await readdir(path.join(dir, 'local/pilot-packets')))[0]);
   const manifest = JSON.parse(await readFile(path.join(folder, 'manifest.json')));
   assert.equal(manifest.protocol, 'continuous');
-  assert.equal(manifest.promptVersion, 2);
+  assert.equal(manifest.promptVersion, 3);
   assert.equal(manifest.chatbotModel, 'gpt-6-sol');
   assert.equal(manifest.chatbotEffort, 'medium');
   for (const key of ['status', 'baselineModel', 'pending']) assert.ok(!(key in manifest), `manifest still has ${key}`);
