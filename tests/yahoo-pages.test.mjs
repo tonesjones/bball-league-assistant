@@ -82,6 +82,16 @@ test('live team: standing, adds used, and empty roster slot', () => {
   assert.throws(() => parseTeam(without(page('team-live'), 'You have used 1 of your 4 player adds for this week.')), /team: line \d+: the weekly player adds line not found/);
 });
 
+test('team: a notice between the heading and the team name is not read as the name', () => {
+  // Shape seen 2026-10-29: icon glyph lines around a one-line notice, then the name.
+  const notice = 'Yahoo Sports Fantasy Basketball\n\t\t\t\n\nUpdate to IL changes: synthetic notice text.\n\n\t\n';
+  const team = page('team-live').replace('Yahoo Sports Fantasy Basketball\n', notice);
+  assert.equal(parseTeam(team).name, 'Fixture Five');
+  const p = { ...pages(), team, matchup: page('matchup-empty'), transactions: page('transactions-live') };
+  assert.equal(buildSnapshot(p, ASOF).team.name, 'Fixture Five');
+  assert.throws(() => parseTeam(page('team-live').replace(/\(Since '15\)/, '')), /team: line \d+: the manager line .* not found/);
+});
+
 test('signed-out team and matchup pages fail before parsing', () => {
   assert.throws(() => parseTeam(page('team-signed-out')), /^Error: signed out of Yahoo: team page; sign in to Yahoo in the browser pane and refresh$/);
   assert.throws(() => parseMatchup(page('matchup-signed-out')), /^Error: signed out of Yahoo: matchup page; sign in to Yahoo in the browser pane and refresh$/);

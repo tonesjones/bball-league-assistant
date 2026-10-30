@@ -16,6 +16,8 @@ Run npm run refresh:analyze -- local/raw/YYYY-MM-DD-HHmm with the actual verifie
    summary, not merely some output files. Confirm local/decisions/<printed-id>.json exists,
    its report.asOf and provenance.snapshotPath match this capture, and its commit matches this checkout.
 4. Retain local/refreshes/<timestamp>/ step logs, evidence paths and exact new decision ID.
+   status.json there lists each step as ok, failed or not run; a rerun moves the earlier
+   attempt's logs to attempt-<n>/.
    Do not invent numbers or use an older decision on failure.
 
 ## Gotchas

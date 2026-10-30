@@ -19,7 +19,17 @@ export async function getJson(url, { cacheFile, maxAgeHours = 24 } = {}) {
     const wait = 500 - (Date.now() - lastRequest);
     if (wait > 0) await delay(wait);
     lastRequest = Date.now();
-    const response = await fetch(url);
+    let response;
+    // A shell without network access fails DNS (ENOTFOUND); resets and timeouts are retried like a 503.
+    try { response = await fetch(url, { signal: AbortSignal.timeout(30000) }); }
+    catch (cause) {
+      if (attempt === 3) {
+        const code = cause.cause?.code ?? cause.name;
+        throw new Error(`ESPN unreachable: ${url} (${code}, 4 attempts). Check that this shell has network access.`, { cause });
+      }
+      await delay(2000 * (2 ** attempt));
+      continue;
+    }
     if (response.ok) {
       try { json = await response.json(); break; }
       catch (cause) {

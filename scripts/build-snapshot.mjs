@@ -31,6 +31,21 @@ function main() {
       if (/^\d+\.txt$/.test(f)) pages[`teams/${f.slice(0, -4)}`] = readFileSync(join(teamsDir, f), 'utf8');
     }
   }
+  // An empty file or a page the capture logged as skipped or sign-in means the capture is
+  // incomplete; say so instead of failing later on a confusing parse error. Agents write
+  // _log.txt by hand, so only "<file> <url> <status>" lines count (with spaces or "|" between),
+  // and a later line for the same file replaces an earlier one.
+  const problems = Object.entries(pages).filter(([, text]) => !text.trim()).map(([k]) => `${k}.txt is empty`);
+  const log = join(dir, '_log.txt');
+  if (existsSync(log)) {
+    const status = {};
+    for (const line of readFileSync(log, 'utf8').split(/\r?\n/)) {
+      const m = /^(\S+\.txt)[\s|]+https?:\/\/\S+[\s|]*(.*)$/.exec(line.trim());
+      if (m) status[m[1]] = m[2];
+    }
+    for (const [file, s] of Object.entries(status)) if (/^(skipped|sign-in)\b/i.test(s)) problems.push(`${file} logged ${s.split(/[\s:;]/)[0]}`);
+  }
+  if (problems.length) throw new Error(`capture incomplete: ${problems.join('; ')}. Recapture before analysis.`);
   const snapshot = buildSnapshot(pages, asOf);
 
   const out = join(root, 'local', 'snapshots', `${folder}.json`);

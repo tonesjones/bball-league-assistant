@@ -24,11 +24,13 @@ function parsePending(page, L) {
   return { count, waivers, proposedTrades, unlisted };
 }
 
+// The name is the line above the manager line ("PAT (Since '15)..."). Yahoo can put a notice
+// between the page heading and the name (an IL rules banner on 2026-10-29), so the line after
+// the heading isn't always the name.
 function teamName(page, L) {
   const t = indexOf(page, L, (s) => s === 'Yahoo Sports Fantasy Basketball', 'the "Yahoo Sports Fantasy Basketball" heading');
-  const name = L[t + 1]?.s;
-  if (!name) throw fail(page, L[t], 'no team name after the heading');
-  return name;
+  const m = indexOf(page, L, (s) => /\(Since '\d\d\)/.test(s), `the manager line ("(Since 'YY)")`, t + 2);
+  return L[m - 1].s;
 }
 
 function parseRoster(page, L) {

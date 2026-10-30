@@ -70,3 +70,16 @@ test('persistent invalid JSON stops after bounded retries, identifies the URL an
   assert.equal(calls, 4);
   assert.equal(await readFile(cacheFile, 'utf8'), previous);
 });
+
+test('a network error is retried, and a lasting one names the URL and the error code', async (t) => {
+  let calls = 0;
+  t.mock.method(globalThis, 'setTimeout', (fn) => { queueMicrotask(fn); return 0; });
+  const dnsFailure = () => Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('getaddrinfo ENOTFOUND'), { code: 'ENOTFOUND' }) });
+  t.mock.method(globalThis, 'fetch', async () => { if (calls++ < 1) throw dnsFailure(); return new Response('{"ok":true}', { status: 200 }); });
+  assert.deepEqual(await getJson('https://example.invalid/a'), { ok: true });
+  assert.equal(calls, 2);
+  calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => { calls++; throw dnsFailure(); });
+  await assert.rejects(getJson('https://example.invalid/b'), /^Error: ESPN unreachable: https:\/\/example\.invalid\/b \(ENOTFOUND, 4 attempts\)/);
+  assert.equal(calls, 4);
+});
