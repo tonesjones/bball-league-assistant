@@ -26,6 +26,8 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    Do not first run it in a known network-restricted shell. If access is denied or unavailable,
    stop and report game-logs; do not change network settings, bypass a denial, or treat old logs
    as freshly checked. Yahoo collection remains browser-only and follows step 1.
+   local/refreshes/<timestamp>/status.json records each step as ok, failed or not run, the
+   failed step and the decision ID. Use its failedStep as the failed step name in step 5.
    Only after success, take <decisionId> from this run's analysis output, then run:
    npm run brief -- <decisionId> --state "C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant state.md"
    Stop processing at the first failure. Do not run later processing commands or fix anything.
@@ -79,11 +81,19 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    Keep all league data in local/. Do not change the state note or any other vault file.
    Before editing, check the vault git status. If the runs note already has uncommitted
    changes, stop logging and report the conflict. Leave all other changes alone.
-   Stage only the runs note, then commit only that file and push the vault's current branch:
+   Stage only the runs note, then commit only that file:
    git -C C:/TestCode/Obsidian/Claude add -- "10 Projects/bball-league-assistant runs.md"
    git -C C:/TestCode/Obsidian/Claude commit -m "Log bball refresh <timestamp>" -- "10 Projects/bball-league-assistant runs.md"
-   git -C C:/TestCode/Obsidian/Claude push
-   Run these commands separately. Stop at the first logging, commit or push failure.
+   Before pushing, check where the push goes and what it sends:
+   git -C C:/TestCode/Obsidian/Claude fetch origin
+   git -C C:/TestCode/Obsidian/Claude status -sb
+   git -C C:/TestCode/Obsidian/Claude log --oneline --stat "@{u}..HEAD"
+   Push only if the branch tracks origin/<the same branch>, is not behind it, and every outgoing
+   commit changes only the runs note. Then push to that named target:
+   git -C C:/TestCode/Obsidian/Claude push origin <branch>
+   Run these commands separately. Stop at the first logging, commit, check or push failure.
+   If a check fails or the push is refused or denied approval, do not retry or work around it:
+   report the entry as committed but unpushed, with the commit hash and the reason.
    Report the failed step without appending another line or retrying the refresh.
 6. Report in chat, in this order:
    - "Brief copied to clipboard: paste it into ChatGPT." with the brief path, or the failed step.

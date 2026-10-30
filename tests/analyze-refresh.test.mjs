@@ -18,6 +18,16 @@ test('refresh stops on a failed snapshot, preserves diagnostics and never fetche
   assert.match(result.stderr, /snapshot failed/);
   assert.match(await readFile(path.join(dir, 'local/refreshes/2026-10-23-1200/snapshot.txt'), 'utf8'), /missing page text: transactions/);
   await assert.rejects(access(path.join(dir, 'unexpected-fetch')), { code: 'ENOENT' });
+  assert.match(result.stderr, /Steps: snapshot failed; game-logs not run; evidence not run; advice not run/);
+  const status = JSON.parse(await readFile(path.join(dir, 'local/refreshes/2026-10-23-1200/status.json'), 'utf8'));
+  assert.equal(status.failedStep, 'snapshot');
+  assert.equal(status.decisionId, null);
+
+  // A rerun keeps the first attempt's diagnostics instead of overwriting them.
+  await writeFile(path.join(dir, 'scripts/build-snapshot.mjs'), "console.error('second failure'); process.exit(1);");
+  spawnSync(process.execPath, [cli, 'local/raw/2026-10-23-1200'], { cwd: dir, encoding: 'utf8' });
+  assert.match(await readFile(path.join(dir, 'local/refreshes/2026-10-23-1200/attempt-1/snapshot.txt'), 'utf8'), /missing page text: transactions/);
+  assert.match(await readFile(path.join(dir, 'local/refreshes/2026-10-23-1200/snapshot.txt'), 'utf8'), /second failure/);
 });
 
 test('refresh passes the exact snapshot through all steps and prints computed results', async (t) => {
@@ -55,4 +65,7 @@ test('refresh passes the exact snapshot through all steps and prints computed re
   assert.match(result.stdout, /Other Team \(Oct 23\): add Sample Guard \(\$3\)/);
   assert.doesNotMatch(result.stdout, /full detail/);
   assert.match(await readFile(path.join(dir, `local/refreshes/${stamp}/advice.txt`), 'utf8'), /full detail/);
+  const status = JSON.parse(await readFile(path.join(dir, `local/refreshes/${stamp}/status.json`), 'utf8'));
+  assert.deepEqual(status.stages, { snapshot: 'ok', 'game-logs': 'ok', evidence: 'ok', advice: 'ok' });
+  assert.equal(status.decisionId, 'sample-id');
 });
