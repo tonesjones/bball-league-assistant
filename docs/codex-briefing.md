@@ -37,6 +37,12 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    Never substitute an older decision or brief. Use - for a missing ID or brief path.
 3. Pilot. Only after the brief succeeded, record the three pilot arms for this decision:
    a. Run: npm run pilot:prepare -- <decisionId> --chatbot-dir "$env:TEMP\bball-pilot\<decisionId>"
+      In Codex, run preparation and the chatbot command in the same network-enabled shell
+      environment (require_escalated when needed). Sandboxed and network-enabled shells can
+      resolve TEMP to different directories; a sandbox-specific path may not exist in the
+      other environment. Take the actual chatbot folder printed by preparation, verify
+      prompt.txt exists there from the launch environment, and use that folder as the
+      chatbot command working directory. Do not reconstruct it from another shell's TEMP.
       Take the packet folder from its output. Preparation also creates local/pilot-replies
       before the chatbot command redirects output there.
    b. In PowerShell, from that chatbot folder, run the chatbot arm exactly as below. Take the
@@ -52,6 +58,8 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
       The script reads the reply and writes all three entries. Never write or edit entries
       yourself, and never reword the reply.
    A pilot failure does not undo the refresh or the brief. Record it in step 5.
+   For an authorized catch-up, reuse the existing decision and rerun preparation in the launch
+   environment; do not recapture Yahoo or rerun analysis just to obtain the missing chatbot arm.
 4. If the brief succeeded, copy it to the clipboard:
    Get-Content -Raw "<brief path>" | Set-Clipboard
    Then run: npm run review -- <decisionId>
@@ -95,7 +103,14 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    If a check fails or the push is refused or denied approval, do not retry or work around it:
    report the entry as committed but unpushed, with the commit hash and the reason.
    Report the failed step without appending another line or retrying the refresh.
-6. Report in chat, in this order:
+6. Before reporting completion, distinguish the evidence for each stage: brief generated,
+   clipboard copy verified, chatbot exited successfully with a nonempty unblocked reply,
+   bakeoff confirmed all three arms recorded, and review launch succeeded. A successful
+   analysis or review launch alone does not establish a complete pilot. Report missing stages
+   explicitly. Vault commit/push status is separate from whether the answers are ready to rate.
+   User-reported saved ratings are not independently verified disk persistence.
+
+   Report in chat, in this order:
    - "Brief copied to clipboard: paste it into ChatGPT." with the brief path, or the failed step.
    - The output of the bakeoff pilot command, unchanged: each arm's answer and the three
      rating commands (a fallback to the screen). Or the failed pilot step.
