@@ -1,11 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { execFileSync } from 'node:child_process';
+import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { realizedGain, flips, validateEntry, validateReview, applyReviews, summarize, scorecard } from '../src/engine/bakeoff.mjs';
+import { readEntries, appendEntries } from '../src/sources/bakeoff-log.mjs';
+import { realizedGain, flips, validateEntry, summarize, differs, latestEntries } from '../src/engine/bakeoff.mjs';
 
 const entries = (await readFile(new URL('./fixtures/bakeoff/log.jsonl', import.meta.url), 'utf8')).trim().split('\n').map(JSON.parse);
 const logs = JSON.parse(await readFile(new URL('./fixtures/bakeoff/gamelogs.json', import.meta.url)));
@@ -71,87 +70,6 @@ test('chatbot prompt versions are required for records but legacy scoring fills 
   assert.throws(() => validateEntry({ ...bot, promptVersion: 0 }), /promptVersion/);
 });
 
-test('scorecard groups model and prompt versions, pairs scored decisions, gates and rolls deterministically', () => {
-  const paired = (version, prompt, id, createdAt, rating, helped, status = 'scored') => ['tool', 'chatbot', 'none'].map((source) => ({
-    entry: { ...entries[source === 'chatbot' ? 1 : 0], decisionId: id, source, chatbot: source === 'chatbot' ? 'Example' : null,
-      promptVersion: source === 'chatbot' ? prompt : undefined, rating: source === 'tool' ? rating : 3 },
-    status, gain: status === 'scored' ? zero : null, flips: status === 'scored' ? { helped: source === 'tool' ? Array(helped).fill('PTS') : [], hurt: [] } : null,
-    modelVersion: version, createdAt,
-  }));
-  const rows = [];
-  for (let i = 1; i <= 10; i++) rows.push(...paired(2, 1, `new-${i}`, `2026-10-${String(i).padStart(2, '0')}T00:00:00Z`, 5, 2));
-  rows.push(...paired(1, 1, 'old', '2026-10-01T00:00:00Z', 1, 0));
-  rows.push(...paired(2, 2, 'prompt-2', '2026-10-11T00:00:00Z', 4, 1));
-  rows.push(...paired(2, 1, 'unscored', '2026-10-12T00:00:00Z', 5, 0, 'unscored'));
-  const cards = scorecard(rows, { lastN: 3 });
-  assert.deepEqual(cards.map((c) => [c.modelVersion, c.promptVersion]), [[1, 1], [2, 1], [2, 2]]);
-  const v1 = cards[0], v2 = cards[1], p2 = cards[2];
-  assert.equal(v1.gate, 'too few');
-  assert.equal(v2.paired, 10); assert.equal(v2.gate, 'met');
-  assert.equal(v2.rolling[0].scored, 3);
-  assert.equal(v2.summaries.find((s) => s.source === 'tool').unscored, 1);
-  assert.equal(p2.paired, 1); assert.equal(p2.gate, 'too few');
-  assert.deepEqual(scorecard(rows, { lastN: 3 }), cards);
-  const tied = rows.map((r) => r.entry.decisionId.startsWith('new-') && r.entry.source === 'chatbot'
-    ? { ...r, flips: { helped: ['PTS', 'PTS'], hurt: [] } } : r);
-  assert.equal(scorecard(tied).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'met');
-  const tiedRatings = tied.map((r) => r.entry.source === 'tool' ? { ...r, entry: { ...r.entry, rating: 3 } } : r);
-  assert.equal(scorecard(tiedRatings).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'not met');
-  const behind = rows.map((r) => r.entry.decisionId.startsWith('new-') && r.entry.source === 'chatbot'
-    ? { ...r, flips: { helped: ['PTS', 'PTS', 'PTS'], hurt: [] } } : r);
-  assert.equal(scorecard(behind).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'not met');
-  const unrated = rows.map((r) => r.entry.source === 'none' ? { ...r, entry: { ...r.entry, rating: null } } : r);
-  assert.equal(scorecard(unrated).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'not met');
-  const nine = rows.filter((r) => r.entry.decisionId !== 'new-10');
-  assert.equal(scorecard(nine).find((c) => c.modelVersion === 2 && c.promptVersion === 1).paired, 9);
-  assert.equal(scorecard(nine).find((c) => c.modelVersion === 2 && c.promptVersion === 1).gate, 'too few');
-  assert.deepEqual(scorecard(rows.filter((r) => r.entry.decisionId !== 'old'), { lastN: 3 }), cards.slice(1));
-});
-
-test('reviews override entry ratings unless late; rows without a source are skipped', () => {
-  const row = (source, rating) => ({ entry: { ...entries[0], decisionId: 'd1', source, rating }, windowEnd: '2026-10-25' });
-  const reviews = [
-    { recordedAt: '2026-10-25T04:00:00Z', decisionId: 'd1', source: 'tool', rating: 2, rejectReason: 'timing' },
-    { recordedAt: '2026-10-25T05:00:00Z', decisionId: 'd1', source: 'tool', rating: 4 },
-    { recordedAt: '2026-10-25T05:00:00Z', type: 'strategy-review', decisionId: 'd1', rating: null },
-    // 2026-10-26 08:00 UTC is 01:00 Pacific on the 26th, after the window ends on the 25th.
-    { recordedAt: '2026-10-26T08:00:00Z', decisionId: 'd1', source: 'none', rating: 5 },
-    // 2026-10-26 06:00 UTC is still the 25th in Pacific time.
-    { recordedAt: '2026-10-26T06:00:00Z', decisionId: 'd1', source: 'chatbot', rating: 1 },
-  ];
-  const { results, late } = applyReviews([row('tool', null), row('none', 3), row('chatbot', null)], reviews);
-  assert.equal(results[0].entry.rating, 4);
-  assert.equal(results[0].entry.rejectReason, undefined);
-  assert.equal(results[1].entry.rating, 3);
-  assert.equal(results[2].entry.rating, 1);
-  assert.equal(late, 1);
-});
-
-test('rate validates the review and the decision before appending', async (t) => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'bball-rate-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  await mkdir(path.join(dir, 'local/decisions'), { recursive: true });
-  await writeFile(path.join(dir, 'local/decisions/d1.json'), JSON.stringify({ id: 'd1' }));
-  const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));
-  const rate = (...a) => execFileSync(process.execPath, [cli, 'rate', ...a], { cwd: dir, stdio: 'pipe' });
-  rate('d1', 'none', '3', '--reason', 'timing', '--note', 'late add');
-  assert.throws(() => rate('missing', 'tool', '3'), /ENOENT/);
-  assert.throws(() => rate('d1', 'coach', '3'), /source must be/);
-  assert.throws(() => rate('d1', 'tool', '6'), /rating must be/);
-  assert.throws(() => rate('d1', 'tool', '3', '--reason', 'vibes'), /rejectReason must be/);
-  const lines = (await readFile(path.join(dir, 'local/pilot-reviews.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);
-  assert.equal(lines.length, 1);
-  assert.deepEqual({ ...lines[0], recordedAt: 'x' }, { recordedAt: 'x', decisionId: 'd1', source: 'none', rating: 3, rejectReason: 'timing', note: 'late add' });
-  assert.throws(() => validateReview({ ...lines[0], recordedAt: 'never' }), /recordedAt/);
-});
-
-test('unversioned records are isolated as rehearsal data', () => {
-  const rows = entries.slice(0, 2).map((entry) => ({ entry: { ...entry, promptVersion: undefined }, status: 'scored', gain: zero,
-    flips: { helped: [], hurt: [] }, modelVersion: null, createdAt: '2026-10-20T12:00:00Z' }));
-  const [card] = scorecard(rows);
-  assert.equal(card.gate, 'rehearsal'); assert.equal(card.rehearsal, true);
-});
-
 test('summary counts holds, rejection reasons and averages each category including holds', () => {
   const move = { entry: { ...entries[0], rejectReason: 'core-player' }, gain: { ...zero, PTS: 12, TO: -2, 'FG%': { makes: 2, attempts: 4 }, 'FT%': { makes: -1, attempts: -2 } }, flips: { helped: ['PTS'], hurt: ['TO', 'FG%'] } };
   const hold = { entry: { ...entries[0], decision: 'hold', add: null, drop: null, rating: null, rejectReason: 'timing' }, gain: zero, flips: { helped: [], hurt: [] } };
@@ -168,4 +86,40 @@ test('a move may omit the drop for an open roster spot but still needs an add', 
   const move = entries.find((e) => (e.decision ?? 'move') === 'move');
   assert.equal(validateEntry({ ...move, drop: null }).drop, null);
   assert.throws(() => validateEntry({ ...move, add: null, drop: null }), /add needs name and espnId/);
+});
+
+const tony = { ...entries[0], source: 'tony', chatbot: null, rating: null, tag: 'no-effect' };
+test('tony entries need a G4 tag and accept the optional fields; chatbot rows stay valid', () => {
+  assert.equal(validateEntry({ ...tony, minutes: 3, rescue: true, replaces: true, note: 'why' }).minutes, 3);
+  for (const [fields, error] of [[{ tag: undefined }, /tag must be/], [{ tag: 'busy' }, /tag must be/], [{ rating: 4 }, /rating/],
+    [{ chatbot: 'Bot A' }, /chatbot/], [{ minutes: '3' }, /minutes/], [{ rescue: 'yes' }, /rescue/], [{ replaces: false }, /replaces/], [{ note: 1 }, /note/]]) {
+    assert.throws(() => validateEntry({ ...tony, ...fields }), error);
+  }
+  assert.throws(() => validateEntry({ ...entries[0], tag: 'no-effect' }), /tag must be omitted/);
+  assert.equal(validateEntry(entries[1]).source, 'chatbot');
+});
+
+test('differs compares decision, pickup, drop and start; newest entry counts', () => {
+  const move = { ...entries[0] };
+  assert.equal(differs(move, { ...move }), false);
+  assert.equal(differs(move, { ...move, start: '2026-10-22' }), true);
+  assert.equal(differs(move, { ...move, drop: null }), true);
+  assert.equal(differs(move, { ...move, add: { name: 'Other', espnId: 'Z' } }), true);
+  assert.equal(differs(move, { ...move, decision: 'hold', add: null, drop: null }), true);
+  assert.equal(differs({ ...move, decision: 'hold', add: null, drop: null }, { ...move, decision: 'hold', add: null, drop: null, start: '2026-10-25' }), false);
+  const [kept] = latestEntries([{ decisionId: 'd', source: 'tony', n: 1 }, { decisionId: 'd', source: 'tony', n: 2 }]);
+  assert.equal(kept.n, 2);
+});
+
+test('the log refuses a second entry for a decision and source unless it replaces', async (t) => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'bball-log-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'log.jsonl');
+  await appendEntries([tony], file);
+  await assert.rejects(appendEntries([tony], file), /already recorded/);
+  await assert.rejects(appendEntries([tony, { ...tony, source: 'none' }, { ...tony, source: 'none' }], file), /already recorded/);
+  assert.equal((await readEntries(file)).length, 1);
+  await appendEntries([{ ...tony, replaces: true, tag: 'wasted-time' }], file);
+  assert.deepEqual((await readEntries(file)).map((e) => e.tag), ['no-effect', 'wasted-time']);
+  assert.equal((await readFile(file, 'utf8')).trim().split(String.fromCharCode(10)).length, 2);
 });

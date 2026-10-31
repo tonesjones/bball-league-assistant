@@ -23,9 +23,10 @@ export async function decisionInputs(record) {
 
 export async function attachLineups(entry) {
   const record = await readDecision(entry.decisionId), r = record.report;
+  const tony = entry.source === 'tony';
   if (entry.week !== r.week || Date.parse(entry.asOf) !== Date.parse(r.asOf)) throw new Error(`entry does not match decision ${entry.decisionId}: week/asOf must match`);
   // Old rehearsal records remain readable, but cannot become scored decisions by reconstruction.
-  if (!r.banked || !record.projections?.players) return { ...entry, lineups: null };
+  if (!r.banked || !record.projections?.players) return { ...entry, lineups: null, unscoredReason: 'Decision record predates replay evidence.' };
   const inputs = await decisionInputs(record), { ids, schedule } = inputs;
   const snapshot = r.options.preferences ? applyPreferences(inputs.snapshot, r.options.preferences).snapshot : inputs.snapshot;
   if (entry.source === 'none' && entry.decision !== 'hold') throw new Error('Do-nothing baseline must hold');
@@ -44,13 +45,18 @@ export async function attachLineups(entry) {
   const identify = (g) => ({ ...g, espnId: g.espnId ?? match([...snapshot.team.roster, ...snapshot.matchup.opponentRoster, ...snapshot.freeAgents].find((p) => p.name === g.name) ?? { name: g.name }).espnId });
   const baseline = r.baselineLineups.mine.map(identify), opponent = r.baselineLineups.opponent.map(identify);
   let proposed = baseline;
+  // Tony may act outside what the engine could: that move is unscored, not an error.
+  const refuse = (message) => { if (!tony) throw new Error(message); return { ...entry, lineups: null, unscoredReason: message }; };
   if (entry.decision === 'move') {
-    const pickup = snapshot.freeAgents.map(match).find((p) => p.name === entry.add.name && String(p.espnId) === String(entry.add.espnId));
+    const pool = tony ? [...snapshot.freeAgents, ...(snapshot.matchup.opponentRoster ?? [])] : snapshot.freeAgents;
+    const pickup = pool.map(match).find((p) => p.name === entry.add.name && String(p.espnId) === String(entry.add.espnId));
     const drop = entry.drop && roster.find((p) => p.name === entry.drop.name && String(p.espnId) === String(entry.drop.espnId));
-    if (!pickup || (entry.drop && !drop) || BLOCKED.includes(pickup.status)) throw new Error('Move must name an available eligible pickup and a rostered drop');
-    if (!entry.drop && (r.openSpots ?? openRosterSpots(snapshot.settings, snapshot.team.roster)) < 1) throw new Error('A move without a drop needs an open roster spot');
-    if (drop && r.options.roles.core.some((name) => normalizeName(name) === normalizeName(drop.name))) throw new Error('Cannot drop a core player');
-    if (!r.addsLeft || entry.start < pickupStart(pickup, r.fromDate, r.window, r.addsFrom) || entry.start > r.window.end) throw new Error('Move has no legal effective date/add remaining');
+    if (!pickup) return refuse(tony ? 'Pickup is not in the captured free agents.' : 'Move must name an available eligible pickup and a rostered drop');
+    if (entry.drop && !drop) return refuse('Move must name an available eligible pickup and a rostered drop');
+    if (!tony && BLOCKED.includes(pickup.status)) throw new Error('Move must name an available eligible pickup and a rostered drop');
+    if (!entry.drop && (r.openSpots ?? openRosterSpots(snapshot.settings, snapshot.team.roster)) < 1) return refuse('A move without a drop needs an open roster spot');
+    if (drop && r.options.roles.core.some((name) => normalizeName(name) === normalizeName(drop.name))) return refuse('Cannot drop a core player');
+    if (!r.addsLeft || entry.start < pickupStart(pickup, r.fromDate, r.window, r.addsFrom) || entry.start > r.window.end) return refuse('Move has no legal effective date/add remaining');
     const project = (force) => projectTeam(roster, {}, {}, snapshot.settings, schedule, r.fromDate, r.window.end,
       { pickup, drop, start: entry.start, startPickup: force }).started;
     const automatic = project(false), deliberate = project(true);

@@ -5,7 +5,7 @@ edit what a page says: copy its text and save it.
 
 ## Before you start
 
-For a pre-refresh readiness check and reusable proof recipes, use [verify-league-refresh](../.agents/skills/verify-league-refresh/SKILL.md). Its offline smoke test verifies review HTTP integration only; live capture, ESPN, clipboard and browser checks have separate proof requirements. A stale capture cannot complete the normal analysis pipeline because the evidence command has no stale override.
+A stale capture cannot complete the normal analysis pipeline because the evidence command has no stale override.
 
 
 Run on Tony's request, usually after a completed game slate. Do not install a daily schedule

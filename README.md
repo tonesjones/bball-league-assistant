@@ -139,27 +139,3 @@ Last season's per-game lines, positions, teams, minutes and playoff-week game co
 npm run import:draftlab
 ```
 
-## Local league review screen
-
-After `$league-refresh` creates the brief and attempts the pilot, it opens a private local
-review screen. Copy the brief into your regular ChatGPT chat, read the engine and isolated
-chatbot answers alongside making no move, choose 1-5 ratings, and click **Save all three ratings**.
-The isolated chatbot is the pilot comparison, separate from the ChatGPT chat where you paste
-the brief. The existing command-line ratings remain available as a fallback.
-
-Reopen a saved check with `npm run review -- <decisionId>`, or use `npm run review` to open the
-newest saved decision and select another. The command starts or reuses a server on 127.0.0.1,
-with a private access link. No hosting, Yahoo writes, or new runtime dependencies are involved.
-The screen reads this checkout's `local/` data; normally launch it from the main project.
-If the server's code has changed since it started, the command replaces it. Stop it with
-`npm run review -- --stop`.
-
-Ratings are appended to `local/pilot-reviews.jsonl`, the same log the scorecard reads. Repeated
-unchanged saves do not duplicate reviews; changed ratings add a new review before the matchup
-ends. After that, ratings close. Incomplete pilot arms cannot be rated. Brief copies are logged
-under `local/review-ui/`, without claiming a paste or a Yahoo action happened.
-
-After the matchup ends, refresh game logs and reload the screen to replay the saved lineups
-with the existing scorer. Results use cached data, never fetch in the background, and stay
-unscored if evidence is missing. The screen reports helped/hurt categories per answer; the
-versioned aggregate gate remains available through `npm run bakeoff -- scorecard`.

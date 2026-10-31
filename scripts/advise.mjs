@@ -9,6 +9,9 @@ import { addDays, tomorrow } from '../src/engine/weeks.mjs';
 import { loadProjectionLogs } from '../src/sources/gamelogs.mjs';
 import { projectPlayers } from '../src/engine/projections.mjs';
 import { saveDecision } from '../src/sources/decisions.mjs';
+import { appendEntries } from '../src/sources/bakeoff-log.mjs';
+import { attachLineups } from '../src/sources/bakeoff-records.mjs';
+import { validateEntry } from '../src/engine/bakeoff.mjs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
@@ -140,6 +143,21 @@ export function formatPlan(report) {
   return lines.join('\n');
 }
 
+// The shadow log: the engine's call and the do-nothing baseline. A wait counts as a hold.
+// A logging failure must not lose the advice, so it is reported and the run goes on.
+async function logShadowEntries(decisionId, report) {
+  try {
+    const { pair } = report.decision, ref = (p) => ({ name: p.name, espnId: p.espnId });
+    const common = { decisionId, week: report.week, date: new Date().toISOString().slice(0, 10), asOf: report.asOf, chatbot: null, rating: null };
+    const hold = { decision: 'hold', add: null, drop: null };
+    const tool = pair ? { decision: 'move', start: pair.pickupStart, add: ref(pair.pickup), drop: pair.drop ? ref(pair.drop) : null } : hold;
+    const entries = [{ ...common, source: 'tool', ...tool }, { ...common, source: 'none', ...hold }].map((e) => validateEntry(e));
+    await appendEntries(await Promise.all(entries.map(attachLineups)));
+  } catch (err) {
+    console.error(`Shadow log not written: ${err.message}`);
+  }
+}
+
 function date(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value ?? '') || !Number.isFinite(Date.parse(value))
     || new Date(value).toISOString().slice(0, 10) !== value) throw new Error('dates must be YYYY-MM-DD');
@@ -236,6 +254,7 @@ async function main(args) {
   };
   const saved = await saveDecision({ report, options: { ...report.options, ...freshnessOptions, maxAgeHours: freshness.maxAgeHours, allowStale: freshnessOptions.allowStale ?? false }, provenance, projections });
   report.decisionId = saved.id;
+  await logShadowEntries(saved.id, report);
   const text = formatPlan(report);
   const output = path.join('local/advice', path.basename(snapshotPath));
   await mkdir(path.dirname(output), { recursive: true });
