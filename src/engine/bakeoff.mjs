@@ -1,7 +1,7 @@
 import { replayLineups } from './lineup-replay.mjs';
 import { CATEGORIES } from '../sources/yahoo-pages/common.mjs';
-import { addDays, tomorrow } from './weeks.mjs';
 
+export const TONY_TAGS = ['changed-decision', 'caught-mistake', 'no-effect', 'wasted-time'];
 const REJECT_REASONS = ['wrong-role', 'core-player', 'bad-data', 'injury', 'timing', 'other'];
 const isDecisionId = (v) => typeof v === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,100}$/.test(v);
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
@@ -15,7 +15,7 @@ export function validateEntry(e, { allowLegacyPromptVersion = true } = {}) {
   if (!isDate(e.date)) bad.push('date must be YYYY-MM-DD');
   if (!['move', 'hold'].includes(e.decision)) bad.push('decision must be move or hold');
   if (e.decision === 'move' && !isDate(e.start)) bad.push('start must be YYYY-MM-DD');
-  if (!['tool', 'chatbot', 'none'].includes(e.source)) bad.push('source must be tool, chatbot or none');
+  if (!['tool', 'chatbot', 'none', 'tony'].includes(e.source)) bad.push('source must be tool, chatbot, none or tony');
   if (e.source === 'none' && e.decision !== 'hold') bad.push('none source must hold');
   if (e.invalidReason !== undefined && (typeof e.invalidReason !== 'string' || !e.invalidReason || e.decision !== 'hold')) bad.push('invalidReason needs a nonempty reason and hold');
   if (e.source === 'chatbot' && (typeof e.chatbot !== 'string' || !e.chatbot)) bad.push('chatbot source needs chatbot name');
@@ -23,13 +23,20 @@ export function validateEntry(e, { allowLegacyPromptVersion = true } = {}) {
     if (e.promptVersion == null && allowLegacyPromptVersion) e = { ...e, promptVersion: null };
     else if (!Number.isInteger(e.promptVersion) || e.promptVersion < 1) bad.push('chatbot promptVersion must be a positive integer');
   } else if (e.promptVersion !== undefined) bad.push(`${e.source} promptVersion must be omitted`);
-  if (['tool', 'none'].includes(e.source) && e.chatbot !== null) bad.push(`${e.source} chatbot must be null`);
+  if (['tool', 'none', 'tony'].includes(e.source) && e.chatbot !== null) bad.push(`${e.source} chatbot must be null`);
   for (const key of ['add', 'drop']) {
     if (e.decision === 'hold') { if (e[key] !== null) bad.push(`${key} must be null for hold`); }
     // A move with drop null adds the pickup to an open roster spot.
     else if (key === 'drop' && e[key] === null) continue;
     else if (!e[key] || typeof e[key].name !== 'string' || !e[key].name || (typeof e[key].espnId !== 'string' && typeof e[key].espnId !== 'number')) bad.push(`${key} needs name and espnId`);
   }
+  if (e.source === 'tony') {
+    if (e.rating !== null) bad.push('tony rating must be null');
+    if (!TONY_TAGS.includes(e.tag)) bad.push(`tag must be one of ${TONY_TAGS.join(', ')}`);
+    if (e.minutes !== undefined && !(typeof e.minutes === 'number' && Number.isFinite(e.minutes) && e.minutes >= 0)) bad.push('minutes must be a number');
+    if (e.rescue !== undefined && typeof e.rescue !== 'boolean') bad.push('rescue must be boolean');
+  } else for (const key of ['tag', 'minutes', 'rescue']) if (e[key] !== undefined) bad.push(`${e.source} ${key} must be omitted`);
+  if (e.replaces !== undefined && e.replaces !== true) bad.push('replaces must be true');
   if (!(e.rating === null || (Number.isInteger(e.rating) && e.rating >= 1 && e.rating <= 5))) bad.push('rating must be 1..5 or null');
   if (typeof e.asOf !== 'string' || Number.isNaN(Date.parse(e.asOf))) bad.push('asOf must be a timestamp');
   if (e.taken !== undefined && typeof e.taken !== 'boolean') bad.push('taken must be boolean');
@@ -42,31 +49,13 @@ export function validateEntry(e, { allowLegacyPromptVersion = true } = {}) {
 export function validateReview(r) {
   const bad = [];
   if (!isDecisionId(r.decisionId)) bad.push('decisionId must name a saved decision record');
-  if (!['tool', 'chatbot', 'none'].includes(r.source)) bad.push('source must be tool, chatbot or none');
+  if (!['tool', 'chatbot', 'none', 'tony'].includes(r.source)) bad.push('source must be tool, chatbot, none or tony');
   if (!Number.isInteger(r.rating) || r.rating < 1 || r.rating > 5) bad.push('rating must be 1..5');
   if (r.rejectReason !== undefined && !REJECT_REASONS.includes(r.rejectReason)) bad.push(`rejectReason must be one of ${REJECT_REASONS.join(', ')}`);
   if (r.note !== undefined && typeof r.note !== 'string') bad.push('note must be a string');
   if (typeof r.recordedAt !== 'string' || Number.isNaN(Date.parse(r.recordedAt))) bad.push('recordedAt must be a timestamp');
   if (bad.length) throw new Error(`invalid review:\n- ${bad.join('\n- ')}`);
   return r;
-}
-
-// Tony rates in local/pilot-reviews.jsonl after recording. The last on-time review for a decision
-// and source replaces the entry's rating. Rows without a source (strategy reviews) don't apply.
-// A review dated (Pacific) after the decision window ends could have seen the outcome.
-export function applyReviews(results, reviews) {
-  const latest = new Map();
-  for (const r of reviews) if (r.source && r.rating != null) latest.set(`${r.decisionId}/${r.source}`, r);
-  let late = 0;
-  const applied = results.map((row) => {
-    const review = latest.get(`${row.entry.decisionId}/${row.entry.source}`);
-    if (!review) return row;
-    if (addDays(tomorrow(review.recordedAt), -1) > row.windowEnd) { late++; return row; }
-    const entry = { ...row.entry, rating: review.rating };
-    if (review.rejectReason !== undefined) entry.rejectReason = review.rejectReason;
-    return { ...row, entry };
-  });
-  return { results: applied, late };
 }
 
 export const realizedGain = replayLineups;
@@ -115,37 +104,33 @@ export function summarize(results) {
   });
 }
 
-export function scorecard(results, { lastN = 10, minScored = 10 } = {}) {
-  const decisions = new Map();
-  for (const row of results) {
-    const { decisionId } = row.entry;
-    (decisions.get(decisionId) ?? decisions.set(decisionId, []).get(decisionId)).push(row);
+const sameName = (a, b) => (a?.name ?? null) === (b?.name ?? null) && String(a?.espnId ?? '') === String(b?.espnId ?? '');
+
+// Two entries differ when their decision, pickup, drop or start differ. A hold has no start.
+export function differs(a, b) {
+  if (a.decision !== b.decision) return true;
+  if (a.decision === 'hold') return false;
+  return !sameName(a.add, b.add) || !sameName(a.drop, b.drop) || a.start !== b.start;
+}
+
+// The newest entry for each decision and source counts; the log is append-only.
+export function latestEntries(entries) {
+  const latest = new Map();
+  for (const e of entries) latest.set(`${e.decisionId}/${e.source}`, e);
+  return [...latest.values()];
+}
+
+const net = (side) => side.flips.helped.length - side.flips.hurt.length;
+
+// rows: one per decision, { decisionId, tool, tony } where each side is { entry, status, flips, reasons }.
+export function replaySummary(rows) {
+  const out = { decisions: rows.length, differing: 0, toolWon: 0, tonyWon: 0, tied: 0, unscored: 0 };
+  for (const row of rows) {
+    if (!row.differs) continue;
+    out.differing++;
+    if (row.tool.status !== 'scored' || row.tony.status !== 'scored') { out.unscored++; continue; }
+    const d = net(row.tool) - net(row.tony);
+    if (d > 0) out.toolWon++; else if (d < 0) out.tonyWon++; else out.tied++;
   }
-  const groups = new Map();
-  for (const [decisionId, rows] of decisions) {
-    const tool = rows.find((r) => r.entry.source === 'tool');
-    const bot = rows.find((r) => r.entry.source === 'chatbot');
-    const baseline = rows.find((r) => r.entry.source === 'none');
-    const modelVersion = rows.find((r) => r.modelVersion != null)?.modelVersion ?? null;
-    const promptVersion = bot?.entry.promptVersion ?? null;
-    const key = `${modelVersion ?? 'rehearsal'}/${promptVersion ?? 'rehearsal'}`;
-    const group = groups.get(key) ?? { modelVersion, promptVersion, rehearsal: modelVersion == null, decisions: new Map() };
-    group.decisions.set(decisionId, { decisionId, createdAt: rows[0].createdAt, rows, paired: Boolean(tool && bot && baseline && [tool, bot, baseline].every((r) => r.status !== 'unscored' && r.gain)) });
-    groups.set(key, group);
-  }
-  const sortedGroups = [...groups.values()].sort((a, b) => (a.modelVersion ?? -1) - (b.modelVersion ?? -1) || (a.promptVersion ?? -1) - (b.promptVersion ?? -1));
-  return sortedGroups.map((group) => {
-    const rows = [...group.decisions.values()].flatMap((d) => d.rows);
-    const paired = [...group.decisions.values()].filter((d) => d.paired).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.decisionId.localeCompare(b.decisionId));
-    const pairedRows = (source, selected = paired) => selected.flatMap((d) => d.rows.filter((r) => r.entry.source === source));
-    const summaries = ['tool', 'chatbot', 'none'].flatMap((source) => summarize(rows.filter((r) => r.entry.source === source)));
-    const rollings = ['tool', 'chatbot', 'none'].map((source) => ({ source, ...summarize(pairedRows(source, paired.slice(-lastN)))[0] })).filter((r) => r.scored !== undefined);
-    const total = Object.fromEntries(['tool', 'chatbot', 'none'].map((source) => [source, summarize(pairedRows(source))[0]]));
-    const { tool, chatbot, none } = total;
-    // A tie on net counts when ratings break it: a tool that rightly holds nets 0, as "none" does.
-    const beats = (other) => tool.net >= other.net && tool.meanRating != null && other.meanRating != null && tool.meanRating > other.meanRating;
-    const gate = group.rehearsal ? 'rehearsal' : paired.length < minScored ? 'too few' : beats(chatbot) && beats(none) ? 'met' : 'not met';
-    return { modelVersion: group.modelVersion, promptVersion: group.promptVersion, rehearsal: group.rehearsal, paired: paired.length, summaries,
-      rolling: rollings, gate, comparison: Object.fromEntries(['tool', 'chatbot', 'none'].map((source) => [source, { net: total[source]?.net ?? 0, meanRating: total[source]?.meanRating ?? null }])) };
-  });
+  return out;
 }

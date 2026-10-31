@@ -297,8 +297,8 @@ hand, and check that the hard rules hold on every real refresh, not only on test
   path and hashes of the snapshot, IDs and schedule. The snapshot holds my roster, other teams'
   rosters, free agents, FAAB balance and adds used this week. Records can't be recreated later,
   so they are the eval data.
-- Outcome grading. `npm run bakeoff -- scorecard` replays game logs for each decision's week and
-  reports realized category gain per model version ([Task 11](tasks/11-continuous-pilot-and-scorecard.md)).
+- Outcome grading. `npm run bakeoff -- replay --to <date>` replays game logs for each decision's week and
+  reports the categories helped and hurt by the tool's and Tony's actions ([Task 11](tasks/11-continuous-pilot-and-scorecard.md)).
 - Hard-rule tests on synthetic fixtures (`tests/advice-correctness.test.mjs` and others).
 
 **Gaps, in order (when unparked):**

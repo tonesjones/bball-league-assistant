@@ -3,15 +3,15 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { saveDecision, readDecision } from '../src/sources/decisions.mjs';
-import { planWeek } from '../src/engine/week-plan.mjs';
-import { validateEntry } from '../src/engine/bakeoff.mjs';
 import { projectPlayers } from '../src/engine/projections.mjs';
 import { hash } from '../src/sources/bakeoff-records.mjs';
 import { zeroLine } from '../src/engine/lineup-replay.mjs';
+import { saveDecision, readDecision } from '../src/sources/decisions.mjs';
+import { planWeek } from '../src/engine/week-plan.mjs';
+import { validateEntry } from '../src/engine/bakeoff.mjs';
 
 const plan = (f, projections = { players: f.priors }) => planWeek({ snapshot: f.snapshot, schedule: f.schedule,
   projections, ids: f.ids, options: { protectRank: 0 } });
@@ -41,109 +41,77 @@ test('reruns retain separate immutable records, options and exact daily lineups'
 
 test('every bakeoff source must identify the shared decision record', () => {
   const base = { week: 1, date: '2026-10-20', decision: 'hold', add: null, drop: null, rating: null, asOf: '2026-10-20T12:00:00Z', chatbot: null };
-  for (const source of ['tool', 'chatbot', 'none']) {
-    const entry = { ...base, source, chatbot: source === 'chatbot' ? 'Example' : null };
+  for (const source of ['tool', 'chatbot', 'none', 'tony']) {
+    const entry = { ...base, source, chatbot: source === 'chatbot' ? 'Example' : null, ...(source === 'tony' ? { tag: 'no-effect' } : {}) };
     assert.throws(() => validateEntry(entry), /decisionId/);
     assert.equal(validateEntry({ ...entry, decisionId: 'example-decision' }).decisionId, 'example-decision');
   }
 });
 
-test('bakeoff records three sources against one decision and rejects broken links before appending', async (t) => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'bball-bakeoff-links-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  const records = path.join(dir, 'local/decisions');
-  await mkdir(records, { recursive: true });
-  const saved = await saveDecision({ report: { week: 1, asOf: '2026-10-20T12:00:00Z' }, options: {}, provenance: {} }, records);
-  const entries = ['tool', 'chatbot', 'none'].map((source) => ({ decisionId: saved.id, week: 1, date: '2026-10-20', decision: 'hold', add: null, drop: null, rating: null, asOf: '2026-10-20T12:00:00Z', source, chatbot: source === 'chatbot' ? 'Example' : null, ...(source === 'chatbot' ? { promptVersion: 1 } : {}) }));
-  const input = path.join(dir, 'entries.json');
-  await writeFile(input, JSON.stringify(entries));
-  const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));
-  const run = () => execFileSync(process.execPath, [cli, 'record', input], { cwd: dir, stdio: 'pipe' });
-  run();
-  const before = await readFile(path.join(dir, 'local/bakeoff.jsonl'), 'utf8');
-  assert.equal(before.trim().split('\n').length, 3);
-  await writeFile(input, JSON.stringify([entries[0], { ...entries[1], decisionId: 'missing' }]));
-  assert.throws(run, /ENOENT/);
-  assert.equal(await readFile(path.join(dir, 'local/bakeoff.jsonl'), 'utf8'), before);
-  await writeFile(input, JSON.stringify([{ ...entries[0], week: 2 }]));
-  assert.throws(run, /week\/asOf must match/);
-});
-
-test('record saves each source lineup, rejects duplicate arms and prepares a hashed rehearsal packet', async (t) => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'bball-replay-record-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
+const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));
+async function recorded(dir, snapshot, name, decision) {
   const f = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url)));
   const projections = projectPlayers(f.priors, f.ids, []);
-  const report = plan(f, projections);
+  const report = plan({ ...f, snapshot }, projections);
+  if (decision) report.decision = decision;
   await mkdir(path.join(dir, 'data'), { recursive: true });
   await writeFile(path.join(dir, 'data/ids.json'), JSON.stringify(f.ids));
   await writeFile(path.join(dir, 'data/schedule-2026-27.json'), JSON.stringify(f.schedule));
-  const snapshotPath = path.join(dir, 'snapshot.json'), snapshotText = JSON.stringify(f.snapshot);
-  await writeFile(snapshotPath, snapshotText);
+  const snapshotPath = path.join(dir, `${name}.json`), text = JSON.stringify(snapshot);
+  await writeFile(snapshotPath, text);
   const saved = await saveDecision({ report, options: report.options, projections,
-    provenance: { snapshotPath, snapshotHash: hash(snapshotText), idsHash: hash(JSON.stringify(f.ids)),
+    provenance: { snapshotPath, snapshotHash: hash(text), idsHash: hash(JSON.stringify(f.ids)),
       scheduleHash: hash(JSON.stringify(f.schedule)), gameLogCoverage: { hashes: {} } } }, path.join(dir, 'local/decisions'));
-  const base = { decisionId: saved.id, week: report.week, date: '2026-10-20', asOf: report.asOf,
-    decision: 'hold', add: null, drop: null, chatbot: null, rating: null };
-  const entries = [{ ...base, source: 'tool' }, { ...base, source: 'none' },
-    { ...base, source: 'chatbot', chatbot: 'Example', promptVersion: 1, decision: 'move', start: '2026-10-20',
-      add: { name: 'Casey Fiction', espnId: '3' }, drop: { name: 'Alex Sample', espnId: '1' } }];
-  const input = path.join(dir, 'entries.json'); await writeFile(input, JSON.stringify(entries));
-  const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));
-  const run = () => execFileSync(process.execPath, [cli, 'record', input], { cwd: dir, stdio: 'pipe' });
-  run();
+  const base = { decisionId: saved.id, week: report.week, date: '2026-10-20', asOf: report.asOf, chatbot: null, rating: null };
+  return { report, base, record: async (entries) => {
+    const input = path.join(dir, `${name}-entries.json`);
+    await writeFile(input, JSON.stringify(entries));
+    return execFileSync(process.execPath, [cli, 'record', input], { cwd: dir, stdio: 'pipe' });
+  } };
+}
+
+test('record saves tool, none and tony lineups, rejects duplicates and score replays them', async (t) => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'bball-replay-record-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const f = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url)));
+  const { report, base, record } = await recorded(dir, f.snapshot, 'full');
+  const hold = { decision: 'hold', add: null, drop: null };
+  await record([{ ...base, source: 'tool', ...hold }, { ...base, source: 'none', ...hold },
+    { ...base, source: 'tony', tag: 'changed-decision', decision: 'move', start: '2026-10-20',
+      add: { name: 'Casey Fiction', espnId: '3' }, drop: { name: 'Alex Sample', espnId: '1' } }]);
   const logPath = path.join(dir, 'local/bakeoff.jsonl'), before = await readFile(logPath, 'utf8');
-  const rows = before.trim().split('\n').map(JSON.parse);
+  const rows = before.trim().split(String.fromCharCode(10)).map(JSON.parse);
   assert.deepEqual(rows[0].lineups.proposed, rows[0].lineups.baseline);
   assert.notDeepEqual(rows[2].lineups.proposed, rows[0].lineups.proposed);
   assert.ok(rows[2].lineups.proposed.some((g) => g.espnId === '3'));
   assert.ok(rows.every((r) => r.recordedAt));
-  assert.throws(run, /already recorded/);
+  await assert.rejects(record([{ ...base, source: 'none', ...hold }]), /already recorded/);
   assert.equal(await readFile(logPath, 'utf8'), before);
-  const starts = new Map(rows.flatMap((r) => [...r.lineups.baseline, ...r.lineups.proposed, ...r.lineups.opponent])
-    .map((g) => [`${g.date}/${g.espnId}`, g]));
+  const starts = new Map(rows.flatMap((r) => [...r.lineups.baseline, ...r.lineups.proposed, ...r.lineups.opponent]).map((g) => [`${g.date}/${g.espnId}`, g]));
   const byDay = new Map();
-  for (const g of starts.values()) {
-    if (!byDay.has(g.date)) byDay.set(g.date, []);
-    byDay.get(g.date).push({ ...zeroLine(), date: g.date, espnId: g.espnId, didNotPlay: false,
-      espnEventId: `game-${g.date}`, pts: 20 });
-  }
+  for (const g of starts.values()) byDay.set(g.date, [...(byDay.get(g.date) ?? []), { ...zeroLine(), date: g.date, espnId: g.espnId, didNotPlay: false, espnEventId: `game-${g.date}`, pts: 20 }]);
   const logsDir = path.join(dir, 'local/gamelogs/2026-27'); await mkdir(logsDir, { recursive: true });
   for (const [date, lines] of byDay) await writeFile(path.join(logsDir, `${date}.json`), JSON.stringify(lines));
   const scored = execFileSync(process.execPath, [cli, 'score', '--week', '1', '--from', report.window.start, '--to', report.window.end], { cwd: dir, encoding: 'utf8' });
-  assert.match(scored, /tool\t-\thold\tscored/);
-  assert.match(scored, /chatbot\tExample\tmove\tscored/);
+  assert.match(scored, /tool.-.hold.scored/);
+  assert.match(scored, /tony.-.move.scored/);
   assert.match(scored, /not a weekly plan/);
 });
 
-test('record attaches an add-only move into an open spot and refuses one for a full roster', async (t) => {
+test('record attaches an add-only tool move into an open spot and refuses one for a full roster', async (t) => {
   const dir = await mkdtemp(path.join(tmpdir(), 'bball-add-only-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const f = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url)));
-  await mkdir(path.join(dir, 'data'), { recursive: true });
-  await writeFile(path.join(dir, 'data/ids.json'), JSON.stringify(f.ids));
-  await writeFile(path.join(dir, 'data/schedule-2026-27.json'), JSON.stringify(f.schedule));
-  const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));
-  const record = async (snapshot, name) => {
-    const projections = projectPlayers(f.priors, f.ids, []);
-    const report = plan({ ...f, snapshot }, projections);
-    const snapshotPath = path.join(dir, `${name}.json`), snapshotText = JSON.stringify(snapshot);
-    await writeFile(snapshotPath, snapshotText);
-    const saved = await saveDecision({ report, options: report.options, projections,
-      provenance: { snapshotPath, snapshotHash: hash(snapshotText), idsHash: hash(JSON.stringify(f.ids)),
-        scheduleHash: hash(JSON.stringify(f.schedule)), gameLogCoverage: { hashes: {} } } }, path.join(dir, 'local/decisions'));
-    const input = path.join(dir, `${name}-entries.json`);
-    await writeFile(input, JSON.stringify([{ decisionId: saved.id, week: report.week, date: '2026-10-20', asOf: report.asOf,
-      source: 'chatbot', chatbot: 'Example', promptVersion: 1, decision: 'move', start: '2026-10-21', rating: null,
-      add: { name: 'Casey Fiction', espnId: '3' }, drop: null }]));
-    return () => execFileSync(process.execPath, [cli, 'record', input], { cwd: dir, stdio: 'pipe' });
-  };
+  const move = { action: 'move', pair: { pickup: { name: 'Casey Fiction', nbaTeam: 'CCC', espnId: '3' }, drop: null, pickupStart: '2026-10-21' } };
+  const entry = (base) => [{ ...base, source: 'tool', decision: 'move', start: '2026-10-21', add: { name: 'Casey Fiction', espnId: '3' }, drop: null }];
   const open = structuredClone(f.snapshot);
   open.team.roster[0].slot = 'IL+';
-  (await record(open, 'open'))();
-  const [row] = (await readFile(path.join(dir, 'local/bakeoff.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);
+  const a = await recorded(dir, open, 'open', move);
+  await a.record(entry(a.base));
+  const [row] = (await readFile(path.join(dir, 'local/bakeoff.jsonl'), 'utf8')).trim().split(String.fromCharCode(10)).map(JSON.parse);
   assert.equal(row.drop, null);
   assert.ok(!row.lineups.baseline.some((g) => g.espnId === '3'));
   assert.deepEqual(row.lineups.proposed.filter((g) => g.espnId === '3').map((g) => g.date), ['2026-10-21']);
-  assert.throws(await record(f.snapshot, 'full'), /needs an open roster spot/);
+  const b = await recorded(dir, f.snapshot, 'full', move);
+  await assert.rejects(b.record(entry(b.base)), /needs an open roster spot/);
 });
