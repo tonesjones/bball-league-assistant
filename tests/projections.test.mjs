@@ -117,3 +117,41 @@ test('current production overtakes the prior as minutes accumulate and updates s
   assert.equal(seasonValues([prior, rival]).get(prior.name).rank, 1);
   assert.equal(seasonValues([five, rival]).get(prior.name).rank, 2);
 });
+
+const novice = { players: [...ids.players, { espnId: '9', name: 'Sample Rookie', priorName: null }] };
+const rookieRow = (i, fields = {}) => ({ espnId: '9', date: '2026-10-2' + i, espnEventId: `r${i}`, min: 20, starter: false, didNotPlay: false,
+  fgm: 4, fga: 8, ftm: 2, fta: 2, fg3m: 1, pts: 11, reb: 5, ast: 2, stl: 1, blk: 0, to: 1, ...fields });
+const rookie = (logs, options) => projectPlayers([prior], novice, logs, options).players.find((p) => p.espnId === '9');
+
+test('season-only entry needs 5 games or 100 minutes', () => {
+  assert.equal(rookie([0, 1, 2, 3].map((i) => rookieRow(i, { min: 22.5 }))), undefined);
+  const five = rookie([0, 1, 2, 3, 4].map((i) => rookieRow(i)));
+  assert.equal(five.name, 'espn:9');
+  assert.equal(five.source, 'season-only');
+  assert.equal(five.perGame.g, 5);
+  assert.equal(five.perGame.pts, 11);
+  assert.equal(five.mpg, 20);
+  assert.equal(five.original, null);
+  assert.equal(five.rates, null);
+  assert.equal(five.minutes.prior, null);
+  assert.equal(rookie([0, 1, 2, 3].map((i) => rookieRow(i, { min: 25 }))).perGame.g, 4);
+  assert.equal(project([]).source, 'prior');
+});
+
+test('an injury DNP does not count as a season-only game', () => {
+  const logs = [0, 1, 2, 3].map((i) => rookieRow(i, { min: 20 }));
+  logs.push(rookieRow(4, { didNotPlay: true, reason: 'RIGHT CALF', min: null }));
+  assert.equal(rookie(logs), undefined);
+});
+
+test('matchPlayers finds a season-only player by ESPN ID and dropBlock keeps him protected', async () => {
+  const { matchPlayers, dropBlock } = await import('../src/engine/advice-common.mjs');
+  const projected = projectPlayers([prior], novice, [0, 1, 2, 3, 4].map((i) => rookieRow(i))).players;
+  const { match } = matchPlayers({ ids: { players: [...novice.players, { espnId: '9', name: 'Sample Rookie', priorName: null, team: 'AAA' }].filter((p, i, a) => a.findIndex((q) => q.espnId === p.espnId) === i) }, priors: projected });
+  const [found] = match([{ name: 'Sample Rookie', nbaTeam: 'AAA' }], 'roster');
+  assert.equal(found.espnId, '9');
+  assert.equal(found.prior.source, 'season-only');
+  assert.ok(found.season && found.minutes);
+  const opts = { coreSet: new Set(), streamSet: new Set(), openSpots: 1, protectRank: 0, seasonMargin: 0 };
+  assert.equal(dropBlock(found, { season: { value: 99 } }, '2026-10-30', opts), 'noPrior');
+});

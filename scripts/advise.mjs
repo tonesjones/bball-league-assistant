@@ -1,8 +1,7 @@
-import { crunchText } from '../src/engine/crunch.mjs';
 import { readFile, readdir, stat, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
-import { advise } from '../src/engine/v0-advice.mjs';
+import { planWeek } from '../src/engine/week-plan.mjs';
 import { normalizeRoles, MODEL_VERSION } from '../src/engine/advice-common.mjs';
 import { estimateVolume } from '../src/engine/shooting-volume.mjs';
 import { findPlayer } from '../src/engine/names.mjs';
@@ -70,77 +69,74 @@ export function snapshotFreshness(asOf, { maxAgeHours = 12, allowStale = false, 
   return { ageHours, maxAgeHours, stale };
 }
 
-export function formatAdvice(report) {
-  const d = report.decision;
-  const lines = [d.action === 'move' ? `Move: pick up ${d.pair.pickup.name}, ${d.pair.drop ? `drop ${d.pair.drop.name} [${d.pair.dropRole}]` : 'no drop (open roster spot)'}`
-    : `${d.action === 'insufficient' ? 'Insufficient evidence' : 'Hold'}: ${d.reason}`,
-    ...(d.missing ?? []).map((p) => `Missing: ${p.name} (${p.nbaTeam}, ${p.side}): ${p.starts} starts, ${p.reason}`),
-    `Unknown games: mine ${report.unknownGames.mine} | opponent ${report.unknownGames.opponent}`,
-    `Bars: drop ${report.holdBelow} | add-only ${report.addOnlyBelow}${d.bar ? ` | applied: ${d.bar.kind}` : ''}`, '',
-    `Snapshot: ${report.asOf}`, `Week ${report.week}: ${report.window.start} to ${report.window.end}`,
-    `From: ${report.fromDate} | Adds from: ${report.addsFrom} | Adds left: ${report.addsLeft}`,
-    ...(report.pending?.waivers ?? []).map((w) => `Pending claim ${w.order} (${w.date}): add ${w.add}${w.bid == null ? '' : ` for $${w.bid}`}${w.drop ? `, drop ${w.drop}` : ''}`),
-    ...(report.pending?.warning ? [`Warning: ${report.pending.warning}`] : []),
-    `Shooting volume: ${Object.entries(report.volumeStatus).map(([side, v]) => `${side}: ${v.status}${v.reason ? ` (${v.reason})` : ''}${v.unmatched?.length ? `; unmatched: ${v.unmatched.join(', ')}` : ''}`).join(' | ')}`, '',
-    'Category     Mine       Opponent   P(win)   Need'];
-  if (report.projection) lines.splice(lines.length - 1, 0,
-    `Game logs checked: ${report.projection.asOf} | Minutes pseudo-games k=${report.projection.k} (starting value, not calibrated)`, '');
-  if (report.freshness?.stale) lines.unshift(`STALE: snapshot is ${report.freshness.ageHours.toFixed(2)} hours old (maximum ${report.freshness.maxAgeHours}).`, '');
-  for (const [c, v] of Object.entries(report.baseline.categories)) {
-    const incomplete = v.pWinRange && !v.complete;
-    const probability = incomplete ? v.pWinRange.map((p) => p.toFixed(2)).join('-') : number(v.pWin);
-    lines.push(`${c.padEnd(8)} ${number(v.mine).padStart(10)} ${number(v.opponent).padStart(10)} ${probability.padStart(8)}   ${incomplete ? 'incomplete' : v.label}`);
+const WIDTH = 72;
+
+// Wraps text to at most WIDTH characters per line: the first line starts with lead, the rest with indent.
+function wrap(text, indent = '  ', lead = '') {
+  const lines = [];
+  let line = '';
+  const prefix = () => (lines.length ? indent : lead);
+  const limit = () => WIDTH - prefix().length;
+  const push = () => { lines.push(prefix() + line); line = ''; };
+  for (let word of text.split(' ')) {
+    if (line && line.length + 1 + word.length <= limit()) { line += ` ${word}`; continue; }
+    if (line) push();
+    while (word.length > limit()) { line = word.slice(0, limit()); word = word.slice(limit()); push(); }
+    line = word;
   }
-  if (report.crunch) lines.push('', ...crunchText(report.crunch.current, 'Roster crunch'),
-    ...crunchText(report.crunch.nextWeek, 'Next week crunch (context only)'));
-  lines.push('', ...report.notes, '', 'Decision details:');
-  const pairLines = (pair, i) => {
-    lines.push(`${i + 1}. Pick up ${pair.pickup.name} (${pair.pickup.nbaTeam}, ${pair.pickup.status ?? 'healthy'}, ${pair.pickup.games} games from ${pair.pickupStart})`,
-      `   ${pair.drop ? `Drop ${pair.drop.name} [${pair.dropRole}] (${pair.drop.games} games left)` : 'No drop: open roster spot'} | Score: ${signed(pair.score)} categories`);
-    if (pair.nextWeek) lines.push(`   Next week (${pair.nextWeek.start} to ${pair.nextWeek.end}, context only): ${pair.nextWeek.games} games, ${pair.nextWeek.starts} legal starts`);
-    lines.push(`   Unknown games (mine after move): ${pair.unknownGames}`);
-    if (pair.scoreRange[0] !== pair.scoreRange[1]) lines.push(`   Score range: ${number(pair.scoreRange[0])} to ${number(pair.scoreRange[1])}`);
-    const times = pair.lineup.pickupStarts === 1 ? 'once' : `${pair.lineup.pickupStarts} times`;
-    const displaced = pair.lineup.displaced.map((g) => `${g.name} on ${g.date}`).join(', ');
-    if (pair.lineup.mode === 'start-pickup') {
-      lines.push(displaced
-        ? `   Lineup: deliberately start ${pair.pickup.name} ${times}; displaces ${displaced}.`
-        : `   Lineup: deliberately start ${pair.pickup.name} ${times}; no other projected starter is displaced.`);
-    } else if (displaced) lines.push(`   Lineup: ${pair.pickup.name} starts ${times}; displaces ${displaced}.`);
-    const season = (p) => p.seasonValue == null ? 'unknown' : `${signed(p.seasonValue)} (#${p.seasonRank})`;
-    const players = [pair.pickup, pair.drop].filter(Boolean);
-    for (const p of players) if (p.minutes) {
-      const m = p.minutes;
-      lines.push(`   ${p.name} minutes: games ${m.games}, starts ${m.starts}, prior ${number(m.prior)}, season ${number(m.season)}, projected ${number(m.projected)}`);
-    }
-    for (const scenario of pair.minuteScenarios ?? []) lines.push(
-      `   Minutes case pickup ${scenario.pickupMode} ${number(scenario.pickupMpg)}${pair.drop ? ` / drop ${scenario.dropMode} ${number(scenario.dropMpg)}` : ''}: ${scenario.scoreRange.map(number).join(' to ')} categories`);
-    for (const p of players) if (p.rates) lines.push(
-      `   ${p.name} per-minute evidence: ${p.rates.status}, ${p.rates.games} games / ${number(p.rates.minutes)} minutes`);
-    if (pair.rateScenarios?.length) lines.push(`   Per-minute sensitivity: ${pair.rateScenarios.length} additional cases, score ${number(Math.min(...pair.rateScenarios.map((s) => s.scoreRange[0])))} to ${number(Math.max(...pair.rateScenarios.map((s) => s.scoreRange[1])))} categories (full cases in JSON).`);
-    if (pair.missingRates?.length) lines.push(`   Missing complete per-minute evidence: ${pair.missingRates.join(', ')}`);
-    lines.push(`   Season value: pickup ${season(pair.pickup)}${pair.drop ? ` vs drop ${season(pair.drop)}` : ''}`);
-    lines.push(`   ${Object.entries(pair.changes).map(([c, v]) => `${c}: total ${signed(v.total)}, P(win) ${signed(v.pWin)}`).join(' | ')}`);
-  };
-  if (d.action === 'move') pairLines(d.pair, 0);
-  else if (d.action === 'insufficient' && d.best) pairLines(d.best, 0);
-  else lines.push(d.reason);
-  lines.push('', 'Top pairs (alternatives against the current roster):');
-  report.topPairs.forEach(pairLines);
-  if (!report.topPairs.length) lines.push('None.');
-  const g = report.guardrail;
-  lines.push('', 'Season guardrail:', `Margin: ${g.seasonMargin} | Protect rank: ${g.protectRank} | Blocked pairs: ${g.blockedPairs}`,
-    `Core players: ${g.core.join(', ') || 'None.'}`, `Stream players: ${g.stream.join(', ') || 'None.'}`,
-    `Blocked by rule (first match): ${Object.entries(g.blockedByRule).map(([rule, count]) => `${rule} ${count}`).join(' | ')}`,
-    'Protected by rank:');
-  for (const p of g.protectedByRank) lines.push(`${p.name}: ${signed(p.value)} (#${p.rank})`);
-  if (!g.protectedByRank.length) lines.push('None.');
-  lines.push('No prior (protected, starts counted as unknown games):');
-  for (const p of g.protectedNoPrior) lines.push(`${p.name} (${p.nbaTeam}): ${p.reason}`);
-  if (!g.protectedNoPrior.length) lines.push('None.');
-  lines.push('', 'Unscored players:');
-  for (const p of report.unscored) lines.push(`${p.name} (${p.nbaTeam}, ${p.where}): ${p.reason}`);
-  if (!report.unscored.length) lines.push('None.');
+  if (line) push();
+  return lines;
+}
+
+const stepText = (step) => `ADD ${step.pickup.name} (${step.pickup.nbaTeam}), ${step.drop ? `DROP ${step.drop.name}` : 'into open spot'}, starts ${step.start}`;
+
+// Report section 1: the action line.
+export function actionLines(report) {
+  if (report.action === 'add') return wrap(stepText(report.step));
+  if (report.action === 'wait') return wrap(`WAIT: add ${report.waitFor.pickup.name} to start ${report.waitFor.start}`);
+  return ['HOLD'];
+}
+
+// Report section 2: players whose line decides the call.
+export function dependsOnLines(report) {
+  return report.dependsOn.flatMap((d) => wrap(`Depends on ${d.player.name}: ${d.games} games, season mpg ${mpg(d.seasonMpg)}, prior mpg ${mpg(d.priorMpg)}; cautious action ${d.cautiousAction}`));
+}
+const mpg = (n) => (n == null ? 'unknown' : n.toFixed(1));
+
+// Report section 8: when the data was read, and which model scored it.
+export function asOfLines(report) {
+  return [`Snapshot as of: ${report.asOf}`, `Projections as of: ${report.projection?.asOf ?? 'unknown'}`, `MODEL_VERSION: ${MODEL_VERSION}`];
+}
+
+// What analyze-refresh prints: sections 1, 2 and 8.
+export const planSummary = (report) => [...actionLines(report), ...dependsOnLines(report), ...asOfLines(report)];
+
+export function formatPlan(report) {
+  const lines = [];
+  if (report.freshness?.stale) lines.push(...wrap(`STALE: snapshot is ${report.freshness.ageHours.toFixed(2)} hours old (maximum ${report.freshness.maxAgeHours}).`), '');
+  lines.push(...actionLines(report));
+  const depends = dependsOnLines(report);
+  if (depends.length) lines.push('', ...depends);
+  lines.push('', 'Category changes');
+  const changes = Object.entries(report.categories);
+  if (!changes.length) lines.push('  none (no move)');
+  for (const [c, v] of changes) lines.push(`  ${c.padEnd(5)} P(win) ${signed(v.change)}  total ${signed(v.total)}`);
+  lines.push('', 'Starts by day');
+  for (const d of report.startsByDay) {
+    lines.push(...wrap(`${d.date}  open slots ${d.openSlots}  pickup starts ${d.pickupStarts ? 'yes' : 'no'}${d.displaced.length ? `  displaces ${d.displaced.join(', ')}` : ''}`, '    ', '  '));
+  }
+  if (!report.startsByDay.length) lines.push('  none');
+  lines.push('', 'Adds and spots', `  Adds left ${report.addsLeft}, open roster spots ${report.openSpots}`);
+  lines.push('', 'Runners-up');
+  for (const r of report.runnersUp) lines.push(...wrap(`${stepText(r.step).replace(/^ADD /, '')}: gain ${signed(r.gain)}, ${r.whyLost}`, '    ', '  '));
+  if (!report.runnersUp.length) lines.push('  none');
+  lines.push('', 'Unknowns');
+  for (const u of report.unknowns) {
+    const who = u.category ?? `${u.player}${u.side ? ` (${u.side}${u.starts ? `, ${u.starts} starts` : ''})` : ''}`;
+    lines.push(...wrap(`${who}: ${u.reason}`, '    ', '  '));
+  }
+  if (!report.unknowns.length) lines.push('  none');
+  lines.push('', 'As of', ...asOfLines(report).map((l) => `  ${l}`));
   return lines.join('\n');
 }
 
@@ -150,37 +146,40 @@ function date(value) {
   return value;
 }
 
+const INTEGER_FLAGS = {
+  '--protect-rank': ['protectRank', 0], '--candidates': ['candidates', 1], '--beam': ['beam', 1],
+  '--drops-per-pickup': ['dropsPerPickup', 1], '--max-steps': ['maxSteps', 0], '--pool-size': ['poolSize', 1],
+};
+
 async function main(args) {
   let snapshotPath;
   const options = {}, freshnessOptions = {};
+  let minutesK;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--from') options.fromDate = date(args[++i]);
-    else if (arg === '--adds-from') options.addsFrom = date(args[++i]);
+    else if (arg === '--adds-from') options.fromDate = date(args[++i]);
     else if (arg === '--allow-stale') freshnessOptions.allowStale = true;
-    else if (arg === '--max-age-hours' || arg === '--hold-below' || arg === '--add-only-below' || arg === '--minutes-k') {
+    else if (arg === '--max-age-hours' || arg === '--drop-bar' || arg === '--add-bar' || arg === '--minutes-k') {
       const value = args[++i];
       if (!value?.trim() || !Number.isFinite(Number(value)) || Number(value) < 0) throw new Error(`${arg} must be a nonnegative finite number`);
       if (arg === '--max-age-hours') freshnessOptions.maxAgeHours = Number(value);
       else if (arg === '--minutes-k') {
         if (Number(value) <= 0) throw new Error('--minutes-k must be positive');
-        options.minutesK = Number(value);
+        minutesK = Number(value);
       }
-      else if (arg === '--add-only-below') options.addOnlyBelow = Number(value);
-      else options.holdBelow = Number(value);
+      else if (arg === '--add-bar') options.addBar = Number(value);
+      else options.dropBar = Number(value);
     }
     else if (arg === '--margin') {
       const value = args[++i];
       if (!value?.trim() || !Number.isFinite(Number(value))) throw new Error('--margin must be a finite number');
       options.seasonMargin = Number(value);
-    } else if (arg === '--protect-rank') {
+    } else if (INTEGER_FLAGS[arg]) {
+      const [key, min] = INTEGER_FLAGS[arg];
       const value = args[++i];
-      if (!/^\d+$/.test(value ?? '') || !Number.isSafeInteger(Number(value))) throw new Error('--protect-rank must be a nonnegative integer');
-      options.protectRank = Number(value);
-    } else if (arg === '--top') {
-      const value = args[++i];
-      if (!/^\d+$/.test(value ?? '')) throw new Error('--top must be a nonnegative integer');
-      options.top = Number(value);
+      if (!/^\d+$/.test(value ?? '') || !Number.isSafeInteger(Number(value)) || Number(value) < min) throw new Error(`${arg} must be an integer of at least ${min}`);
+      options[key] = Number(value);
     } else if (arg.startsWith('-') || snapshotPath) throw new Error(`unexpected argument: ${arg}`);
     else snapshotPath = arg;
   }
@@ -203,26 +202,27 @@ async function main(args) {
   const season = schedule.season ?? '2026-27';
   const seasonStart = schedule.games.map((g) => g.date).sort()[0];
   const { logs, coverage } = await loadProjectionLogs(season, { asOf: snapshot.asOf, from: seasonStart });
-  const projections = projectPlayers(priors, ids, logs, { k: options.minutesK ?? 2, asOf: coverage.checkedAt });
+  const projections = projectPlayers(priors, ids, logs, { k: minutesK ?? 2, asOf: coverage.checkedAt });
   const fromDate = options.fromDate ?? tomorrow(snapshot.asOf);
   const from = snapshot.matchup.start, to = [addDays(fromDate, -1), snapshot.matchup.end].sort()[0];
+  let volumeStatus;
   const missingVolume = (side) => !['fgm', 'fga', 'ftm', 'fta'].every((k) => Number.isFinite(snapshot.matchup.volume?.[side]?.[k]));
   if (to >= from && ['mine', 'opponent'].some(missingVolume)) {
     const slots = snapshot.settings.rosterPositions.filter((p) => !['BN', 'IL', 'IL+'].includes(p.slot))
       .reduce((sum, p) => sum + p.count, 0);
-    options.volumeStatus = {};
+    volumeStatus = {};
     snapshot.matchup.volume ??= {};
     for (const [side, players] of [['mine', snapshot.team.roster], ['opponent', snapshot.matchup.opponentRoster]]) {
-      if (!missingVolume(side)) { options.volumeStatus[side] = { status: 'reported' }; continue; }
+      if (!missingVolume(side)) { volumeStatus[side] = { status: 'reported' }; continue; }
       const roster = players.map((p) => ({ ...p, espnId: findPlayer(ids.players, p.name, p.nbaTeam).player?.espnId }));
       const result = estimateVolume({ roster, totals: snapshot.matchup.totals?.[side], logs, from, to, slots });
-      options.volumeStatus[side] = result;
+      volumeStatus[side] = result;
       if (result.status === 'matched') {
         snapshot.matchup.volume[side] = Object.fromEntries(['fgm', 'fga', 'ftm', 'fta'].map((k) => [k, result[k]]));
       }
     }
   }
-  const report = { ...advise(snapshot, { ...options, ids, priors, schedule, roles, projections, preferences }), freshness };
+  const report = { ...planWeek({ snapshot, schedule, projections, ids, roles, preferences, volumeStatus, options }), freshness };
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   const gitOptions = { cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), encoding: 'utf8' };
   const provenance = {
@@ -236,7 +236,7 @@ async function main(args) {
   };
   const saved = await saveDecision({ report, options: { ...report.options, ...freshnessOptions, maxAgeHours: freshness.maxAgeHours, allowStale: freshnessOptions.allowStale ?? false }, provenance, projections });
   report.decisionId = saved.id;
-  const text = formatAdvice(report);
+  const text = formatPlan(report);
   const output = path.join('local/advice', path.basename(snapshotPath));
   await mkdir(path.dirname(output), { recursive: true });
   await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);

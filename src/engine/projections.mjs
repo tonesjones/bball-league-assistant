@@ -4,7 +4,10 @@ function scale(prior, minutes) {
   return { ...prior.perGame, ...Object.fromEntries(STATS.map((stat) => [stat, (prior.perGame[stat] ?? 0) * minutes / prior.mpg])) };
 }
 
-export function projectPlayers(priors, ids, logs, { k = 2, asOf = null } = {}) {
+const isUsable = (prior) => prior?.perGame?.g > 0 && Number.isFinite(prior.mpg) && prior.mpg > 0
+  && STATS.every((stat) => Number.isFinite(prior.perGame[stat]));
+
+export function projectPlayers(priors, ids, logs, { k = 2, asOf = null, minGames = 5, minMinutes = 100 } = {}) {
   if (!Number.isFinite(k) || k <= 0) throw new Error('minutes k must be positive and finite');
   const byPrior = new Map(ids.players.filter((p) => p.priorName).map((p) => [p.priorName, String(p.espnId)]));
   const byId = new Map();
@@ -23,8 +26,7 @@ export function projectPlayers(priors, ids, logs, { k = 2, asOf = null } = {}) {
   const players = priors.map((prior) => {
     const rows = byId.get(byPrior.get(prior.name)) ?? [];
     const games = rows.length, total = rows.reduce((sum, row) => sum + row.min, 0);
-    const usable = prior.perGame?.g > 0 && Number.isFinite(prior.mpg) && prior.mpg > 0
-      && STATS.every((stat) => Number.isFinite(prior.perGame[stat]));
+    const usable = isUsable(prior);
     const mpg = usable ? (k * prior.mpg + total) / (k + games) : null;
     const minutes = { games, starts: rows.filter((row) => row.starter && !row.didNotPlay).length,
       prior: prior.mpg ?? null, season: games ? total / games : null, projected: mpg, asOf };
@@ -43,9 +45,24 @@ export function projectPlayers(priors, ids, logs, { k = 2, asOf = null } = {}) {
     const perGame = !usable ? null : rates.perMinute
       ? { ...prior.perGame, ...Object.fromEntries(STATS.map((stat) => [stat, rates.perMinute[stat] * mpg])) }
       : scale(prior, mpg);
-    return { ...prior, original: prior, mpg, minutes, rates, perGame };
+    return { ...prior, source: 'prior', original: prior, mpg, minutes, rates, perGame };
   });
-  return { players, k, asOf, version: 'current-season-rates-v4' };
+  const priorByName = new Map(priors.map((prior) => [prior.name, prior]));
+  const seasonOnly = ids.players.filter((p) => p.espnId != null && !isUsable(priorByName.get(p.priorName)))
+    .map((p) => String(p.espnId)).filter((id, i, all) => all.indexOf(id) === i).sort()
+    .flatMap((id) => {
+      const rows = byId.get(id) ?? [];
+      const games = rows.length, total = rows.reduce((sum, row) => sum + row.min, 0);
+      if (games < minGames && total < minMinutes) return [];
+      const stat = (row, key) => row.didNotPlay ? 0 : row[key];
+      if (!rows.every((row) => STATS.every((key) => Number.isFinite(stat(row, key)) && stat(row, key) >= 0))) return [];
+      const mpg = total / games;
+      const perGame = { ...Object.fromEntries(STATS.map((key) => [key, rows.reduce((sum, row) => sum + stat(row, key), 0) / games])), g: games };
+      return [{ name: `espn:${id}`, espnId: id, source: 'season-only', perGame, mpg,
+        minutes: { games, starts: rows.filter((row) => row.starter && !row.didNotPlay).length,
+          prior: null, season: mpg, projected: mpg, asOf }, original: null, rates: null }];
+    });
+  return { players: [...players, ...seasonOnly], k, asOf, version: 'current-season-rates-v4' };
 }
 
 // These endpoints deliberately stay fixed; more games update the blend, not the prior endpoint.

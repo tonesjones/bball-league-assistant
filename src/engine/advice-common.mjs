@@ -1,7 +1,7 @@
 import { findPlayer, normalizeName } from './names.mjs';
 import { seasonValues } from './season-value.mjs';
 
-export const MODEL_VERSION = 7;
+export const MODEL_VERSION = 8;
 
 // Yahoo's "Oct 25" as a date on or after the matchup start.
 export function monthDay(value, window, what) {
@@ -38,11 +38,12 @@ export const identity = (p) => p.espnId ?? normalizeName(p.name);
 
 export function matchPlayers({ ids, priors, poolSize }) {
   const unscored = [], priorByName = new Map(priors.map((p) => [p.name, p]));
-  const values = seasonValues(priors, { poolSize });
+  const values = seasonValues(priors, { poolSize, poolFilter: (p) => p.source !== 'season-only' });
   const match = (players, where) => players.map((p) => {
     const { player, reason } = findPlayer(ids.players, p.name, p.nbaTeam);
-    const prior = priorByName.get(player?.priorName);
-    const season = values.get(player?.priorName);
+    let prior = priorByName.get(player?.priorName);
+    if (player && !prior?.perGame) prior = priorByName.get(`espn:${player.espnId}`) ?? prior;
+    const season = values.get(prior?.name);
     const unscoredReason = reason ?? (prior?.minutes && !prior.perGame ? 'no usable prior minutes or rates'
       : prior?.perGame ? 'no games in prior' : 'no prior');
     if (!season) unscored.push({ ...p, where, reason: unscoredReason });
@@ -63,6 +64,6 @@ export function dropBlock(drop, pickup, start, { coreSet, streamSet, openSpots, 
     : ['IL', 'IL+'].includes(drop.slot) && openSpots <= 0 ? 'ilCapacity'
       : drop.locks?.some((lock) => lock.date >= start) ? 'lineupLock'
         : streamSet.has(name) || planPickups.some((p) => identity(p) === identity(drop)) ? null
-          : !drop.season || drop.prior?.source === 'season-only' ? 'noPrior' : drop.season.rank <= protectRank ? 'rank'
+          : !drop.season || (drop.prior?.source ?? 'prior') !== 'prior' ? 'noPrior' : drop.season.rank <= protectRank ? 'rank'
             : pickup.season.value < drop.season.value + seasonMargin ? 'seasonValue' : null;
 }

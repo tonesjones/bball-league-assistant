@@ -436,7 +436,7 @@ real planner run (week of Oct 26) reserves an add because 21 free agents rank in
 `protectRank` under some minutes or rate case. It finds 5 starts from 3 adds (6 from 4 with
 `--adds-week transaction`), not the hand plan's 7, because Monday has only SF and F open and
 Wednesday has none. Next: Tony reviews #32, #37 and #38. After #32 merges, every refresh runs
-the daily pilot routine (refresh, `refresh:analyze`, `pilot:prepare`, chatbot arm, three logged
+the daily pilot routine (refresh, `refresh:analyze`, `pilot:prepare` (removed in PR 3), chatbot arm, three logged
 entries, Tony's ratings). Open: whether the any-case `protectRank` hold rule is too loose this
 early in the season.
 
@@ -514,7 +514,7 @@ season's per-minute rates. Open decision before the pilot: bring per-minute rate
 forward from 5f, or withhold a drop when the player's season per-minute production beats the
 prior and few games are observed. Hold and insufficient-evidence examples still need review.
 
-**2026-10-22, player evidence and transaction history.** `npm run evidence` reports season and
+**2026-10-22, player evidence and transaction history.** `npm run evidence` (removed in PR 3) reports season and
 last-seven-day production from ESPN box scores for my roster, the opponent and the first 100
 available players: minutes, starts, shot volume, true shooting and an estimated USG%, with
 games observed. It also appends each transaction group seen in a saved snapshot to a private

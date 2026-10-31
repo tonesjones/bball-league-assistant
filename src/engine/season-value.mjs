@@ -24,12 +24,14 @@ function score(players, pool) {
   });
 }
 
-export function seasonValues(priors, { poolSize = 150, fullSeasonGames = 70 } = {}) {
+export function seasonValues(priors, { poolSize = 150, fullSeasonGames = 70, poolFilter = () => true } = {}) {
   const players = priors.filter((p) => p.perGame && p.perGame.g > 0);
   if (!players.length) return new Map();
-  const first = score(players, players).sort((a, b) => b.perGameZ - a.perGameZ || a.name.localeCompare(b.name));
-  const byName = new Map(players.map((p) => [p.name, p]));
-  const pool = first.slice(0, Math.min(poolSize, players.length)).map((p) => byName.get(p.name));
+  const base = players.filter(poolFilter);
+  if (!base.length) return new Map();
+  const first = score(base, base).sort((a, b) => b.perGameZ - a.perGameZ || a.name.localeCompare(b.name));
+  const byName = new Map(base.map((p) => [p.name, p]));
+  const pool = first.slice(0, Math.min(poolSize, base.length)).map((p) => byName.get(p.name));
   const values = score(players, pool).map((p) => ({ ...p,
     value: p.perGameZ > 0 ? p.perGameZ * Math.min(1, p.games / fullSeasonGames) : p.perGameZ,
   })).sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));

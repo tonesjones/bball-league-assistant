@@ -15,12 +15,9 @@
     "match:ids": "node scripts/match-ids.mjs",
     "fetch:gamelogs": "node scripts/fetch-gamelogs.mjs",
     "bakeoff": "node scripts/bakeoff.mjs",
-    "pilot:prepare": "node scripts/prepare-pilot.mjs",
     "advise": "node scripts/advise.mjs",
     "brief": "node scripts/brief.mjs",
-    "evidence": "node scripts/player-evidence.mjs",
     "refresh:analyze": "node scripts/analyze-refresh.mjs",
-    "stream": "node scripts/stream-plan.mjs",
     "review": "node scripts/review.mjs"
   }
 }

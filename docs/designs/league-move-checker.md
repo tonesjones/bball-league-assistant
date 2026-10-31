@@ -1216,6 +1216,18 @@ impossible. Leave the rest of the document unchanged.
 *   **PR 2, earlier pickups as drops.** Step 6 lists earlier pickups first,
     but they still go through `dropBlock` with `planPickups`. A pickup named
     as core stays protected.
+*   **PR 3, season-only players and ranks (item 5a).** The spec promised
+    that adding season-only players leaves prior-backed players' season
+    values unchanged. It holds for values, not ranks. Season-only players
+    are ranked with everyone else, so a prior-backed player can drop a rank,
+    which can move him across the `protectRank` line. Tony confirmed on
+    2026-10-31 that season-only players count in the ranking.
+*   **PR 3, a negative `--margin`.** `seasonMargin` may be negative, as
+    `advise` allowed before. The planner checks only that it is finite.
+*   **PR 3, `refresh:analyze` check.** On the 2026-10-30-2200 capture, the
+    game-logs stage failed on an ESPN box score ("invalid minutes"). That
+    code is unchanged by PR 3. The report check ran `npm run advise` on the
+    snapshot that run built.
 
 --------------------------------------------------------------------------------
 

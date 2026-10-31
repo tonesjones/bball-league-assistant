@@ -122,11 +122,6 @@ displaced starters and marks missing evidence unscored. Category changes describ
 fixed-lineup counterfactuals; overlapping suggestions are not a weekly plan. Old rehearsals
 without replay evidence cannot be made scored decisions after the fact.
 
-`npm run pilot:prepare -- <decisionId>` writes a unique private rehearsal packet with the same
-Yahoo snapshot, ESPN evidence, projections, schedule, IDs and roles for the chatbot, plus input
-hashes and the candidate prompt. It excludes tool recommendations. It does not start the pilot;
-see [the comparison protocol](docs/bakeoff-prompt.md) for the versioned pilot.
-
 Minutes blend this season's eligible games with two prior pseudo-games. `--minutes-k` changes
 that starting weight; it is not calibrated. Rates per minute remain from the prior season.
 Reports show observed games/starts, prior/season/projected MPG and four fixed pickup/drop
@@ -135,30 +130,6 @@ nominal score must reach the bar: 0.15 expected categories with a drop (`--hold-
 for an add-only move into an open spot (`--add-only-below`). Fixed prior-MPG scenarios do not
 converge as more games arrive, so uncertainty may continue to withhold a move. This is a minutes update, not a current-season rate model.
 
-## Current-season player evidence
-
-After the browser refresh, snapshot build and ESPN game-log refresh, run:
-
-```
-npm run evidence -- local/snapshots/YYYY-MM-DD-HHmm.json
-```
-
-This saves readable Markdown and JSON in ignored `local/evidence/`: your roster, opponent
-data in JSON, and the first 100 available players captured from Yahoo. Yahoo supplies league
-membership, status, waiver dates and transactions. ESPN supplies actual production, minutes,
-starts, shot attempts, shooting efficiency and estimated usage, for the season and last seven
-days. Last-game lines and per-36 rates are also retained in JSON. Unmatched players and missing
-inputs remain unknown. List order follows Yahoo and is not a new recommendation ranking.
-
-Estimated USG% uses the documented box-score formula with recorded team/player minutes and
-possession-exposure weighting across games. It is not official NBA on-court USG%, and it does
-not change the recommendation score. The source and method are included in each report.
-
-The command backfills saved snapshots and appends unseen transaction groups to ignored
-`local/transactions/history.jsonl`, deduplicating by season, team, displayed time and moves.
-Repeated observations do not create duplicates, and events remain after they disappear from
-Yahoo's recent list. This tracks only observed events; it cannot recover earlier unseen moves.
-Tracking runs when the evidence command runs; no background schedule is installed.
 
 ## Priors from Draft Lab
 
