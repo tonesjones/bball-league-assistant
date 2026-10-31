@@ -17,9 +17,9 @@ const categories = (line) => ({
   'FT%': line.fta ? line.ftm / line.fta : 0,
 });
 
-export function strongLine(priors, { poolSize = 150 } = {}) {
-  const values = seasonValues(priors, { poolSize });
-  const pool = priors.filter((p) => values.get(p.name)?.rank <= poolSize).map((p) => p.perGame);
+export function strongLine(priors, { poolSize = 150, poolFilter = () => true } = {}) {
+  const values = seasonValues(priors, { poolSize, poolFilter });
+  const pool = priors.filter((p) => poolFilter(p) && values.get(p.name)?.rank <= poolSize).map((p) => p.perGame);
   if (!pool.length) throw new Error('strong line requires a nonempty prior pool');
   const percentile = (numbers, q) => numbers.sort((a, b) => a - b)[Math.ceil(q * numbers.length) - 1] ?? 0;
   const line = Object.fromEntries(KEYS.map((k) => [k, percentile(pool.map((p) => p[k] ?? 0), k === 'to' ? 0.1 : 0.9)]));

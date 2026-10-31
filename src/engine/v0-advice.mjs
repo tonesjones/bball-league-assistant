@@ -44,7 +44,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   const mine = project(roster, 'mine'), opponent = project(opponentRoster, 'opponent');
   let fill;
   const filled = (players, side, zero, swap) => zero.unknownGames
-    ? project(players, side, swap, fill ??= strongLine(priors, { poolSize })) : zero;
+    ? project(players, side, swap, fill ??= strongLine(priors, { poolSize, poolFilter: (p) => p.source !== 'season-only' })) : zero;
   const mineScenarios = [mine, filled(roster, 'mine', mine)];
   const opponentScenarios = [opponent, filled(opponentRoster, 'opponent', opponent)];
   const outlooks = (lineups) => lineups.flatMap((m) => opponentScenarios.map((o) => needs(m, o, phi, scoring)));

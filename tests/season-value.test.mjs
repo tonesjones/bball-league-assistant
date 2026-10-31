@@ -70,3 +70,16 @@ test('skips absent and zero-game lines; stable ties have contiguous ranks and de
   assert.deepEqual(priors, before);
   assert.deepEqual(seasonValues([]), new Map());
 });
+
+test('season-only players scale by g/70, stay out of the pool and leave other values unchanged', () => {
+  const priors = [player('Aster'), player('Bramble', { pts: 20, reb: 8 }), player('Clover', { to: 4 })];
+  const rookie = { ...player('espn:9', { pts: 30, g: 7 }), source: 'season-only' };
+  const poolFilter = (p) => p.source !== 'season-only';
+  const before = seasonValues(priors, { poolFilter });
+  const after = seasonValues([...priors, rookie], { poolFilter });
+  for (const p of priors) near(after.get(p.name).value, before.get(p.name).value);
+  const unscaled = seasonValues([...priors, { ...rookie, perGame: { ...rookie.perGame, g: 70 } }], { poolFilter });
+  near(after.get('espn:9').value, unscaled.get('espn:9').value / 10);
+  assert.ok(after.get('espn:9').perGameZ > 0);
+  assert.notEqual(seasonValues([...priors, rookie]).get('Aster').value, before.get('Aster').value);
+});

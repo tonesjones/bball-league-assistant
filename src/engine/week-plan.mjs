@@ -89,7 +89,8 @@ export function planWeek({ snapshot, schedule, projections, ids, roles = {}, pro
     snapshot.matchup.totals?.[side], snapshot.matchup.volume?.[side], snapshot.settings, windowSchedule, fromDate, window.end,
     swaps, fillLine, { preferPickups });
   let strong;
-  const fill = () => (strong ??= strongLine(priors, { poolSize }));
+  const priorBacked = (p) => p.source !== 'season-only';
+  const fill = () => (strong ??= strongLine(priors, { poolSize, poolFilter: priorBacked }));
 
   const opponent = project(opponentRoster, 'opponent');
   const opponentScenarios = [opponent, opponent.unknownGames ? project(opponentRoster, 'opponent', null, fill()) : opponent];
@@ -241,7 +242,7 @@ export function planWeek({ snapshot, schedule, projections, ids, roles = {}, pro
   }
 
   // Step 10: the cautious case. The pickup takes his lowest-value case and the drop his highest.
-  const valueOf = (prior, line) => seasonValues(priors.map((x) => (x === prior ? line : x)), { poolSize }).get(prior.name)?.value;
+  const valueOf = (prior, line) => seasonValues(priors.map((x) => (x === prior ? line : x)), { poolSize, poolFilter: priorBacked }).get(prior.name)?.value;
   const extremeCase = (prior, better) => {
     if (!prior?.original || !prior.perGame) return prior;
     let chosen = null;
