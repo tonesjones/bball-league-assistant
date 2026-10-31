@@ -183,7 +183,6 @@ The individual commands remain available for debugging:
 ```
 node scripts/build-snapshot.mjs local/raw/<timestamp>
 npm run fetch:gamelogs -- --season 2026-27 --snapshot local/snapshots/<timestamp>.json
-npm run evidence -- local/snapshots/<timestamp>.json
 ```
 
 The browser remains the source for league membership, available players, matchup state and

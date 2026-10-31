@@ -1,7 +1,7 @@
 import { findPlayer, normalizeName } from './names.mjs';
 import { seasonValues } from './season-value.mjs';
 
-export const MODEL_VERSION = 7;
+export const MODEL_VERSION = 8;
 
 // Yahoo's "Oct 25" as a date on or after the matchup start.
 export function monthDay(value, window, what) {

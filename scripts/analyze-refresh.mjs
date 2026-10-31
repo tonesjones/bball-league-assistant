@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const rawDir = process.argv[2];
@@ -21,7 +21,7 @@ if (earlier.length) {
 }
 mkdirSync(logDir, { recursive: true });
 // status.json says which steps finished, so a failed run is never mistaken for a complete one.
-const stages = Object.fromEntries(['snapshot', 'game-logs', 'evidence', 'advice'].map((s) => [s, 'not run']));
+const stages = Object.fromEntries(['snapshot', 'game-logs', 'advice'].map((s) => [s, 'not run']));
 const status = { capture: path.resolve(rawDir), stages, failedStep: null, decisionId: null };
 const saveStatus = () => writeFileSync(path.join(logDir, 'status.json'), `${JSON.stringify(status, null, 2)}\n`);
 function run(script, args, label) {
@@ -46,31 +46,13 @@ saveStatus();
 run('build-snapshot.mjs', [path.resolve(rawDir)], 'snapshot');
 const schedule = JSON.parse(readFileSync(path.join(root, 'data/schedule-2026-27.json'), 'utf8'));
 run('fetch-gamelogs.mjs', ['--season', schedule.season, '--snapshot', snapshotPath], 'game-logs');
-run('player-evidence.mjs', [snapshotPath], 'evidence');
 run('advise.mjs', [snapshotPath], 'advice');
-const evidencePath = path.join(root, 'local/evidence', `${stamp}.json`);
-const evidence = JSON.parse(readFileSync(evidencePath, 'utf8'));
 const advice = JSON.parse(readFileSync(path.join(root, 'local/advice', `${stamp}.json`), 'utf8'));
 status.decisionId = advice.decisionId;
 saveStatus();
-console.log(`\nAs of: ${advice.asOf}\nDecision: ${advice.decision.action} (${advice.decisionId})`);
-if (advice.decision.reason) console.log(advice.decision.reason);
-if (advice.decision.pair) {
-  const p = advice.decision.pair;
-  console.log(`Add ${p.pickup.name}; ${p.drop ? `drop ${p.drop.name}` : 'no drop (open roster spot)'}; approximate category gain ${p.score.toFixed(3)}`);
-  console.log(`Scenario gain range: ${p.scoreRange.map((n) => n.toFixed(3)).join(' to ')}`);
-  for (const [category, change] of Object.entries(p.changes)) {
-    console.log(`${category}: projected total change ${change.total.toFixed(3)}; approximate category probability change ${change.pWin.toFixed(3)}`);
-  }
-}
-for (const [category, outlook] of Object.entries(advice.baseline?.categories ?? {})) {
-  if (outlook.label === 'unknown') console.log(`${category}: unknown; excluded from score`);
-}
-console.log(`Adds left: ${advice.addsLeft}; unknown starts: yours ${advice.unknownGames.mine}, opponent ${advice.unknownGames.opponent}`);
-console.log(`Newly archived transaction groups: ${evidence.transactions.newlyArchived}`);
-for (const r of evidence.transactions.newlyArchivedEvents) {
-  console.log(`${r.event.team} (${r.event.time}): ${r.event.moves.map((m) => `${m.type} ${m.player}${m.faab != null ? ` ($${m.faab})` : ''}`).join('; ')}`);
-}
-console.log('Newly archived means first seen in saved captures, not necessarily made since the previous refresh.');
+// Report sections 1, 2 and 8 come from the same code that formats the full report.
+const { planSummary } = await import(pathToFileURL(path.join(root, 'scripts/advise.mjs')).href);
+console.log(`\nDecision: ${advice.decisionId}`);
+console.log(planSummary(advice).join('\n'));
 console.log('Limitations: early season sample; prior-season per-minute rates; approximate category scores. See docs/limitations.md.');
-console.log(`Evidence: ${evidencePath.replace(/\.json$/, '.md')}\nFull advice: ${path.join(logDir, 'advice.txt')}\nStep logs: ${logDir}`);
+console.log(`Full advice: ${path.join(logDir, 'advice.txt')}\nStep logs: ${logDir}`);

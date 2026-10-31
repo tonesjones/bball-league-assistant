@@ -30,7 +30,8 @@ function checkOptions(o) {
     if (!(Number.isInteger(o[k]) || k === 'beam' && o[k] === Infinity) || o[k] < 1) throw new Error(`${k} must be a positive integer`);
   }
   if (!Number.isInteger(o.maxSteps) || o.maxSteps < 0) throw new Error('maxSteps must be a nonnegative integer');
-  for (const k of ['dropBar', 'addBar', 'seasonMargin']) {
+  if (!Number.isFinite(o.seasonMargin)) throw new Error('seasonMargin must be a finite number');
+  for (const k of ['dropBar', 'addBar']) {
     if (!Number.isFinite(o[k]) || o[k] < 0) throw new Error(`${k} must be a nonnegative finite number`);
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(o.fromDate)) throw new Error('fromDate must be YYYY-MM-DD');

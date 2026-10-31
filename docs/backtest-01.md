@@ -65,6 +65,6 @@ Prior MPG below 25: selected 0.9133, k=2 0.9122.
 
 ## Reproduce
 
-`node scripts/calibrate-projections.mjs`
+Removed in PR 3; run it from the commit before that PR.
 
 Historical inputs are cached under ignored local/calibration/. The protocol, selected weight, dataset and full results are saved there. No Yahoo input is part of this calibration.

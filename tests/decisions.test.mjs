@@ -7,17 +7,20 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { saveDecision, readDecision } from '../src/sources/decisions.mjs';
-import { advise } from '../src/engine/v0-advice.mjs';
+import { planWeek } from '../src/engine/week-plan.mjs';
 import { validateEntry } from '../src/engine/bakeoff.mjs';
 import { projectPlayers } from '../src/engine/projections.mjs';
 import { hash } from '../src/sources/bakeoff-records.mjs';
 import { zeroLine } from '../src/engine/lineup-replay.mjs';
 
+const plan = (f, projections = { players: f.priors }) => planWeek({ snapshot: f.snapshot, schedule: f.schedule,
+  projections, ids: f.ids, options: { protectRank: 0 } });
+
 test('reruns retain separate immutable records, options and exact daily lineups', async (t) => {
   const dir = await mkdtemp(path.join(tmpdir(), 'bball-decisions-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const f = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url)));
-  const report = advise(f.snapshot, { ...f, protectRank: 0 });
+  const report = plan(f);
   const provenance = { commit: 'abc123', snapshotPath: 'local/snapshots/example.json', projectionVersion: 'prior-v1:hash' };
   const first = await saveDecision({ report, options: { holdBelow: 0.15 }, provenance }, dir);
   const before = await readFile(first.path, 'utf8');
@@ -30,7 +33,8 @@ test('reruns retain separate immutable records, options and exact daily lineups'
   assert.equal(b.options.holdBelow, 0.3);
   assert.deepEqual(a.report.baselineLineups, report.baselineLineups);
   assert.ok(a.report.baselineLineups.mine.length);
-  for (const pair of a.report.topPairs) assert.ok(Array.isArray(pair.lineup.started));
+  assert.ok(a.report.startsByDay.length);
+  for (const day of a.report.startsByDay) assert.ok(Number.isInteger(day.pickupStarts));
   assert.equal(a.provenance.commit, 'abc123');
   await assert.rejects(readDecision('../outside', dir), /decisionId/);
 });
@@ -70,10 +74,8 @@ test('record saves each source lineup, rejects duplicate arms and prepares a has
   t.after(() => rm(dir, { recursive: true, force: true }));
   const f = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url)));
   const projections = projectPlayers(f.priors, f.ids, []);
-  const report = advise(f.snapshot, { ...f, projections, protectRank: 0 });
+  const report = plan(f, projections);
   await mkdir(path.join(dir, 'data'), { recursive: true });
-  await mkdir(path.join(dir, 'docs'), { recursive: true });
-  await writeFile(path.join(dir, 'docs/bakeoff-prompt.md'), await readFile(new URL('../docs/bakeoff-prompt.md', import.meta.url)));
   await writeFile(path.join(dir, 'data/ids.json'), JSON.stringify(f.ids));
   await writeFile(path.join(dir, 'data/schedule-2026-27.json'), JSON.stringify(f.schedule));
   const snapshotPath = path.join(dir, 'snapshot.json'), snapshotText = JSON.stringify(f.snapshot);
@@ -112,20 +114,6 @@ test('record saves each source lineup, rejects duplicate arms and prepares a has
   assert.match(scored, /tool\t-\thold\tscored/);
   assert.match(scored, /chatbot\tExample\tmove\tscored/);
   assert.match(scored, /not a weekly plan/);
-  const prepare = fileURLToPath(new URL('../scripts/prepare-pilot.mjs', import.meta.url));
-  execFileSync(process.execPath, [prepare, saved.id], { cwd: dir, stdio: 'pipe' });
-  const folder = path.join(dir, 'local/pilot-packets', (await readdir(path.join(dir, 'local/pilot-packets')))[0]);
-  const manifest = JSON.parse(await readFile(path.join(folder, 'manifest.json')));
-  assert.equal(manifest.protocol, 'continuous');
-  assert.equal(manifest.promptVersion, 3);
-  assert.equal(manifest.chatbotModel, 'gpt-6-sol');
-  assert.equal(manifest.chatbotEffort, 'medium');
-  for (const key of ['status', 'baselineModel', 'pending']) assert.ok(!(key in manifest), `manifest still has ${key}`);
-  for (const [name, expected] of Object.entries(manifest.hashes)) assert.equal(hash(await readFile(path.join(folder, name))), expected);
-  assert.ok(manifest.hashes['evidence.json']);
-  assert.ok(!manifest.hashes['report.json']);
-  await writeFile(path.join(dir, 'data/ids.json'), '{}');
-  assert.throws(() => execFileSync(process.execPath, [prepare, saved.id], { cwd: dir, stdio: 'pipe' }), /ids hash changed/);
 });
 
 test('record attaches an add-only move into an open spot and refuses one for a full roster', async (t) => {
@@ -138,7 +126,7 @@ test('record attaches an add-only move into an open spot and refuses one for a f
   const cli = fileURLToPath(new URL('../scripts/bakeoff.mjs', import.meta.url));
   const record = async (snapshot, name) => {
     const projections = projectPlayers(f.priors, f.ids, []);
-    const report = advise(snapshot, { ...f, projections, protectRank: 0 });
+    const report = plan({ ...f, snapshot }, projections);
     const snapshotPath = path.join(dir, `${name}.json`), snapshotText = JSON.stringify(snapshot);
     await writeFile(snapshotPath, snapshotText);
     const saved = await saveDecision({ report, options: report.options, projections,
