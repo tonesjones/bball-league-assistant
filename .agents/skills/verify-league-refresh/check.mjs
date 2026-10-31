@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { startReviewServer, codeVersion } from '../../../scripts/review.mjs';
 import { snapshotFreshness } from '../../../scripts/advise.mjs';
-import { MODEL_VERSION } from '../../../src/engine/v0-advice.mjs';
+import { MODEL_VERSION } from '../../../src/engine/advice-common.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const json = async (file) => JSON.parse(await readFile(file, 'utf8'));

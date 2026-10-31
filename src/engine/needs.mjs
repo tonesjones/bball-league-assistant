@@ -1,6 +1,7 @@
 import { CATEGORIES } from '../sources/yahoo-pages/common.mjs';
 import { addDays } from './weeks.mjs';
 import { seasonValues } from './season-value.mjs';
+import { identity } from './advice-common.mjs';
 
 export const STAT = { '3PM': 'fg3m', PTS: 'pts', REB: 'reb', AST: 'ast', STL: 'stl', BLK: 'blk', TO: 'to' };
 export const DEFAULT_PHI = { PTS: 4, REB: 1.5, AST: 1.5, '3PM': 1.5, STL: 1.2, BLK: 1.5, TO: 1.2 };
@@ -73,23 +74,26 @@ export function dayLineup(players, settings, teams, date, preferred = []) {
 }
 
 // Roster entries carry their matched prior. A swap takes effect on its start date; a swap with
-// no drop adds the pickup to an open spot.
-export function projectTeam(roster, totals, volume, settings, schedule, fromDate, endDate, swap = null, fill = null) {
+// no drop adds the pickup to an open spot. `swap` may be an array: swaps apply in start order and
+// match their drop by identity, so a later swap can drop an earlier swap's pickup.
+export function projectTeam(roster, totals, volume, settings, schedule, fromDate, endDate, swap = null, fill = null, { preferPickups = false } = {}) {
   const remaining = empty(), banked = empty(), started = [], unknownStarts = [];
   let unknownGames = 0;
   for (const [c, k] of Object.entries(STAT)) banked[k] = totals?.[c] ?? 0;
   for (const k of ['fgm', 'fga', 'ftm', 'fta']) banked[k] = volume?.[k] ?? 0;
   const cap = settings.maxGamesPerWeek ?? Infinity;
+  const swaps = [].concat(swap ?? []).sort((a, b) => a.start.localeCompare(b.start));
   const teamsByDate = new Map();
   for (const g of schedule.games) {
     if (!teamsByDate.has(g.date)) teamsByDate.set(g.date, new Set());
     teamsByDate.get(g.date).add(g.home).add(g.away);
   }
   for (let date = fromDate; date <= endDate && started.length < cap; date = addDays(date, 1)) {
-    const players = swap && date >= swap.start
-      ? swap.drop ? roster.map((p) => p === swap.drop ? { ...swap.pickup, slot: 'BN' } : p)
-        : [...roster, { ...swap.pickup, slot: 'BN' }] : roster;
-    const preferred = swap?.startPickup && date >= swap.start ? [swap.pickup.name] : [];
+    const live = swaps.filter((s) => date >= s.start);
+    const players = live.reduce((list, s) => s.drop
+      ? list.map((p) => identity(p) === identity(s.drop) ? { ...s.pickup, slot: 'BN' } : p)
+      : [...list, { ...s.pickup, slot: 'BN' }], roster);
+    const preferred = live.filter((s) => s.startPickup || preferPickups).map((s) => s.pickup.name);
     for (const { player: p, slot } of dayLineup(players, settings, teamsByDate.get(date), date, preferred).starters) {
       if (started.length >= cap) break;
       started.push({ name: p.name, espnId: p.espnId ?? null, date, slot });

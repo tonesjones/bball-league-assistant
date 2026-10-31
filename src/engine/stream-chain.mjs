@@ -1,5 +1,5 @@
 import { assignLineup, BLOCKED } from './needs.mjs';
-import { pickupStart, normalizeRoles } from './v0-advice.mjs';
+import { pickupStart, normalizeRoles } from './advice-common.mjs';
 import { normalizeName, findPlayer } from './names.mjs';
 import { seasonValues } from './season-value.mjs';
 import { minutesCase } from './projections.mjs';
