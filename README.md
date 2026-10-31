@@ -75,6 +75,31 @@ The replay prints, for each decision you recorded, what the engine's action and 
 
 Everything the tool reads from Yahoo or writes about your team goes in `local/`, which Git ignores: `raw/`, `snapshots/`, `refreshes/`, `advice/`, `decisions/`, `briefs/` and `bakeoff.jsonl`. Preferences that change advice, such as protected players, live in `local/protected.json` and `local/preferences.json`. Another checkout needs its own copies.
 
+## Subdirectories and system boundaries
+
+- `scripts/`: [`scripts/README.md`](scripts/README.md). The command-line entry points behind the `npm run` commands, and the Yahoo URL guard hook.
+- `src/`: [`src/README.md`](src/README.md). Library code, split into [`src/engine/`](src/engine/README.md) (pure planning and scoring, no I/O) and [`src/sources/`](src/sources/README.md) (ESPN fetching, Yahoo page parsing, validation and storage).
+- `tests/`: `node:test` suites with small synthetic fixtures in `tests/fixtures/`.
+- `data/`: generated inputs: `data/priors/`, `data/ids.json` and `data/schedule-2026-27.json`.
+- `docs/`, `tasks/`: how-to guides, the design in `docs/designs/`, data sources and task specs.
+
+## Global invariants
+
+- The tool reads Yahoo and never changes anything there. `.claude/settings.json` denies the browser click, type, form and script tools. On `navigate` and `preview_start` calls, `scripts/guard-yahoo-url.mjs` blocks any Yahoo URL that `src/sources/yahoo-urls.mjs:checkUrl` refuses.
+- An LLM agent only saves Yahoo page text. Code in `src/` computes every number.
+- `src/engine/` does no I/O and uses no randomness, so the same inputs give the same output.
+- A change to recommendations or scores bumps `MODEL_VERSION` in `src/engine/advice-common.mjs`.
+- Anything about your league goes in `local/`, which Git ignores. Tests use synthetic fixtures only.
+
+## Global side effects
+
+- Network: ESPN's public API (`https://site.api.espn.com`), with caching in `local/cache/espn/`, at least 500 ms between requests, and backoff on 429, 500, 502, 503 and 504.
+- Files: generated data in `data/`, and everything else in `local/`. `import-draftlab.mjs --out` can write elsewhere when run directly. Decision records and briefs are never overwritten. The shadow log `local/bakeoff.jsonl` is append-only.
+
+## System verification
+
+- Run: `npm test`
+
 ## Retired work
 
 Specs for the earlier phases are in [`tasks/archive/`](tasks/archive/). [`tasks/`](tasks/) holds the first two task specs.
