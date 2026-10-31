@@ -384,3 +384,11 @@ test('a mangled other-team page throws with its page name; validate rejects a ba
   const s = buildSnapshot(pages(), ASOF);
   assert.throws(() => validate({ ...s, league: { teams: [{ teamNumber: 0, roster: [] }] } }), /league\.teams\[0\]/);
 });
+
+test('transactions retain traded players without counting them as waiver adds', () => {
+  const text = 'Recent Transactions\nFAB Offers\nExample Guard POR - PG O\nTraded to\nFixture Team\nOct 30, 1:22 am\nExample Center MIL - C\nTraded to\nOther Fixture\nOct 30, 1:22 am\nYahoo Sports - NBC';
+  assert.deepEqual(parseTransactions(text), [
+    {team: 'Fixture Team', time: 'Oct 30, 1:22 am', moves: [{player: 'Example Guard', nbaTeam: 'POR', type: 'trade', faab: null}]},
+    {team: 'Other Fixture', time: 'Oct 30, 1:22 am', moves: [{player: 'Example Center', nbaTeam: 'MIL', type: 'trade', faab: null}]},
+  ]);
+});

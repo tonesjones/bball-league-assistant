@@ -23,6 +23,20 @@ when there are too few games. New checkouts do not include ignored local inputs.
 The `yahoo-reader` agent (`.claude/agents/yahoo-reader.md`) runs these steps. Use it rather than a
 general agent.
 
+## Codex browser startup
+
+Discover tabs with `cua.listTabs({ browser: 'iab' })` and bind the returned tab ID.
+Do not copy a long ambient URL into `getTab`: referral parameters can change or be mistyped.
+A missing tab is a handle/discovery error, not a policy denial. Refresh the tab inventory once
+and bind its actual ID; if none exists, create the refresh tab in the same browser using an
+allowed canonical URL. Stop on an actual tool denial or blocked URL; never change browser
+providers to bypass one. Follow the runtime documentation returned by the browser tools.
+
+Use `node:fs/promises` in the browser REPL when available: write the known preflight string,
+read it back, then write each `innerText()` result directly and compare the saved string.
+Never move Yahoo text through the clipboard or reconstruct it in a shell command.
+Keep page strings in the runtime and print only save status, lengths and capture paths.
+
 ## What is enforced
 
 The browser is signed in as Tony, so the repo's Claude settings remove the ability to change

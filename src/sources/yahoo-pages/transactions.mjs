@@ -29,6 +29,7 @@ export function parseTransactions(text, page = 'transactions') {
       const waiver = /^\$(\d+(?:\.\d+)?) Waiver$/.exec(action.s);
       if (waiver) { type = 'add'; faab = Number(waiver[1]); }
       else if (action.s === 'To Waivers') type = 'drop';
+      else if (action.s === 'Traded to') type = 'trade';
       else throw fail(page, action, 'transactions layout not seen yet');
       moves.push({ player: m[1], nbaTeam: m[2], type, faab });
     }
