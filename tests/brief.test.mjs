@@ -11,98 +11,92 @@ import { readPrompt } from '../scripts/brief.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const player = (name, nbaTeam, extra = {}) => ({ name, nbaTeam, positions: ['PG'], status: null, slot: 'BN', ...extra });
-const pair = { pickup: { name: 'Casey Fiction', nbaTeam: 'CCC', status: null, games: 2 }, drop: { name: 'Drew Bench', nbaTeam: 'BBB', games: 1 },
-  dropRole: 'stream', pickupStart: '2026-10-21', score: 0.25, changes: { PTS: { total: 4.5, pWin: 0.1 }, TO: { total: -1, pWin: 0.02 } } };
+const obj = (name, nbaTeam, extra = {}) => ({ name, nbaTeam, status: null, games: 2, minutes: { games: 4, season: 24.5, prior: null }, ...extra });
 
-function inputs({ decision = { action: 'move', reason: 'clears the bar', pair } } = {}) {
+function inputs() {
   const snapshot = {
     asOf: '2026-10-20T05:00:00Z',
     settings: { rosterPositions: [{ slot: 'Util', count: 1 }, { slot: 'BN', count: 3 }, { slot: 'IL', count: 1 }] },
-    team: { roster: [player('Alex Sample', 'AAA', { slot: 'Util' }), player('Drew Bench', 'BBB'), player('Ellis Hurt', 'AAA', { slot: 'IL', status: 'O' }), player('Finn Out', 'BBB', { status: 'O' })],
-      pending: { proposedTrades: 1 } },
-    matchup: { opponentRoster: [player('Gray Rival', 'CCC', { slot: 'Util' })] },
-    freeAgents: [{ name: 'Casey Fiction', nbaTeam: 'CCC', positions: [], status: null, waiverClears: null },
-      { name: 'Hale Waiver', nbaTeam: 'AAA', positions: ['C'], status: 'GTD', waiverClears: '2026-10-22' }],
+    team: { roster: [player('Alex Sample', 'AAA', { slot: 'Util' }), player('Drew Bench', 'BBB'), player('Ellis Hurt', 'AAA', { slot: 'IL', status: 'O' })] },
+    matchup: { opponentRoster: [] }, freeAgents: [],
   };
-  const schedule = { games: [{ date: '2026-10-20', home: 'AAA', away: 'BBB' }, { date: '2026-10-21', home: 'AAA', away: 'BBB' },
-    { date: '2026-10-22', home: 'CCC', away: 'DDD' }, { date: '2026-10-23', home: 'CCC', away: 'AAA' }, { date: '2026-10-30', home: 'AAA', away: 'BBB' }] };
+  const casey = obj('Casey Fiction', 'CCC'), hale = obj('Hale Waiver', 'AAA', { minutes: { games: 9, season: 30, prior: 28.5 } }),
+    iris = obj('Iris Claim', 'DDD', { minutes: { games: 5, season: 18.25, prior: 22 } });
+  const step = (pickup) => ({ pickup, drop: null, start: '2026-10-21' });
   const record = {
-    id: 'sample', createdAt: '2026-10-20T05:10:00Z', options: { roles: { core: ['Alex Sample'], stream: ['Drew Bench'] } },
-    provenance: { modelVersion: 4 },
+    id: 'sample', createdAt: '2026-10-20T05:10:00Z', provenance: { modelVersion: 5 },
     report: {
-      asOf: snapshot.asOf, week: 1, window: { start: '2026-10-20', end: '2026-10-23' }, fromDate: '2026-10-21', addsLeft: 3,
-      baseline: { categories: {
-        PTS: { mine: 100, opponent: 90, pWin: 0.7, label: 'lean', pWinRange: [0.7, 0.7], complete: true },
-        'FG%': { mine: null, opponent: 0.47, pWin: null, label: 'unknown', pWinRange: [0.2, 0.6], complete: false },
-      } },
-      decision, topPairs: [pair], pending: { waivers: [{ order: 1, date: '2026-10-21', add: 'Iris Claim', bid: 3, drop: null }] },
-      unscored: [{ name: 'Gray Rival', nbaTeam: 'CCC', where: 'opponent', reason: 'no prior' }],
+      asOf: snapshot.asOf, week: 1, window: { start: '2026-10-20', end: '2026-10-23' }, fromDate: '2026-10-21', addsFrom: '2026-10-21',
+      action: 'add', step: step(casey), waitFor: null, plan: [step(casey)], addsLeft: 3, openSpots: 1,
+      startsByDay: [{ date: '2026-10-21', openSlots: 2, pickupStarts: true, displaced: [] },
+        { date: '2026-10-22', openSlots: 0, pickupStarts: true, displaced: ['Drew Bench'] }],
+      dependsOn: [{ player: casey, games: 4, seasonMpg: 24.5, priorMpg: null, cautiousAction: 'hold' },
+        { player: hale, games: 9, seasonMpg: 30, priorMpg: 28.5, cautiousAction: 'hold' }],
+      runnersUp: [{ step: step(hale), gain: 0.2, whyLost: 'lower-gain' }, { step: step(iris), gain: 0.1, whyLost: 'below-bar' },
+        { step: step(casey), gain: 0.05, whyLost: 'later-start' }],
+      decision: { action: 'move', pair: { pickup: casey, drop: null, pickupStart: '2026-10-21' } },
     },
   };
-  return { record, snapshot, schedule, prompt: 'PROMPT TEXT', promptVersion: 1, now: '2026-10-20T08:00:00Z' };
+  return { record, snapshot, prompt: 'PROMPT TEXT', promptVersion: 3 };
 }
 
-test('brief starts with the prompt and the as-of block', () => {
+test('every dependsOn player and runner-up appears once, in input order', () => {
+  const brief = buildBrief(inputs());
+  const at = ['Casey Fiction', 'Hale Waiver', 'Iris Claim'].map((n) => {
+    assert.equal(brief.split(`${n} (`).length - 1, 1, n);
+    return brief.indexOf(`${n} (`);
+  });
+  assert.ok(at[0] < at[1] && at[1] < at[2]);
+  assert.match(brief, /Casey Fiction \(CCC\): 4 games played, season 24\.5 MPG, prior none MPG\.\nWill this role last through 2026-10-23\?/);
+  assert.match(brief, /Hale Waiver \(AAA\): 9 games played, season 30\.0 MPG, prior 28\.5 MPG\./);
+  assert.match(brief, /Iris Claim \(DDD\): 5 games played, season 18\.3 MPG, prior 22\.0 MPG\./);
+});
+
+test('brief has the sections in order, league rules and roster facts', () => {
   const brief = buildBrief(inputs());
   assert.ok(brief.startsWith('PROMPT TEXT\n'));
-  assert.match(brief, /Snapshot \(Yahoo pages read\): 2026-10-20T05:00:00Z/);
-  assert.match(brief, /snapshot 3\.0 hours old/);
-  assert.match(brief, /Model version: 4 \| Brief prompt version: 1/);
-  assert.match(brief, /Games counted from 2026-10-21\. Adds left this week: 3/);
+  const order = ['## League rules', '## Context questions', '## Roster facts'].map((h) => brief.indexOf(h));
+  assert.ok(order[0] > 0 && order[0] < order[1] && order[1] < order[2]);
+  assert.match(brief, /PTS, REB, AST, STL, BLK, 3PM, FG%, FT%, TO/);
+  assert.match(brief, /Roster slots: Util x1, BN x3, IL x1/);
+  assert.match(brief, /Adds left this week: 3/);
+  assert.match(brief, /- Ellis Hurt \(AAA\): O/);
+  assert.match(brief, /- Alex Sample \(AAA\): healthy/);
+  assert.match(brief, /- 2026-10-21: 2 open/);
+  assert.doesNotMatch(brief, /2026-10-22: /);
 });
 
-test('brief shows the move with its numbers, or a hold with its reason', () => {
-  const move = buildBrief(inputs());
-  assert.match(move, /Move: Pick up Casey Fiction \(CCC, healthy, 2 games from 2026-10-21\), drop Drew Bench \(BBB, 1 games left\)\. Score \+0\.250 categories\. Changes: PTS \+4\.500, TO -1\.000\./);
-  assert.match(move, /## Alternatives\n\n1\. Pick up Casey Fiction/);
-  const hold = buildBrief(inputs({ decision: { action: 'hold', reason: 'No pair clears the bar.', best: pair } }));
-  assert.match(hold, /Hold: No pair clears the bar\.\n\nBest pair considered: Pick up Casey Fiction/);
-  assert.match(buildBrief(inputs({ decision: { action: 'insufficient', reason: 'Missing rates.' } })), /Insufficient evidence: Missing rates\./);
-});
-
-test('brief counts games left from the first counted date and marks roles', () => {
+test('the timestamp is the decision as-of time, and the action is never shown', () => {
   const brief = buildBrief(inputs());
-  assert.match(brief, /\| Alex Sample \| AAA \| PG \| Util \| healthy \| core \| 2 \|/);
-  assert.match(brief, /\| Drew Bench \| BBB \| PG \| BN \| healthy \| stream \| 1 \|/);
-  assert.match(brief, /\| Gray Rival \| CCC \| Util \| healthy \| 2 \|/);
-  assert.match(brief, /\| Hale Waiver \| AAA \| C \| GTD \| 2026-10-22 \| 2 \|/);
+  assert.match(brief, /Data as of: 2026-10-20T05:00:00Z/);
+  assert.doesNotMatch(brief, /gain|whyLost|cautious|Move|Pick up|displaced/i);
 });
 
-test('the crunch section shows who sits and why, skipping IL and out players', () => {
-  const brief = buildBrief(inputs());
-  assert.match(brief, /\| 2026-10-21 \| 2 \| 1 \| Drew Bench \(no open slot\) \|/);
-  assert.doesNotMatch(brief, /Ellis Hurt \(|Finn Out \(/);
-  assert.match(brief, /### Chronic sitters[^]*None\./);
-  assert.doesNotMatch(brief, /2026-10-30/);
+test('no line has a player name together with add, drop, wait or hold', () => {
+  const { record, snapshot, prompt, promptVersion } = inputs();
+  const names = [...snapshot.team.roster.map((p) => p.name), 'Casey Fiction', 'Hale Waiver', 'Iris Claim'];
+  const brief = buildBrief({ record, snapshot, prompt, promptVersion });
+  for (const line of brief.split('\n')) {
+    if (names.some((n) => line.includes(n))) assert.doesNotMatch(line, /\b(add|drop|wait|hold)\b/i, line);
+  }
 });
 
-test('missing values print as unknown, never 0', () => {
-  const brief = buildBrief(inputs());
-  assert.match(brief, /\| FG% \| unknown \| 0\.470 \| 0\.20-0\.60 \| incomplete \|/);
-  assert.match(brief, /\| Casey Fiction \| CCC \| unknown \| healthy \| free agent \| 2 \|/);
-  assert.match(brief, /Claim 1 \(2026-10-21\): add Iris Claim for \$3/);
-  assert.match(brief, /Proposed trades: 1/);
-  assert.match(brief, /Gray Rival \(CCC, opponent\): no prior/);
-});
-
-test('the free-agent list respects the cap', () => {
-  const brief = buildBrief({ ...inputs(), faLimit: 1 });
-  assert.match(brief, /## Free agents \(first 1, Yahoo page order\)/);
-  assert.doesNotMatch(brief, /Hale Waiver/);
+test('the same decision gives a byte-identical brief', () => {
+  assert.equal(buildBrief(inputs()), buildBrief(inputs()));
 });
 
 test('the shipped prompt has markers and a version', async () => {
   const { prompt, version } = readPrompt(await readFile(new URL('../docs/chatgpt-brief.md', import.meta.url), 'utf8'));
-  assert.ok(Number.isInteger(version) && version >= 1);
-  assert.match(prompt, /Don't recompute/);
+  assert.ok(Number.isInteger(version) && version >= 3);
+  assert.match(prompt, /Don't compute/);
   assert.throws(() => readPrompt('no markers'), /prompt markers/);
 });
 
-test('brief CLI writes once and refuses a changed snapshot', async (t) => {
+test('brief CLI writes once, accepts --state and --fa, and refuses a changed snapshot', async (t) => {
   const dir = await mkdtemp(path.join(tmpdir(), 'bball-brief-cli-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
-  const { record, snapshot, schedule } = inputs();
-  const ids = { players: [] };
+  const { record, snapshot } = inputs();
+  const schedule = { games: [] }, ids = { players: [] };
   const snapshotPath = path.join(dir, 'local/snapshots/sample.json');
   const snapshotText = JSON.stringify(snapshot);
   Object.assign(record.provenance, { snapshotPath, snapshotHash: hash(snapshotText),
@@ -111,29 +105,17 @@ test('brief CLI writes once and refuses a changed snapshot', async (t) => {
   record.projections = { players: [] };
   const files = { 'local/snapshots/sample.json': snapshotText, 'data/ids.json': JSON.stringify(ids),
     'data/schedule-2026-27.json': JSON.stringify(schedule), 'local/decisions/sample.json': JSON.stringify(record) };
-  for (const [file, text] of Object.entries(files)) {
+  for (const [file, body] of Object.entries(files)) {
     await mkdir(path.dirname(path.join(dir, file)), { recursive: true });
-    await writeFile(path.join(dir, file), text);
+    await writeFile(path.join(dir, file), body);
   }
   const cli = fileURLToPath(new URL('../scripts/brief.mjs', import.meta.url));
   const run = (...args) => execFileSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8', stdio: 'pipe' });
-  assert.equal(run(), `Brief: ${path.join('local/briefs', 'sample.md')}\n`);
+  assert.equal(run('--state', 'x.md', '--fa', '10'), `Brief: ${path.join('local/briefs', 'sample.md')}\n`);
   const brief = await readFile(path.join(dir, 'local/briefs/sample.md'), 'utf8');
-  assert.match(brief, /Brief prompt version: 2/);
+  assert.match(brief, /Brief prompt version: 3/);
   assert.throws(() => run('sample'), /already exists/);
   await rm(path.join(dir, 'local/briefs/sample.md'));
   await writeFile(snapshotPath, JSON.stringify({ ...snapshot, asOf: '2026-10-21T00:00:00Z' }));
   assert.throws(() => run('sample'), /snapshot hash changed/);
-});
-
-test('--state copies the standing sections word for word; without it the brief says none', async () => {
-  const { standingDecisions } = await import('../src/engine/brief.mjs');
-  const note = '---\ntags: [x]\n---\n# State\n\n## Standing preferences\n\n- 2026-10-25: Cason Sample is the IL opening.\n\n'
-    + '## Decisions\n\n- 2026-10-25 proposed: add Casey Fiction.\n\n## Open questions\n\nNone.\n\n## ChatGPT carry-forward\n\n- unreviewed: skip me\n';
-  const standing = standingDecisions(note);
-  assert.match(standing, /^### Standing preferences\n\n- 2026-10-25: Cason Sample is the IL opening\.\n\n### Decisions/);
-  assert.doesNotMatch(standing, /skip me|tags/);
-  assert.throws(() => standingDecisions('## Decisions\n'), /needs these sections/);
-  assert.match(buildBrief({ ...inputs(), standing }), /## Standing decisions\n\n### Standing preferences/);
-  assert.match(buildBrief(inputs()), /## Standing decisions\n\nNone supplied\./);
 });
