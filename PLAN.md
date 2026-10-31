@@ -3,6 +3,19 @@
 The north star for this repo, and where the build stands. Task specs in [`tasks/`](tasks/) hold the
 detail; this file says why each one exists and in what order.
 
+## Active design (2026-10-31)
+
+[`docs/designs/league-move-checker.md`](docs/designs/league-move-checker.md) replaces the roadmap
+below. It went through an EGM review, and it governs from now on. Its five-PR work order is the
+build plan. This file gets a full rewrite in that order's PR 5.
+
+- The usability trial below ended on 2026-10-31 with no log entries (decision Q4). A new two-week
+  trial starts when the design's PR 4 (the shadow log) merges.
+- The three-way pilot and its 2026-11-23 gate are retired. The design replaces them with a two-way
+  shadow log that compares the engine's proposal with Tony's own decision.
+- The single-move `advise` is being replaced by a week planner. It proposes add now, wait for a
+  named day, or hold.
+
 ## Current workflow additions
 
 - [Task 22](tasks/22-refresh-verification.md): project-local refresh verification and isolated review HTTP smoke checks (in review).
