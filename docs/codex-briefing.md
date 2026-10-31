@@ -25,21 +25,21 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    stop and report game-logs; do not change network settings, bypass a denial, or treat old logs
    as freshly checked. Yahoo collection remains browser-only and follows step 1.
    local/refreshes/<timestamp>/status.json records each step as ok, failed or not run, the
-   failed step and the decision ID. Use its failedStep as the failed step name in step 5.
+   failed step and the decision ID. Use its failedStep as the failed step name in step 4.
    Only after success, take <decisionId> from this run's analysis output, then run:
    npm run brief -- <decisionId> --state "C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant state.md"
    Stop processing at the first failure. Do not run later processing commands or fix anything.
-   Still record the failed run in step 5. A sign-in stop also takes this failure path.
+   Still record the failed run in step 4. A sign-in stop also takes this failure path.
    Take the decision ID and action from this run's script output. Take the brief path
    from the brief command. Verify that it belongs to that decision ID.
    Never substitute an older decision or brief. Use - for a missing ID or brief path.
-4. If the brief succeeded, copy it to the clipboard:
+3. If the brief succeeded, copy it to the clipboard:
    Get-Content -Raw "<brief path>" | Set-Clipboard
    Do not claim the clipboard copy succeeded unless it did. A brief copy never proves pasting,
    reading, or a Yahoo action.
    After Tony decides, run npm run did with his answer (see docs/designs/league-move-checker.md,
    CUJ 3). Do not invent his answer.
-5. Log this run in the vault file:
+4. Log this run in the vault file:
    C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant runs.md
    Read only what is needed to preserve this note. If missing, create it with:
    ---
@@ -71,7 +71,7 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    If a check fails or the push is refused or denied approval, do not retry or work around it:
    report the entry as committed but unpushed, with the commit hash and the reason.
    Report the failed step without appending another line or retrying the refresh.
-6. Before reporting completion, distinguish the evidence for each stage: brief generated and
+5. Before reporting completion, distinguish the evidence for each stage: brief generated and
    clipboard copy verified. A successful analysis alone does not establish a complete run.
    Report missing stages explicitly. Vault commit/push status is separate.
 
@@ -102,12 +102,13 @@ Use the current run time for the log and commit timestamp, and the existing fold
 
 ## Catch up a decision
 
-If a refresh produced a decision and brief but step 6 was skipped or failed, paste the
-prompt above with this instruction first. Do it before the move's start date.
+If a refresh produced a decision and brief but the clipboard copy (step 3) or the report (step 5)
+was skipped or failed, paste the prompt above with this instruction first. Do it before the move's
+start date.
 
 ```text
 Catch-up: do not capture or refresh. Use decision <decisionId>. Read the same guides, then run
-only step 6 for that decision.
+only steps 3 and 5 for that decision.
 ```
 
 ## Why these rules
