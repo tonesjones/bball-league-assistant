@@ -63,6 +63,6 @@ export function dropBlock(drop, pickup, start, { coreSet, streamSet, openSpots, 
     : ['IL', 'IL+'].includes(drop.slot) && openSpots <= 0 ? 'ilCapacity'
       : drop.locks?.some((lock) => lock.date >= start) ? 'lineupLock'
         : streamSet.has(name) || planPickups.some((p) => identity(p) === identity(drop)) ? null
-          : !drop.season ? 'noPrior' : drop.season.rank <= protectRank ? 'rank'
+          : !drop.season || drop.prior?.source === 'season-only' ? 'noPrior' : drop.season.rank <= protectRank ? 'rank'
             : pickup.season.value < drop.season.value + seasonMargin ? 'seasonValue' : null;
 }

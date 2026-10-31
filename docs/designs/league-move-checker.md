@@ -1191,6 +1191,32 @@ npm run did -- <decisionId> add "<player>" [--drop "<player>"] --on YYYY-MM-DD -
 Implementers add notes here when part of this spec turns out to be wrong or
 impossible. Leave the rest of the document unchanged.
 
+*   **PR 2, Full days test (line 844).** A pickup whose games fall only on
+    full days gains nothing from games that can't start. He doesn't always
+    gain exactly 0: step 7 keeps the lineup where pickups start more games,
+    so a forced start can displace a starter. The test gives every starter a
+    stronger line and expects a gain of 0 or less and a hold.
+*   **PR 2, Wait test (line 856).** Waiting only beats adding B now if the
+    early add costs something. Otherwise "add B now" ties with "add B
+    Thursday", and the earlier start wins the tie. The fixture has no open
+    roster spot, and the only droppable player starts Tuesday and Wednesday
+    and has no later games.
+*   **PR 2, season-only players before PR 3.** The season-only tests (lines
+    870 to 873) need two pieces that item 5a adds in PR 3. PR 2 adds the
+    `noPrior` rule for a drop whose projection is season-only to `dropBlock`.
+    Its tests reach a season-only player through an `ids` entry whose
+    `priorName` is `espn:<id>`.
+*   **PR 2, one step per day.** Step 8 adds at most one step per plan per
+    day, so two adds in one plan can't share a start date. The first step
+    and the action don't change. A second add that day appears in the plan
+    a day later.
+*   **PR 2, `fromDate` before the matchup.** The planner refuses a
+    `fromDate` before `window.start`. Otherwise a step could start outside
+    this week (step 3).
+*   **PR 2, earlier pickups as drops.** Step 6 lists earlier pickups first,
+    but they still go through `dropBlock` with `planPickups`. A pickup named
+    as core stays protected.
+
 --------------------------------------------------------------------------------
 
 *Drafted with EGM*
