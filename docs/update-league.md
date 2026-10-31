@@ -5,14 +5,11 @@ edit what a page says: copy its text and save it.
 
 ## Before you start
 
-A stale capture cannot complete the normal analysis pipeline because the evidence command has no stale override.
-
+A stale capture stops at the advice step: `refresh:analyze` never passes `--allow-stale`.
 
 Run on Tony's request, usually after a completed game slate. Do not install a daily schedule
 or repeatedly poll. If `local/trade-watch-status.json` exists, use it as user-reported context,
-not verified live trade status. Review watched players from the resulting evidence tables,
-comparing dates, starts, minutes and production with the previous capture. Preserve uncertainty
-when there are too few games. New checkouts do not include ignored local inputs.
+not verified live trade status. New checkouts do not include ignored local inputs.
 
 1. Read `YAHOO_LEAGUE_ID` and `YAHOO_TEAM_ID` from `.env`. If either is empty, stop and ask Tony.
 2. Make the folder `local/raw/<YYYY-MM-DD-HHmm>/`, using the current local time. Example:
@@ -138,7 +135,7 @@ fetched and the snapshot has no `league` field. The draft pages `/{L}/draft` and
 `/{L}/draftresults` are optional, saved as `draft.txt` and `draftresults.txt`. The draft pages accept no query parameters. Trade proposal, draft editing,
 lineup and transaction pages stay blocked, and no trade is submitted.
 
-## Build current-season evidence
+## Analyze the capture
 
 For a complete capture, process that exact folder in one command:
 
@@ -156,27 +153,24 @@ itself proof that ESPN is down.
 
 If Tony requests another attempt after a network-only failure, the same complete capture can
 be processed again without reading Yahoo again, provided the snapshot still passes the existing
-freshness checks and Tony has made no roster changes. Preserve the original failed-step log
-before rerunning, because the pipeline replaces step logs for that timestamp. Do not use
+freshness checks and Tony has made no roster changes. The rerun moves the earlier step logs for
+that timestamp into `local/refreshes/<timestamp>/attempt-<n>/`, so nothing is lost. Do not use
 `--allow-stale` without Tony's explicit override. The failed vault log remains historical evidence;
 a successful retry is a separate run, not a reason to rewrite it.
 
-This builds the snapshot, refreshes ESPN logs, archives observed transactions, writes player
-evidence and runs advice, stopping at the first failed step. It prints the computed decision,
-adds remaining, unknown starts and newly archived transaction details. Full advice and step
-diagnostics are saved in ignored `local/refreshes/<timestamp>/`; evidence remains in
-`local/evidence/`. A failed run can leave outputs from earlier successful steps; only a run
-that reaches the final summary is complete. Reruns deduplicate transactions and produce a new
-decision record. The step logs and evidence for that timestamp are replaced on rerun.
+This runs three steps and stops at the first that fails: `snapshot` (parse the capture),
+`game-logs` (refresh ESPN logs) and `advice` (the week planner). It prints the decision ID and a
+short plan summary. The full advice, one log per step and `status.json` (each step's result, the
+failed step and the decision ID) are saved in ignored `local/refreshes/<timestamp>/`. A failed run
+can leave outputs from earlier successful steps; only a run that prints a decision ID is complete.
+Each successful rerun writes a new decision record.
 
 After a complete run, `npm run brief` writes `local/briefs/<decisionId>.md` for Tony to paste
-into ChatGPT, and prints only its path. It reads the saved decision and makes no network calls. Pass
-`--state "<vault>/10 Projects/bball-league-assistant state.md"` to include Tony's standing
-decisions. Before advising or reviewing, Claude and Codex read that note, name the snapshot they
-used, and flag any entry that conflicts with it.
-
-Newly archived events can include backfilled history. They are not guaranteed to have happened
-since the previous refresh. Both your team's and other teams' observed moves are shown.
+into ChatGPT, and prints only its path. It reads the saved decision and makes no network calls.
+The brief is a context check: it hides the chosen action. `brief` still accepts `--state`, but
+ignores it; Tony's standing decisions are not added to the brief. Before advising or reviewing,
+Claude and Codex read the vault state note, name the snapshot they used, and flag any entry that
+conflicts with it.
 
 The individual commands remain available for debugging:
 
@@ -186,16 +180,14 @@ npm run fetch:gamelogs -- --season 2026-27 --snapshot local/snapshots/<timestamp
 ```
 
 The browser remains the source for league membership, available players, matchup state and
-transactions. ESPN supplies player production and estimated usage. The evidence command
-archives observed transactions without duplicates and saves private Markdown/JSON reports.
-It displays current-season actuals with sample sizes; it does not recommend a move.
+transactions. ESPN supplies player production and estimated usage.
 
 ## Models and token use
 
 The Claude Code `yahoo-reader` is configured as `model: haiku`. That is configuration, not
 verification of a past run's actual model. It collects unchanged page text and returns only
-the capture folder and failures. Node performs snapshot parsing, game-log fetching, transaction
-deduplication, evidence tables and recommendation arithmetic; these scripts call no LLM.
+the capture folder and failures. Node performs snapshot parsing, game-log fetching and
+recommendation arithmetic; these scripts call no LLM.
 
 In Codex, `.claude/agents/yahoo-reader.md` does not select or launch a model. Keep Sol responsible
 for review. Consider a bounded Luna collection assignment only when the signed-in browser and
@@ -204,12 +196,11 @@ the actual model where runtime metadata permits; otherwise label it requested bu
 Never weaken Yahoo access rules to enable a cheaper worker.
 
 For routine updates, keep collection in its own small context. Run `refresh:analyze` and bring
-the compact output to the reviewing chat; read detailed evidence only for a specific uncertainty.
-Do not paste whole Yahoo pages, the entire historical transaction archive, or unchanged reports
-into the review chat. Retain those inputs privately for debugging. This reduces repeated context;
+the compact output to the reviewing chat; read the full advice only for a specific uncertainty.
+Do not paste whole Yahoo pages or unchanged reports into the review chat. Retain those inputs privately for debugging. This reduces repeated context;
 subscription savings remain unmeasured without comparable observed runs. Tokenomics does not
 automatically switch models, and no router or recurring usage audit is needed per refresh.
 
 On each review, record any newly encountered limitation in `docs/limitations.md` using a
 synthetic description. Put real player/league details and rejection reasons in ignored local
-decision or rehearsal records. Do not treat a descriptive evidence report as a model fix.
+decision or rehearsal records.
