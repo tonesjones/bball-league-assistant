@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readDecision } from './decisions.mjs';
 import { findPlayer, normalizeName } from '../engine/names.mjs';
 import { projectTeam, BLOCKED, openRosterSpots } from '../engine/needs.mjs';
-import { pickupStart } from '../engine/v0-advice.mjs';
+import { pickupStart } from '../engine/advice-common.mjs';
 import { tomorrow } from '../engine/weeks.mjs';
 import { applyPreferences } from '../engine/preferences.mjs';
 

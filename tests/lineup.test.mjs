@@ -48,3 +48,24 @@ test('unknown priors take slots at 24 mpg and ties keep input order without muta
   high.prior.mpg = 25;
   assert.deepEqual(players, before);
 });
+
+const dayGames = ['2026-10-20', '2026-10-21', '2026-10-22'].map((date) => ({ date, home: 'AAA', away: 'BBB' }));
+const run = (swap, extra = {}) => projectTeam(swapRoster, {}, {}, { rosterPositions: slots('C') },
+  { games: dayGames }, '2026-10-20', '2026-10-22', swap, null, extra);
+const swapRoster = [player('Alex Sample', ['C'], 30)];
+const first = player('Blair Example', ['C'], 35), second = player('Casey Fiction', ['C'], 40);
+
+test('a later swap can drop an earlier swap pickup', () => {
+  const swaps = [{ pickup: second, drop: first, start: '2026-10-22' },
+    { pickup: first, drop: swapRoster[0], start: '2026-10-21' }];
+  const names = (lineup) => lineup.started.map((g) => `${g.date}:${g.name}`);
+  assert.deepEqual(names(run(swaps)), ['2026-10-20:Alex Sample', '2026-10-21:Blair Example', '2026-10-22:Casey Fiction']);
+});
+
+test('a single swap gives the same output as an object or a one-element array', () => {
+  const swap = { pickup: first, drop: swapRoster[0], start: '2026-10-21' };
+  assert.deepStrictEqual(run([swap]), run(swap));
+  assert.deepStrictEqual(run([{ ...swap, startPickup: true }]), run({ ...swap, startPickup: true }));
+  assert.deepStrictEqual(run([swap], { preferPickups: true }), run({ ...swap, startPickup: true }));
+  assert.deepEqual(run(swap).started.map((g) => g.name), ['Alex Sample', 'Blair Example', 'Blair Example']);
+});

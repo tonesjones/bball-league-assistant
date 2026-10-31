@@ -1,44 +1,13 @@
-import { findPlayer, normalizeName } from './names.mjs';
+import { normalizeName } from './names.mjs';
 import { addDays, tomorrow } from './weeks.mjs';
 import { gamesLeft } from './games-left.mjs';
 import { rosterCrunch } from './crunch.mjs';
 import { BLOCKED, STAT, projectTeam, needs, strongLine, openRosterSpots } from './needs.mjs';
-import { seasonValues } from './season-value.mjs';
+import { MODEL_VERSION, monthDay, pickupStart, normalizeRoles, matchPlayers, dropBlock } from './advice-common.mjs';
 import { minutesCase } from './projections.mjs';
 import { applyPreferences } from './preferences.mjs';
 
-export const MODEL_VERSION = 7;
-
-// Yahoo's "Oct 25" as a date on or after the matchup start.
-function monthDay(value, window, what) {
-  const match = /^([A-Za-z]{3})\s+(\d{1,2})$/.exec(value);
-  const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(match?.[1]);
-  if (!match || month < 0) throw new Error(`invalid ${what}: ${value}`);
-  const suffix = `${String(month + 1).padStart(2, '0')}-${match[2].padStart(2, '0')}`;
-  const year = Number(window.start.slice(0, 4));
-  const date = `${year}-${suffix}`;
-  return date < window.start ? `${year + 1}-${suffix}` : date;
-}
-
-export function pickupStart(player, fromDate, window, addsFrom = fromDate) {
-  const clears = player.waiverClears ? monthDay(player.waiverClears, window, 'waiverClears') : fromDate;
-  return [fromDate, clears, addsFrom].sort().at(-1);
-}
-
-export function normalizeRoles(roles = {}, protectedNames = []) {
-  if (!roles || typeof roles !== 'object' || Array.isArray(roles)) throw new Error('roles must be an object');
-  const { core = [], stream = [] } = roles;
-  for (const names of [core, stream, protectedNames]) {
-    if (!Array.isArray(names) || !names.every((n) => typeof n === 'string')) throw new Error('roles core and stream must be arrays of strings');
-  }
-  const unique = (names) => [...new Map(names.map((n) => [normalizeName(n), n])).values()];
-  const result = { core: unique([...core, ...protectedNames]), stream: unique(stream) };
-  const coreSet = new Set(result.core.map(normalizeName));
-  for (const name of result.stream) {
-    if (coreSet.has(normalizeName(name))) throw new Error(`name in both core and stream: ${name}`);
-  }
-  return result;
-}
+export { MODEL_VERSION, pickupStart, normalizeRoles };
 
 export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedNames = [],
   fromDate = tomorrow(snapshot.asOf), addsFrom = fromDate, top = 10, phi,
@@ -66,20 +35,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
   if (banked && Object.values(shootingVolume).some((v) => v.status === 'matched')) {
     shootingNotes.push('Shooting volume assumes every open lineup slot was filled.');
   }
-  const unscored = [], priorByName = new Map(priors.map((p) => [p.name, p]));
-  const values = seasonValues(priors, { poolSize });
-  const match = (players, where) => players.map((p) => {
-    const { player, reason } = findPlayer(ids.players, p.name, p.nbaTeam);
-    const prior = priorByName.get(player?.priorName);
-    const season = values.get(player?.priorName);
-    const unscoredReason = reason ?? (prior?.minutes && !prior.perGame ? 'no usable prior minutes or rates'
-      : prior?.perGame ? 'no games in prior' : 'no prior');
-    if (!season) unscored.push({ ...p, where, reason: unscoredReason });
-    return { ...p, espnId: player?.espnId ?? null, prior: season ? prior : null,
-      minutes: prior?.minutes ?? null,
-      rates: prior?.rates ?? null,
-      season: season ? { value: season.value, rank: season.rank } : null, unscoredReason };
-  });
+  const { match, unscored } = matchPlayers({ ids, priors, poolSize });
   const roster = match(snapshot.team.roster, 'roster');
   const opponentRoster = match(snapshot.matchup.opponentRoster, 'opponent');
   const freeAgents = match(snapshot.freeAgents, 'freeAgent');
@@ -130,11 +86,7 @@ export function advise(snapshot, { ids, priors, schedule, roles = {}, protectedN
     for (const drop of [...(openSpots > 0 ? [null] : []), ...drops]) {
       const name = drop && normalizeName(drop.name);
       const dropRole = !drop ? 'open-slot' : streamSet.has(name) ? 'stream' : 'normal';
-      const blocked = !drop ? null : coreSet.has(name) ? 'core'
-        : ['IL', 'IL+'].includes(drop.slot) && openSpots <= 0 ? 'ilCapacity'
-          : drop.locks?.some((lock) => lock.date >= start) ? 'lineupLock' : dropRole === 'stream' ? null
-        : !drop.season ? 'noPrior' : drop.season.rank <= protectRank ? 'rank'
-          : pickup.season.value < drop.season.value + seasonMargin ? 'seasonValue' : null;
+      const blocked = dropBlock(drop, pickup, start, { coreSet, streamSet, openSpots, protectRank, seasonMargin });
       if (blocked) {
         guardrail.blockedPairs++;
         guardrail.blockedByRule[blocked]++;
