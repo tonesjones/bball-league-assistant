@@ -44,6 +44,15 @@ and retains the reason. Coach's-decision minutes are zero; injury/rest minutes r
 Missing minutes without that evidence still fail. A synthetic regression test and a completed
 real refresh verified the fix.
 
+Resolved on 2026-10-31: the 2026-10-30 box score for ESPN event 401909285 stopped the game-log
+refresh with "invalid minutes". Two reserves had `MIN: -`, `didNotPlay: false`, `active: true`
+and a coach's-decision reason, but a nonzero `+/-`, and one had an assist. They played under a
+minute, so the zero-stat DNP rule did not match them. The parser now reads that combination as
+a played row with 0 minutes, keeps its stats and counts it in team minutes. Placeholder minutes
+with an injury or rest reason, with no reason, or without `active: true` still fail. A synthetic
+regression test and `npm run fetch:gamelogs -- --season 2026-27 --from 2026-10-30 --to
+2026-10-30` against the cached box scores (10 finals) verified the fix.
+
 Use the next ID and record: date, evidence, affected decision, consequence, present handling,
 and the next verification or resolution. Keep private evidence in the decision/rehearsal record
 and link the public issue or fix here when available. A limitation is not resolved merely

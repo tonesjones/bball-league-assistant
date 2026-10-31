@@ -15,9 +15,16 @@ export function parseBoxScore(json, { date, standardCode }) {
       }
       const didNotPlay = (p) => p.didNotPlay || (/^--?$/.test(p.stats?.[positions.MIN] ?? '') && Boolean(p.reason)
         && labels.every((label, i) => label === 'MIN' || /^(?:0|0-0)$/.test(p.stats[i])));
+      // ESPN shows a sub-minute appearance (2026-10-30) as placeholder minutes with a coach's-decision
+      // reason but active and with real stats, so it is a played row with 0 minutes.
+      const minutes = (p) => {
+        const text = p.stats[positions.MIN];
+        if (/^--?$/.test(text) && p.reason === "COACH'S DECISION" && p.active === true) return 0;
+        return text == null || text === '' ? NaN : Number(text);
+      };
       const playing = (group.athletes ?? []).filter((p) => !didNotPlay(p));
-      const teamMinutes = playing.every((p) => p.stats[positions.MIN] !== '' && Number.isFinite(Number(p.stats[positions.MIN])))
-        ? playing.reduce((sum, p) => sum + Number(p.stats[positions.MIN]), 0) : null;
+      const teamMinutes = playing.every((p) => Number.isFinite(minutes(p)))
+        ? playing.reduce((sum, p) => sum + minutes(p), 0) : null;
       const totalAttempts = (label) => {
         const match = /^(\d+)-(\d+)$/.exec(group.totals?.[positions[label]] ?? '');
         return match ? Number(match[2]) : null;
@@ -51,11 +58,10 @@ export function parseBoxScore(json, { date, standardCode }) {
         const three = /^(\d+)-(\d+)$/.exec(val('3PT') ?? '');
         const fg3m = three ? +three[1] : Number(val('3PT'));
         if (!Number.isFinite(fg3m)) throw new Error(`event ${eventId}: invalid 3PT stat`);
-        if (!Number.isFinite(Number(val('MIN'))) || Number(val('MIN')) < 0 || val('MIN') == null || val('MIN') === '') {
-          throw new Error(`event ${eventId}: invalid minutes`);
-        }
+        const min = minutes(p);
+        if (!Number.isFinite(min) || min < 0) throw new Error(`event ${eventId}: invalid minutes`);
         out.push({ ...identity,
-          min: Number(val('MIN')), fgm, fga, ftm, fta, fg3m, pts: Number(val('PTS')), reb: Number(val('REB')),
+          min, fgm, fga, ftm, fta, fg3m, pts: Number(val('PTS')), reb: Number(val('REB')),
           ast: Number(val('AST')), stl: Number(val('STL')), blk: Number(val('BLK')), to: Number(val('TO')) });
       }
     }

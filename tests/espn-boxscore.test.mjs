@@ -70,3 +70,30 @@ for (const placeholder of ['--', '-']) test(`placeholder ${placeholder} minutes 
   player.stats[group.labels.indexOf('PTS')] = '2';
   assert.throws(() => parseBoxScore(copy, { date: '2026-01-15', standardCode: map }), /invalid minutes/);
 });
+
+test('an active coach\'s-decision row with placeholder minutes and stats is a 0-minute appearance', () => {
+  const copy = structuredClone(summary);
+  copy.boxscore.players = [copy.boxscore.players[0]];
+  const group = copy.boxscore.players[0].statistics[0];
+  const player = { athlete: { id: 'example', displayName: 'Sample Reserve' }, starter: false, active: true,
+    didNotPlay: false, reason: "COACH'S DECISION",
+    stats: group.labels.map((label) => ({ MIN: '-', AST: '1', '+/-': '+2' })[label] ?? (['FG', '3PT', 'FT'].includes(label) ? '0-0' : '0')) };
+  const starter = { athlete: { id: 'starter', displayName: 'Sample Starter' }, starter: true, didNotPlay: false,
+    stats: group.labels.map((label) => ({ MIN: '48', PTS: '20', FG: '8-15', '3PT': '2-4', FT: '2-3', REB: '5', AST: '4', TO: '2', STL: '1', BLK: '1' })[label] ?? '0') };
+  group.athletes = [starter, player];
+  group.totals = [...starter.stats];
+  const parse = () => parseBoxScore(copy, { date: '2026-01-15', standardCode: map });
+  const row = parse().at(-1);
+  assert.equal(row.didNotPlay, false);
+  assert.equal(row.min, 0);
+  assert.equal(row.ast, 1);
+  assert.equal(row.teamContext.minutes, 48);
+  player.reason = 'RIGHT CALF';
+  assert.throws(parse, /invalid minutes/);
+  player.reason = "COACH'S DECISION";
+  player.active = false;
+  assert.throws(parse, /invalid minutes/);
+  player.active = true;
+  player.stats[group.labels.indexOf('MIN')] = '';
+  assert.throws(parse, /invalid minutes/);
+});
