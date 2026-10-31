@@ -1,626 +1,126 @@
 # PLAN
 
-The north star for this repo, and where the build stands. Task specs in [`tasks/`](tasks/) hold the
-detail; this file says why each one exists and in what order.
+This repo holds a tool that proposes one fantasy basketball move at a time. The active design is
+[`docs/designs/league-move-checker.md`](docs/designs/league-move-checker.md). It holds the
+reasoning, the planner spec and each PR's file list. This file holds the goals, the decisions, the
+build checklist and what is next. The plan before 2026-10-31 is in
+[`tasks/archive/PLAN-2026-10-30.md`](tasks/archive/PLAN-2026-10-30.md).
 
-## Active design (2026-10-31)
+## What the tool is, and the problem
 
-[`docs/designs/league-move-checker.md`](docs/designs/league-move-checker.md) replaces the roadmap
-below. It went through an EGM review, and it governs from now on. Its five-PR work order is the
-build plan. This file gets a full rewrite in that order's PR 5.
+Tony manages one team in a 12-team Yahoo head-to-head league scored on 9 categories, with daily
+lineups and 4 adds a week. Most of the in-season edge comes from a few repeated decisions: whom to
+add and drop, where to spend the 4 adds so more started games land on open lineup days, and whether
+a move helps the categories still in play this week. Tony makes these decisions by hand, with
+ChatGPT for news, injuries and roles. ChatGPT is weak at counting games on open days, at combining
+FG% and FT% from makes and attempts, and at giving the same answer twice. When a decision is
+pending, the tool searches the available players and proposes one action (add today, wait for a
+named later day, or hold) with the counts behind it. It never makes a move. Tony compares each
+proposal with what he would do himself, to decide whether the engine is worth keeping.
 
-- The usability trial below ended on 2026-10-31 with no log entries (decision Q4). A new two-week
-  trial starts when the design's PR 4 (the shadow log) merges.
-- The three-way pilot and its 2026-11-23 gate are retired. The design replaces them with a two-way
-  shadow log that compares the engine's proposal with Tony's own decision.
-- The single-move `advise` is being replaced by a week planner. It proposes add now, wait for a
-  named day, or hold.
+By 2026-10-30, after 13 days and 7 model versions, no decision had been scored, and Tony rated
+"do nothing" above the tool. The bet behind the project is untested.
 
-## Current workflow additions
+## Goals and stop rule
 
-- [Task 22](tasks/22-refresh-verification.md): project-local refresh verification and isolated review HTTP smoke checks (in review).
+| ID | Goal | Measure |
+|---|---|---|
+| G1 | One proposed action with correct counts. | The planner tests pass. Tony checks three real proposals by hand and finds no error. |
+| G2 | No guardrail is broken. | The guardrail tests in `tests/advice-correctness.test.mjs`, ported to the planner, pass. |
+| G3 | At most 5 minutes of Tony's attention per decision. | Tony records minutes with `npm run did -- ... --minutes N`. |
+| G4 | Useful often enough to keep. | Each `did` entry has one tag (`changed-decision`, `caught-mistake`, `no-effect`, `wasted-time`). The weekly replay shows which choice gained more categories when Tony and the engine differed. The threshold is open question Q3. |
+| G5 | Low upkeep. | At most one 30-minute maintenance session and one rescued league check per week. Rescues come from `did --rescue`, sessions from the git log. |
+| G6 | Same inputs, same answer. | A test runs the planner twice on one fixture and compares the output byte for byte. |
 
-- [Task 20](tasks/20-advice-correctness.md): model-7 roster legality, unknown counting totals and lineup-lock fixes (merged).
-- [Task 21](tasks/21-local-review-ui.md): local post-refresh review, brief copy, saved pilot ratings and outcome replay (in review). This is a small local interface around existing records; the broader Task 06 application remains deferred.
+**Stop rule.** If G4 or G5 fails at the end of the trial window, Tony stops asking for league
+checks. The code stays in the repo for occasional use. Any further work starts with a new design
+review.
 
-## What we're building
+**Trial window.** 2026-10-31 to 2026-11-14. It started when PR 4 (the shadow log, #77) merged.
+Apply the stop rule on 2026-11-14. The 2026-10-30 usability trial ended on 2026-10-31 with no entries (decision Q4).
 
-Advice on add/drop and streaming moves for one Yahoo head-to-head 9-category fantasy basketball
-league, with the numbers behind every suggestion. Tony makes every move by hand in Yahoo. The tool
-never acts.
+## Decisions
 
-## Why
+All made by Tony on 2026-10-31. The design has the rejected options and known weaknesses.
 
-To win Tony's league. That is the only goal. Making this usable by other people is parked: one
-league, one user, and nothing in the build should be shaped by sharing it later.
-
-## Why not just ask a chatbot
-
-Posting roster screenshots into Claude, ChatGPT or Grok and asking for advice is free and takes a
-minute. This project only makes sense if it beats that. The bet is that weekly edges in H2H 9-cat
-come from arithmetic that chatbots do badly:
-
-- games left this week for each player, times per-game category rates, against the opponent's
-  projected totals;
-- FG% and FT% weighted by attempts, not averaged;
-- spending 4 adds a week where they swing the most categories.
-
-Chatbots also guess at schedules and who is available, give different answers to the same
-question, forget league context between chats, and can't be scored afterwards. This tool reads the
-real league state, does the arithmetic in code, and logs every suggestion so it can be scored.
-
-If it doesn't beat the chatbot in practice (Phase 0 below), stop or rethink before building more.
-
-## How
-
-### Ground rules
-
-- **No Yahoo API.** Access now needs an application, an email exchange and an NDA. Not pursuing it.
-- **No pasting.** League data is read on demand: Tony says "update league", and an agent (Haiku or
-  Sonnet) opens his Yahoo league pages in a browser he is already signed in to and saves the raw
-  page text to `local/raw/`. Node parsers turn that text into the league snapshot. An LLM collects
-  the pages; code computes every number. Claude never signs in to Yahoo for Tony.
-- **Codex is optional.** Codex (`/codex-delegate`) writes parsers and engine code when it's
-  available. If the subscription goes, Sonnet (`worker`) and Haiku (`scout`, `grunt`) do the same
-  work. Nothing that runs during the season calls Codex.
-- **Public repo.** No league ID, team names, manager names or Yahoo pages in git. They live in
-  `local/` and `.env`, both git-ignored.
-
-### Phase 0: v0 advice and the chatbot bakeoff (now)
-
-No UI. Run from Claude Code.
-
-1. League read ([Task 02](tasks/02-yahoo-league-state.md)): browser fetch and parsers for
-   rosters, free agents, this week's matchup and transactions.
-2. Schedule and ID map: steps 2 and 3 of [Task 01](tasks/01-nba-data-and-projections.md),
-   pulled forward.
-3. v0 advice and bakeoff ([Task 05](tasks/05-v0-advice-and-bakeoff.md)): rank free agents against
-   Tony's roster by games left times last season's per-game category value, weighted by this
-   week's category needs, within the 4-add limit and the guardrails in [`AGENTS.md`](AGENTS.md).
-   Done (#7, #8, #9). Tony rejected every suggestion from the first runs, so step 4 makes the
-   advice trustworthy before the bakeoff starts.
-4. "Best next move, or hold." Each item is one PR:
-   - **4a. Live matchup and shooting volume** (PR #10). The live matchup page has no makes or
-     attempts. Estimate this week's banked FGM/A and FTM/A from NBA game logs for each roster,
-     checked against Yahoo's counting totals. If the estimate can't be checked, FG% and FT% are
-     marked unknown and left out of the score, and the report says so at the top.
-     *Done when:* a synthetic test shows the estimate on a checked roster, and a mismatch or
-     missing logs marks FG%/FT% unknown; the real week-1 pages produce a report.
-   - **4b. Legal lineups, one move or hold, fresh data.** Each day's starters fill the league's
-     position slots (PG, SG, G, SF, PF, F, C, Util) from each player's eligible positions, and a
-     games cap counts games already used when the league has one. The report gives one best move,
-     or "hold" when no move gains at least a set number of expected categories, then says to
-     refresh and rerun after the move. Players with no prior still take lineup slots and are
-     counted as unknown games. A snapshot older than a set age is refused unless overridden.
-     *Done when:* tests cover a player who can't fill a slot, hold below the threshold, unknown
-     games, and a stale snapshot.
-   - **4c. Roster roles.** Tony marks players in git-ignored `local/roles.json` as core (never
-     dropped) or stream (droppable for a weekly gain, with no season-value test). Everyone else
-     keeps the season guardrail.
-     *Done when:* tests show a stream player dropped for a weekly gain, a core player never
-     dropped, and `local/protected.json` still read as core.
-   - **4d. Bakeoff scoring.** Score every decision, including "hold", against making no move,
-     from the move's own effective date. Report categories helped and hurt separately, and each
-     category's gain on its own scale, never averaged across categories. Log why Tony rejected a
-     suggestion.
-     *Done when:* tests show a harmful flip counted as hurt, a hold scored as zero change, and a
-     move dated mid-week scored only from that date.
-   - **4e. Docs.** README status, and the phase of each requirement in `AGENTS.md`
-     (Δ P(win this week) arrives with Task 03, Δ P(title) later).
-
-   Done (#10 to #14). One gap from 4b: when the league has a games cap, games already used this
-   week are still unknown, and the report says so. This league has no cap.
-5. Honest advice, then the pilot. Last season's priors set every projection and the season-value
-   guardrail, a start with no projection counts as zero, and the bakeoff counts every game a
-   player played, started or not. These items fix that before the scored pilot, in this order.
-   Each is one PR:
-   - **5a. Missing production.** Advice gets a third outcome, "insufficient evidence", beside move
-     and hold. A start with no projection, in either of Tony's lineups or in the opponent's, is
-     never counted as zero. When it could change the comparison or the category outlook, the
-     report withholds the move and names the players and what's missing. "Hold" stays for when
-     the known numbers support no move.
-     *Done when:* tests show that dropping an unprojected stream player can't look like a gain
-     because their production is missing, that unknown opponent production can't give a
-     complete category outlook, and that fully projected comparisons, core protection and
-     deliberate pickup starts work as before. Tony reviews a real example of each of the three
-     outcomes before 5b starts.
-   - **5b. Decision records.** Each advice run gets an ID and saves, under `local/`, its options,
-     the baseline and proposed daily lineups, the commit SHA, the snapshot path and the
-     projection version. Reruns add a record; none is overwritten. Tool, chatbot and "do nothing"
-     bakeoff entries point to the same decision. Schedule and priors are in git, so the SHA
-     covers them.
-     *Done when:* two runs on the same snapshot with different options are both kept, and every
-     bakeoff entry names its decision record.
-   - **5c. Minutes blend.** [Task 01](tasks/01-nba-data-and-projections.md) step 5, minutes only,
-     pulled forward. Projected minutes blend the prior MPG with this season's games from the
-     first game on, as pseudo-games: `(k × prior_mpg + sum of season minutes) / (k + games)`,
-     with `k = 2` as a parameter and equal weight per game. `k = 2` is a starting value, not a
-     calibrated one; recency decay waits for the Task 01 backtest. Per-minute rates stay at the
-     prior, so counting stats scale with projected minutes. That's an interim assumption: a
-     change in usage or shots per minute waits for the rate model after the pilot. The same
-     projection feeds weekly scoring, lineup order and the season-value guardrail.
-     The ESPN box score parser keeps DNP rows and the `starter` flag (both seen in real box
-     scores; older logs discarded DNP rows). A DNP with reason `COACH'S DECISION` counts as zero
-     minutes. Any other reason (an injury such as "RIGHT CALF", or rest) is left out of the
-     blend, and so is a game where the player isn't in the box score. Starter status is stored
-     and shown, not modeled. A player with no usable prior stays unknown, because minutes alone
-     can't give category rates.
-     A one-game role change shouldn't flip a decision on its own. Each pickup and drop gets two
-     minutes scenarios, the prior MPG and this season's MPG so far, and a move is recommended
-     only if it clears the hold threshold in all four combinations, the same rule 5a uses for
-     missing production. If some cases clear the threshold and others do not, the outcome is
-     "insufficient evidence"; if none support a move, it is "hold". These endpoints stay fixed:
-     more games update the blend, but do not retire the prior-MPG case. This conservative choice
-     can keep a move blocked even after a consistent season history. Advice requires a game-log
-     refresh checked at or after the snapshot, covering the season through its Eastern date
-     (including checked off-days). The report shows games observed, starts, prior MPG, season MPG, projected
-     MPG and the as-of time of the logs.
-     *Done when:* tests cover a player with 1 or 2 games, a player whose minutes rose (projection
-     and guardrail rank both up), an injury DNP left out, a coach's-decision DNP counted, a
-     player absent from the box score left out, a player with no prior still unknown, one game
-     that reverses a drop's ranking giving "insufficient evidence", a consistent 5-game history
-     moving the blended projection toward the observed role while retaining the fixed scenario
-     gate, and stale game logs refused. A synthetic fixture covers the 10-21 regression (a
-     low-prior big who starts and plays 30 minutes, against a high-prior wing who plays 18 off
-     the bench) without real names.
-   - **5d. Continuous pilot ([Task 11](tasks/11-continuous-pilot-and-scorecard.md)).** Not a
-     freeze. Starts with the first refresh after PR #32 merges and runs every refresh from then
-     on, even while Tony rates most advice as bad. Every refresh gets a decision record. Log the
-     tool, chatbot and "do nothing" entries, Tony's rating and any rejection reason before the
-     outcome is known. Also track invalid and unscorable decisions, refresh time and recurring
-     data problems. A fix doesn't restart anything: a change to recommendations or scores bumps
-     `MODEL_VERSION`, a change to the chatbot prompt bumps its prompt version, and the scorecard
-     groups results by version. Decisions recorded before Task 11a have no version and count
-     only as rehearsals.
-   - **5e. Lineup-aware scoring.** Built while the pilot runs, from the saved lineups. Replay the
-     baseline and proposed daily starts against real game logs: a pickup's benched game counts
-     for nothing, a displaced starter's production is subtracted, games before the effective
-     date are left out, and FG% and FT% come from makes and attempts. Missing results or
-     shooting volume make a decision unscorable, never zero. Each decision is reported on its
-     own, and totals are labeled so overlapping hypothetical moves don't read as a weekly plan.
-     *Done when:* tests show a benched pickup game adds nothing, a displaced starter subtracted,
-     a mid-week move scored from its date, a complete hold scored as zero, and missing evidence
-     shown as unscored.
-   - **5f. After the pilot.** Per-minute rate shrinkage and the rest of Task 01 (Phase 1). With
-     about 15 games of prior minutes, one 30-minute game moves a rate only about 7%, so rates
-     wait; the error in the first live runs came from minutes. Players with no prior get an
-     evidence threshold here (for example 5 games or 100 minutes) before their season rates are
-     used. Hand-entered role assumptions stay deferred unless the pilot shows decisions going
-     wrong in the first games after a role change.
-
-6. Stream-chain planner ([Task 10](tasks/10-stream-chain-planner.md)). A separate command that
-   chains pickups across teams' back-to-backs to get the most started games from one stream
-   slot, for 2, 3 and 4 adds. A long-term pickup always comes first and gets its own add. It
-   doesn't change `advise` output or the bakeoff, so it can be built before or during the pilot.
-
-7. Empty-slot pickups ([Task 12](tasks/12-empty-slot-pickups.md)). When an IL move opens a
-   non-IL roster spot, `advise` also scores an add with no drop. Each reported pickup shows its
-   next-week games and legal starts as context; they don't change the score. `MODEL_VERSION` 2.
-
-8. Pending claims ([Task 13](tasks/13-pending-claims.md)). The team page's pending waiver
-   claims reserve adds and open spots, claimed players and pending drops aren't offered, and the
-   report warns when claims need more adds or spots than Tony has. Proposed trades are reported,
-   not modeled. `MODEL_VERSION` 3.
-
-9. Unblock the scored pilot ([Task 14](tasks/14-pilot-unblock.md)), from the 2026-10-24 scope
-   audit. Four PRs, in order: banked makes and attempts from Yahoo's `week=N` matchup page
-   (14a), a chatbot model that runs (14b), a ratings join and the gate tie (14c), and a move
-   rule that withholds only moves that could lose, with a lower bar for add-only moves (14d,
-   `MODEL_VERSION` 4). Then `MODEL_VERSION` 4 is frozen until the gate is read.
-
-10. Codex and ChatGPT workflow (Tony, 2026-10-25). Codex runs the refresh and `advise`; Claude
-    builds and tunes the engine and runs a refresh only as a backup. Three tasks, in order, none
-    of which changes `advise` scores:
-    - ChatGPT brief ([Task 17](tasks/17-chatgpt-brief.md)): one Markdown file per decision with
-      the tool's numbers and a fixed prompt. Tony pastes it into ChatGPT for news, roles and
-      trade ideas. Nothing ChatGPT says feeds back into the engine.
-    - Packed-day roster crunch ([Task 18](tasks/18-roster-crunch.md)): who sits each day, why,
-      and the production lost.
-    - Trade evaluator ([Task 19](tasks/19-trade-evaluator.md)): other teams' rosters on request
-      (19a), then trades scored in code for both sides (19b). Open questions in the task file.
-
-**Gate.** A rolling comparison per model version. Go to Phase 1 when one version, over at least
-10 scored decisions, does at least as well as both the chatbot and doing nothing on categories
-helped minus hurt, and Tony's mean rating for the tool is strictly higher than for both. A tie on
-net counts when the ratings break it (Tony, 2026-10-24): a tool that rightly holds scores 0, the
-same as doing nothing. Fewer than 10 scored decisions is "too
-few, keep testing". If no version clears the gate by 2026-11-23, rethink or stop. Record the
-result here and as a decision note in the vault.
-
-**Usability trial (2026-10-30 to 2026-11-12).** The gate can't clear by 2026-11-23: matchups
-score weekly and nightly decisions in one week overlap, so the 11-23 call will be a judgment.
-This trial gives that judgment better evidence than the scorecard. Decided 2026-10-29 after an
-outside review of the workflow.
-
-- Refresh only when a decision is pending: an open roster spot, an injury, a waiver claim or a
-  streaming deadline. No refresh just because a day passed.
-- Use the engine as a checker of starts, displaced production, category effects and unknowns.
-  News, roles and long-term holds stay with Tony and ChatGPT.
-- Budget: about five minutes of Tony's attention per decision and one short maintenance
-  session per week.
-- After each decision, Tony adds one line to `local/trial-log.md` (git-ignored):
-  `YYYY-MM-DD <decisionId> changed-decision|caught-mistake|no-effect|wasted-time <note>`.
-- No new features during the trial. Fixes to capture reliability and the comparison prompt only.
-- Done when: on 2026-11-12, the log is counted and the result is written here. If the workflow
-  needed rescue more than once a week, stop the nightly pipeline and keep the code as an
-  occasional schedule and category calculator.
-
-Open decisions for the trial: whether the vault run log and the isolated chatbot arm stay in
-every refresh (`docs/codex-briefing.md` steps 3 and 5), and whether the chatbot arm should get
-news so it matches Tony's real alternative.
-
-**Improvement loop (Task 11b, later).** After about 2 weeks of logged decisions, a weekly report
-computed in code counts rejection reasons and unscored causes per version and replays saved
-decisions with one tunable value changed. It suggests changes and never makes them: Tony picks a
-change, it lands as a PR that bumps `MODEL_VERSION`, and the scorecard shows whether the new
-version does better.
-
-### Phase 1: better numbers
-
-- Projections from this season's game logs, with the 2025-26 backtest
-  ([Task 01](tasks/01-nba-data-and-projections.md), remaining steps). Minutes arrive in Phase 0
-  (step 5c); this adds per-minute rates, spread and the backtest.
-- Matchup odds ([Task 03](tasks/03-matchup-odds.md)). Advice is ranked by Δ P(win this week).
-
-### Phase 2: the app
-
-[Task 06](tasks/06-app.md). Not a CLI.
-
-- **Local web app:** used to test a branch before its PR is approved, and in daily use it has the
-  Refresh button that runs the league read and pushes the new snapshot to Cloudflare.
-- **Cloudflare Pages:** production. Deploys `main` on merge, gives each PR branch a preview URL,
-  and is locked to Tony's email with Cloudflare Access. Tony sets up the Cloudflare account and
-  Access himself.
-- **Screens:** first-run setup, today's best move, free-agent board. The matchup screen comes with
-  matchup odds.
-- **UX bar:** someone opening it for the first time gets to a recommendation without reading docs.
-  Phone first: readable at 375 px with no horizontal scrolling.
-
-### Later
-
-FAAB bid pricing, Δ P(title) from a season simulation, injury alerts
-([Task 04](tasks/04-injury-feed.md)), opponent and trade models.
-
-A `npm run check:raw <dir>` script that runs each page parser on a saved refresh on its own and
-prints ok or the error, without page text. It would replace the scratch script used on
-2026-10-21 to check parser changes against a real capture before opening a PR.
-
-### Parked: evals over saved decisions
-
-**Status:** Parked until the refresh pipeline is stable.
-
-**Goal:** Grade recommendation quality from the saved record instead of rating each suggestion by
-hand, and check that the hard rules hold on every real refresh, not only on test fixtures.
-
-**Already built (don't rebuild):**
-- Snapshot logging. Every refresh saves a decision record in `local/decisions/` with the snapshot
-  path and hashes of the snapshot, IDs and schedule. The snapshot holds my roster, other teams'
-  rosters, free agents, FAAB balance and adds used this week. Records can't be recreated later,
-  so they are the eval data.
-- Outcome grading. `npm run bakeoff -- replay --to <date>` replays game logs for each decision's week and
-  reports the categories helped and hurt by the tool's and Tony's actions ([Task 11](tasks/11-continuous-pilot-and-scorecard.md)).
-- Hard-rule tests on synthetic fixtures (`tests/advice-correctness.test.mjs` and others).
-
-**Gaps, in order (when unparked):**
-1. Rule check over real decisions: a Node script that reads every record in `local/decisions/`
-   and its saved snapshot, and fails if the saved recommendation breaks a guardrail in
-   `AGENTS.md` (adds left this week, protected drops, pickup already rostered or out, bid above
-   value, pacing cap or on a free agent, more than one move). Prints decision IDs and rule names
-   only, no player names. Done when it runs on the saved records and on a synthetic fixture with
-   one planted violation of each rule.
-2. Matchup calibration, after [Task 03](tasks/03-matchup-odds.md) lands: Brier score per
-   category from the saved P(win) and the final matchup result (0.25 is a coin flip). Meaningful
-   from about week 8.
-3. Collection accuracy, only if comparing refresh models (Terra, Sol, Luna). The models collect
-   Yahoo pages; code computes the advice, so the same snapshot gives the same advice under any
-   model. Compare what each model captured with what Yahoo shows (rosters, matchup totals, FAAB,
-   adds used). Keep one model live and run the others on the same nights; never rotate by day.
-   Default to the cheapest model whose captures match.
-
-**Design rules:**
-- No leakage: grade a decision only with data available at its `asOf`.
-- Punted categories are a grader setting, not counted against a move.
-- Judge on volume, not single results; good decisions can have bad outcomes.
-- Node scripts in this repo, reading and writing only under `local/`. Build with Codex or plain
-  scripts, not Claude usage.
-- A draft Python harness was reviewed on 2026-10-27 and not kept: it assumed a list of moves per
-  refresh, used the wrong category names and committed snapshots outside `local/`.
-
-## How we prove it works
-
-| What | Proof |
+| ID | Decision |
 |---|---|
-| The whole idea | Phase 0 bakeoff: the tool beats the chatbot baseline on realized category gain and on Tony's rating. |
-| League read | The snapshot matches the Yahoo app for rosters and matchup totals. Parsers fail loudly on a page they don't recognize, never with a partial snapshot. |
-| Advice | Every suggestion names the pickup, the drop, games left for each and the category gain, and passes the guardrail tests. |
-| Projections | On the 2025-26 backtest, beat "season average so far" in at least 7 of 9 categories. |
-| Odds | Task 03 sanity tests, then a weekly Brier score from the calibration log. |
-| App | A first-time user reaches a recommendation unaided, on a phone. |
-| The season | A weekly log: record, categories won, moves made, suggestions taken. |
+| Q1 | The tool searches and proposes. It does not check Tony's own moves. |
+| Q2 | Engine against Tony through a two-way shadow log. No three-way bakeoff, no chatbot arm. |
+| D1 | The planner searches week plans with a beam search and acts on step one. |
+| D2 | Codex runs the Yahoo capture, and Claude stays a maintained backup host (revised 2026-10-31). |
+| I1 | Always propose, and show what the proposal depends on. |
+| I2 | Keep the engine. The brief becomes a context-check prompt that hides the chosen action. |
+| A4 | The 2026-10-22 requirement (never propose a drop on one strong game) is relaxed by I1. |
+| Q7 | A player with no prior season gets a season-only projection after 5 games or 100 minutes. |
+| Q4 | End the 2026-10-30 trial now. A new two-week window starts when PR 4 merges. |
 
-## Status
+## Open questions
 
-Updated at the end of each session.
+- **Q3. G4 threshold.** How many `changed-decision` or `caught-mistake` tags out of how many
+  decisions mean "keep"?
+- **Q6. The I2 fallback trigger.** For example: after 5 decisions, Tony overrode the engine on
+  context grounds in at least 3. If I2 fails, the fallback is "code computes, ChatGPT decides". It
+  changes Q1, D1, the planner and `AGENTS.md` hard rule 2, so it needs a new design.
 
-**2026-10-26, after 17b.** Merged: worktree rule and Codex refresh prompt (#51), Tasks 15-16
-(current-season blend, k=2, MODEL_VERSION 6, #52), Task 18 roster crunch in the brief (#53),
-Tony's Task 19 decisions (#54) and Task 19a other teams' rosters on `--trades` (#55). 218 tests
-pass. Next: 19b trade scoring (playoff-weighted, partner must gain a real need, 1-for-1 and
-2-for-1), and a routine Codex briefing prompt. Open: none.
+## The build
 
-**2026-10-25, new workflow.** Codex runs refreshes; Tony pastes a brief into ChatGPT for news and
-trade ideas. Wrote Tasks 17-19 (step 10, #47). Task 17 (`npm run brief`) is open for review;
-Task 18 is next.
+Five PRs, in order. Each leaves `npm test` passing and deletes a module only together with every
+file that imports it. The "Done when" lines are the acceptance criteria. The design lists the files
+for each PR.
 
-**2026-10-25, calibration check.** Task 16 uses 2024-25 priors and 20,518 historical 2025-26
-appearances, with nine tuning and fourteen held-out validation weeks. The tuning winner k=8
-did not beat k=2 on validation; keep k=2 under model 6. No replacement was established.
-Repeated results and report are byte-identical. See docs/backtest-01.md.
-This conditions on observed appearances and does not validate injuries, future roles, legal
-lineup decisions or opening-week optimality.
+- [x] **PR 1: shared helpers and multi-swap scoring (#74, merged).** No behavior change.
+  *Done when:* `npm test` passes, and `npm run advise` on one snapshot before and after the PR gives
+  the same `local/advice/<snapshot>.json`, with `decisionId` and `freshness` removed.
+- [x] **PR 2: week planner engine (#75, merged).** `src/engine/week-plan.mjs` and its tests. No script
+  uses it yet.
+  *Done when:* the planner tests pass, and the PR description gives the measured runtime on the
+  runtime fixture.
+- [x] **PR 3: switch to the planner; cut the chatbot arm (#76, merged).** Rewrites `advise`,
+  `refresh:analyze` and the brief. Adds season-only projections (Q7). Sets `MODEL_VERSION` to 8.
+  *Done when:* `npm test` passes, `npm run refresh:analyze` on the latest saved capture prints the
+  report sections in the design's order, and no doc line names a removed command.
+- [x] **PR 4: shadow log; cut the review UI (#77, merged).** Adds the `tony` source,
+  `npm run did` and the two-way replay.
+  *Done when:* the shadow-log tests pass, and a replay of one real decision prints a result, or
+  "unscored" with the reason.
+- [x] **PR 5: docs (#78).** Rewrites this file, archives `tasks/03` to `tasks/22`, updates
+  `README.md` and `AGENTS.md`.
+  *Done when:* every relative link in `PLAN.md`, `README.md`, `AGENTS.md`, `docs/` and
+  `tasks/archive/` resolves.
 
-**2026-10-25, current-season weighting requested.** Task 15 changes nominal production to the
-existing blend of current-season rates and two prior games of minutes, instead of prior-only
-rates. MODEL_VERSION 6 supersedes the model-4 freeze for this requested change (Task 17b took 5).
-Prior/blended sensitivity checks remain conservative; missing priors remain unknown. The
-weighting is uncalibrated.
+Merging PR 4 started the trial window on 2026-10-31.
 
-**2026-10-24, scope audit.** No paired, scored decision exists yet. Four causes: the 21:13
-decision saved banked shooting as null, so every arm is unscorable; the chatbot model is
-rejected on Tony's account; ratings in `local/pilot-reviews.jsonl` never reach the scorecard;
-and a holding tool ties doing nothing on net, which the gate counted as a loss. Since the rate
-gate landed, real runs were withheld by the 0.15 threshold rather than by risk. On 10-23 the best
-pair was positive in all 24 cases (+0.080 to +0.382). Tony approved Task 14 with a net tie broken
-by ratings and a lower add-only bar. Frozen, not extended, until the gate: the stream planner,
-the transaction history archive, the draft pages and the ad hoc research scripts.
+## Next tasks
 
-**2026-10-24, Task 14a merged (#42).** A refresh also saves the `week=N` matchup page as
-`matchup-totals.txt`, and the snapshot takes banked makes and attempts from it. On the 10-24
-capture, both teams get all four values. 188 tests pass. A live refresh that fetches the new page
-hasn't run yet. Next: 14b, after Tony picks the chatbot model.
+- [ ] **`tasks/23-codex-capture.md` (D2), not written yet.** Check the allowed URLs on saved
+  captures, so a Codex capture meets the same read-only rule as the Claude one. The Claude capture
+  path (`yahoo-reader`, `.claude/settings.json` and the URL hook) stays as a maintained backup. It
+  weakens no enforcement without Tony's OK in its PR.
 
-**2026-10-24, Task 14b merged (#43).** The chatbot arm runs on `gpt-6-sol` at medium effort as
-prompt version 2; `gpt-6.1-sol` is still rejected on Tony's account. A real run on the 10-24
-packet returned a valid HOLD once `-c windows.sandbox="elevated"` restored file reads. That entry
-was validated but not recorded. Next: 14c.
+## Parked
 
-**2026-10-25, Task 14c merged (#44).** Ratings in `local/pilot-reviews.jsonl` now reach the
-scorecard, and a net tie with doing nothing counts as a tie broken by ratings, not a loss.
+None of these is needed for the trial.
 
-**2026-10-25, Task 14d merged (#45).** `advise` moves when a pair has no missing rates, every case
-is above 0 and the nominal score reaches the bar: 0.15 with a drop, 0.05 add-only. Among qualifying
-pairs it picks the highest nominal score. `MODEL_VERSION` 4. On the 10-23 snapshot (decision
-`1d9f5a61`) it now moves: 27 pairs qualify, and the pick gains +0.287 nominally (+0.108 to
-+0.325). Tony settled the two open questions and kept the code as merged:
+- Rule check over real decisions: a script that reads every record in `local/decisions/` and its
+  snapshot, and fails if a saved recommendation breaks a guardrail. Prints decision IDs and rule
+  names only. The design defers it (G2).
+- `npm run check:raw <dir>`: run each page parser on a saved refresh and print ok or the error,
+  without page text.
+- Untracked refresh skills in `.agents/skills/league-refresh/`: Tony decides whether to keep them.
+- A paid projection source (design Alternative C), if the replay shows poor proposals come from
+  projections.
 
-- A pair with missing per-minute rates stays `insufficient` even when every computed case is
-  positive, because the rate case that could go negative was never run.
-- The highest nominal score wins among qualifying pairs, not the best worst case. The
-  all-cases-positive filter already covers the downside.
+Out of scope by the design's non-goals: win probabilities, title odds, trade scoring, FAAB bid
+amounts, a web app, scheduled runs, and chained plans past this week.
 
-Next: `MODEL_VERSION` 4 stays fixed from its first refresh (target 2026-10-27), and every refresh
-after that runs the daily pilot routine.
+## Ground rules
 
-**2026-10-25, first v4 refresh.** The 14:30 capture gave decision `01375bd1`: hold, no adds left
-in week 1. No pilot entries were recorded for it. Two findings:
+`AGENTS.md` has the hard rules. These add the reasons behind two of them.
 
-- Tony confirmed that a Sunday add takes effect Monday and counts against the next week's adds,
-  which settles the Task 10 open question (`--adds-week effective`). `advise` scores only the
-  current matchup week, so on the last day of a week it can't score a move effective the next
-  day. A week rollover (next week's dates and opponent from the `week=N+1` matchup page, zero
-  banked, a fresh add budget) would change recommendations, so it needs `MODEL_VERSION` 5. Tony
-  deferred it.
-- Today's `week=1` matchup page has no FGM/A or FTM/A columns, though the 10-24 capture had them,
-  so FG% and FT% were unknown. Check the week 2 page on the next refresh.
-
-**2026-10-24, empty-slot pickups.** PRs #32, #37 and #38 are merged. The 2026-10-24 21:13
-refresh held with "No eligible add/drop pairs": an IL move opened a spot, but `advise` only
-scored drops, and the guardrail blocked every one. Task 12 adds add-only moves and next-week
-context (`MODEL_VERSION` 2). On that snapshot it now holds for the right reason: the best add-only
-move gains 0.017 expected categories. The pickup Tony wanted gains 0.002 this week from one
-Sunday start and shows 3 games and 3 legal starts the next week. Task 12 is merged (#39). Next: the
-daily pilot routine.
-
-**2026-10-24, pending claims.** Task 13 reads pending waiver claims from the team page. On the
-21:13 capture, two add-only claims need 2 adds and 2 open spots but Tony has 1 of each, so the
-report now warns that the second claim may fail and holds with no adds left after the claims.
-Task 13 is merged (#40). Next: the daily pilot routine.
-
-**2026-10-24, continuous pilot.** Tony dropped the frozen 2-week pilot: it waited on a real move
-he accepts, and every real run so far has been hold or insufficient evidence (latest: decision
-`1d9f5a61` on the 2026-10-23 22:19 refresh). Step 5d is now a continuous pilot scored per model
-version, with a rolling gate (above) and a 2026-11-23 rethink date. Tasks 08 and 09 are merged
-(#30, #31). PR #32 (ESPN DNP flags) passes 154 tests and waits for Tony. Task 11a (versioned
-scorecard, PR #37) and Task 10 (stream-chain planner, PR #38) are open for review. The first
-real planner run (week of Oct 26) reserves an add because 21 free agents rank inside
-`protectRank` under some minutes or rate case. It finds 5 starts from 3 adds (6 from 4 with
-`--adds-week transaction`), not the hand plan's 7, because Monday has only SF and F open and
-Wednesday has none. Next: Tony reviews #32, #37 and #38. After #32 merges, every refresh runs
-the daily pilot routine (refresh, `refresh:analyze`, `pilot:prepare` (removed in PR 3), chatbot arm, three logged
-entries, Tony's ratings). Open: whether the any-case `protectRank` hold rule is too loose this
-early in the season.
-
-**2026-10-23, stream-chain spec.** Wrote [Task 10](tasks/10-stream-chain-planner.md) from a manual
-plan for the week of Oct 26 (back-to-backs: BOS Mon–Tue, ATL/CLE Wed–Thu, CHA/HOU/MIN/PHI Fri–Sat;
-7 games from 4 adds). Tony's rule: schedule efficiency never pushes a long-term pickup down the
-list. Hold candidates (an `advise` move or insufficient-evidence pickup, or inside `protectRank`
-under any minutes or rate case) are listed first and reserve an add. Not built. Open question:
-which week Yahoo counts a Sunday add for a Monday game against.
-
-**2026-10-23, rate shrinkage.** The observed per-minute endpoint is now shrunk toward the
-prior with the minutes blend's k pseudo-games: `(k * prior per-game + observed totals) /
-(k * prior MPG + played minutes)`. The raw rate stays descriptive as `observedPerMinute`.
-A new test shows one modestly strong drop game no longer withholds a move; the extreme-game
-test still withholds. On the saved October 22 capture the result stays insufficient: every
-top pair drops the center Tony agreed to withhold, while most pickup-only rate cases now clear.
-150 tests pass. k remains uncalibrated (Task 01 backtest).
-
-**2026-10-23, combined verification and outcome review.** Tasks 08/09 pass 153 tests together, including rate shrinkage.
-Tony accepted withholding the historical drop as insufficient evidence. Acceptable real move
-and hold examples, fresh Yahoo data and the pilot freeze remain pending. The shared ESPN/Yahoo
-rehearsal packet was generated and its input hashes checked. No pilot or background watch was
-started. Task 09 depends on Task 08; both were merged in #30 and #31.
-
-**2026-10-23, rate disagreement check.** Task 08 adds observed per-minute production as an
-additional sensitivity endpoint for both pickup and drop, crossed with minutes and missing
-production. Nominal rates remain prior-season rates; estimated usage stays descriptive. This
-chooses the conservative withholding option from the rejected 5a review. The saved October 22
-capture now yields insufficient evidence, not the rejected move (stale-data rehearsal only).
-149 tests pass, including the failing-before regression. The rate endpoints stay fixed and
-uncalibrated; a complete rate model remains later work. Real outcome review and pilot freeze
-are still pending. The pilot prompt also needs the ESPN evidence available to the tool.
-
-**2026-10-23, lineup replay and pilot preparation.** Task 09 implements source-specific saved
-legal starts, banked production and lineup-aware replay for the tool, chatbot and no-move
-baseline. Missing evidence is unscored. Category changes use the saved no-move/opponent
-counterfactual, not later actual totals that may include unrelated changes. Rehearsal packet
-preparation supplies the same Yahoo/ESPN inputs to both arms and verifies hashes; it does not
-freeze or start the pilot. Real outcome reviews remain pending. A fresh Yahoo read was stopped
-on a Sign in link, per the read-only workflow; no login was attempted.
-
-**2026-10-23, refresh workflow and limitations.** Added `docs/limitations.md` as the ongoing
-register of observed evidence, projection and workflow limits. `refresh:analyze` processes an
-explicit saved capture through snapshot, logs, transaction/evidence reporting and advice,
-with compact output and private step logs. Newly archived transactions appear first in the
-evidence report. Claude collection is configured for Haiku; all arithmetic runs in Node.
-Codex model routing remains host-specific; token savings have not been measured. This does
-not change projections or resolve the pre-pilot rate-model decision.
-
-Tony chose on-demand refreshes after completed game slates, not a daily scheduled watch.
-Review watched players during that refresh, using current-season sample sizes and the prior
-capture. If present, read `local/trade-watch-status.json` for user-reported trade/watch state
-and `local/recovery/` for preserved interrupted assessments. These are private local inputs,
-not files available merely by pulling the public repository. A new checkout must capture
-its own data or receive those inputs privately; do not reconstruct them from public docs.
-
-**2026-10-23, merge checkpoint.** Decision records (#24), current-season minutes (#25) and
-descriptive player evidence with observed transaction history (#27) are merged. PR #28 adds
-read-only draft and draft-results pages for trade research Tony requests, alongside the already
-allowed team rosters. Routine refreshes still use the same pages. The full suite passes 145 tests.
-The earlier draft evidence implementation (#26) is superseded by #27, which also handles box-score
-groups without athletes.
-
-The scored pilot has not started. Next: resolve the per-minute-rate decision from the rejected
-5a move below, then review real hold and insufficient-evidence outcomes before freezing the
-pilot settings and chatbot prompt. Merged implementations do not satisfy that review gate.
-
-**2026-10-22, 5a review: the "move" example is bad.** On the 22:28 snapshot (decision
-`4a5175ae`), advice said to drop a starting center who played 30 minutes with a strong line in
-his only game (14 REB, 5 AST, 3 BLK), for a bench forward on waivers. The move cleared the
-hold threshold in all four minutes cases, so the minutes check worked. The cause is the
-per-minute rates: they're still last season's, so the drop's strong game counts only as more
-minutes. Tony's ruling: hold. One strong game at 30 minutes should not be overruled by last
-season's per-minute rates. Open decision before the pilot: bring per-minute rate updates
-forward from 5f, or withhold a drop when the player's season per-minute production beats the
-prior and few games are observed. Hold and insufficient-evidence examples still need review.
-
-**2026-10-22, player evidence and transaction history.** `npm run evidence` (removed in PR 3) reports season and
-last-seven-day production from ESPN box scores for my roster, the opponent and the first 100
-available players: minutes, starts, shot volume, true shooting and an estimated USG%, with
-games observed. It also appends each transaction group seen in a saved snapshot to a private
-history, once. Yahoo stays the source for rosters, availability and transactions. The report is
-descriptive: usage doesn't change recommendation scores.
-
-**2026-10-22, steps 5b/5c implemented for review.** Decision records are in draft PR #24.
-The dependent minutes implementation uses two prior pseudo-games, retains DNP reasons and
-starter flags, and feeds the blended lines to scoring, lineup order and season protection.
-Tony chose fixed prior/season minutes endpoints; the earlier convergence and guaranteed
-five-game-move claims are removed. Source-check coverage supplies log freshness, including
-off-days. Per-minute rates and calibrated weights remain deferred. The scored pilot has not
-started, and review of the real 5a outcomes is still pending.
-
-**2026-10-22, step 5c revised.** Reviewed Codex's projection plan after the 10-21 run kept
-valuing a player by last season's 19.7 MPG after a 30-minute start. Kept per-minute rates in 5f
-and made 5c concrete: pseudo-game minutes blend with `k = 2`, DNP rule from real ESPN reasons,
-and a four-way minutes check that returns "insufficient evidence" when one game could reverse a
-move. Order unchanged: Tony reviews the 5a outcomes, then 5b, then 5c.
-
-**2026-10-22, step 5a built.** Advice no longer counts a start with no projection as zero
-(#23). It scores those starts at zero and at a strong rotation line (90th percentile of the top
-150 priors, 10th percentile TO) for both teams. It recommends a move only if the move clears the
-hold threshold in all four scenarios. When only the best case clears it, the new "insufficient
-evidence" outcome names the players with missing starts. On the 2026-10-21 snapshot, 4 unknown
-starts on my side still left a move (score 0.543 to 0.587). The matchup parser now reads pages
-captured before that day's games tip off (#22). Next: Tony reviews a real example of each outcome
-(move, hold, insufficient evidence); the 10-21 run supplies the move. Then 5b.
-
-**2026-10-22, plan for step 5.** Reviewed an outside plan (Astra) against the code. Two real gaps:
-a start with no projection counts as zero, so dropping an unprojected stream player looks like a
-gain, and the bakeoff counts every game the pickup and drop played instead of the games they
-started. Step 5 is now six items: missing production, decision records, a minutes blend that also
-feeds the guardrail, the frozen 2-week pilot, lineup-aware scoring built during the pilot, and
-per-minute rates after it.
-
-**Checkpoint (2026-10-20, step 4 done).** Phase 0, step 5 of 5. Step 4 merged (#10 to #14):
-the report now gives one best move or "hold", fills legal daily lineups, rebuilds banked FG%/FT%
-volume from game logs (or marks them unknown), refuses a stale snapshot, reads core and stream
-roles from `local/roles.json`, and the bakeoff scores helped and hurt against "no move". The
-first live run matched the opponent's volume. Mine came back unknown because the snapshot was
-taken mid-game; a refresh after the night's games should match. Still needed before the pilot:
-write `docs/bakeoff-prompt.md`, pick the chatbot, mark roles in `local/roles.json`, get Tony's OK
-on the advice output, and build the transactions parser once the league has a real move. Gate
-not yet run.
-
-**2026-10-19.** North star agreed. Scaffold only: Draft Lab priors in `data/priors/`, task specs,
-2 passing tests. Next: Phase 0, starting with the league read (Task 02) and the schedule.
-
-**2026-10-19, later.** Task 02 steps 1 and 2 done: [`docs/update-league.md`](docs/update-league.md)
-written, and the first real fetch saved all 9 pages to `local/raw/`. Page URLs and contents are in
-[`docs/sources.md`](docs/sources.md), real IDs in `.env`. Schedule source picked (ESPN, see
-`docs/sources.md`). Next: Task 02 steps 3 to 5 (schema, parsers, synthetic fixtures), then Task
-01 steps 2 and 3 (schedule and ID map).
-
-**2026-10-19, guardrails.** The league read is now read-only by enforcement, not only by
-instruction: `.claude/settings.json` denies the browser's click, type, form and script tools and
-runs a hook that blocks Yahoo URLs outside the read-only list. Fetches run through the
-`yahoo-reader` agent. The opponent page was dropped (the matchup page has both rosters), so a
-refresh is 8 pages. Checked live: a click and a blocked URL were refused, and the settings page
-still opened.
-
-**2026-10-19, parsers.** Task 02 steps 3 to 5 done: snapshot schema and `validate()`, one parser
-per page in `src/sources/yahoo-pages/`, synthetic fixtures, and `scripts/build-snapshot.mjs`. The
-real pre-season refresh builds a valid snapshot. Known gap: the transactions parser only handles
-an empty page, so the first refresh after a league move will fail until a real example is added
-(see the notes in Task 02). Next: Task 01 steps 2 and 3 (schedule and ID map), then Task 02 step 6.
-
-**2026-10-19, schedule and IDs.** Task 01 steps 2 and 3 and Task 02 step 6 done, written by Codex
-(Luna) and reviewed here: `data/schedule-2026-27.json` (ESPN, 80 of 82 games per team until the NBA
-Cup is set) and `data/ids.json`. The playoff-week check passes, and 123 of 126 players in the Yahoo
-snapshot map. Game logs and the bakeoff scripts are in a separate PR. Next: Task 05 v0 advice, from
-the needs design in that task file.
-
-**2026-10-20, v0 advice and guardrail.** Merged: NBA game logs and the bakeoff scoring script
-(#5), Yahoo status `P` with a hard failure on unknown status codes (#6), v0 add/drop advice that
-reads week dates from the matchup page (#7), and a season-value guardrail (#8). The first v0 run
-suggested 4 drops, and Tony judged all 4 bad: each swapped a core player for a streamer. The
-guardrail now protects the top 120 by season value and every roster player with no prior, and
-requires the pickup's season value to be at least the drop's plus `--margin`. On the same snapshot
-only one suggestion is left (a bench big ranked #161 for a pickup ranked #104), which Tony also
-called bad. PR #8 was written by Codex (Sol), reviewed by Claude and by Codex's reviewer, and
-passes 67 tests. The transactions page still had no moves, so its parser waits on branch
-`fix-transactions-parser`. Next: Tony reruns `npm run advise` and decides on `--margin` or
-protecting that player; move the protected list to a git-ignored `local/protected.json`; write
-`docs/bakeoff-prompt.md` and pick the chatbot; then start the 2-week bakeoff. Build the
-transactions parser when "retry transactions fetch" finds a real move.
-
-## Open decisions
-
-- Whether next-week value should ever change a recommendation (2026-10-24). Today it is context
-  only. The case for it: an add left at week's end expires, and an open spot costs nothing. It
-  depends on which week Yahoo charges a Sunday add to (`--adds-week`), on a bar the pickup must
-  clear against next week's options, and on scoring next-week value apart from this week's
-  categories. Decide after the pilot has a few cases like this one.
-
-- ~~Which pages the league read needs, and their URLs.~~ Settled 2026-10-19: 8 pages, listed with
-  the reason for each in `docs/update-league.md` (the first fetch also read the opponent page).
-- ~~Whether a Haiku or Sonnet subagent can drive the browser tools.~~ Settled 2026-10-19: yes. A
-  Haiku subagent (general-purpose agent, `model: haiku`) used the built-in browser pane's tools
-  and fetched all 9 pages by following `docs/update-league.md` in about 2.5 minutes. It saves
-  pages by retyping the tool output, so a check compared two saved pages with the live page:
-  every player row and setting matched; only whitespace and button labels differed. Parsers must
-  still fail loudly on a malformed row. Tony is signed in to Yahoo in the browser pane, not in
-  Firefox, which the browser tools can't drive.
-- ~~Schedule source for 2026-27.~~ Settled 2026-10-19: ESPN's public site API, per team. See
-  `docs/sources.md`.
-- The chatbot used for the bakeoff baseline, and its fixed prompt. The pinned `gpt-6.1-sol` is
-  rejected on Tony's ChatGPT account (2026-10-24); Tony picks a replacement in Task 14b.
+- **Read only, no Yahoo API.** Access needs an application, an email exchange and an NDA, and Tony
+  decided not to pursue it. League data comes from Yahoo pages in Tony's signed-in browser, saved
+  unchanged to `local/raw/`. Node parsers build the snapshot, and code computes every number.
+- **Codex is optional for building.** Codex (`/codex-delegate`) can write parsers and engine code.
+  If it is unavailable, Sonnet and Haiku do the same work. Under D2, Codex is the primary capture
+  host and Claude's `yahoo-reader` agent is the maintained backup.

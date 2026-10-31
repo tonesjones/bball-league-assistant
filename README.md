@@ -1,141 +1,80 @@
 # bball-league-assistant
 
-An in-season assistant for one Yahoo H2H 9-category fantasy basketball league. It suggests add/drop moves for the current week, with the numbers behind each one. It never makes a move. You make every move by hand in Yahoo.
+A tool for one Yahoo head-to-head, 9-category fantasy basketball league. When a roster decision is pending, it searches the available players and proposes one action for the week: add today, wait for a named later day, or hold. Each proposal comes with the category counts behind it. The tool never makes a move. You make every move by hand in Yahoo.
 
-League data comes from Yahoo pages read in a browser you're already signed in to, not from the Yahoo API. An LLM agent fetches the pages, and plain Node code computes every number.
-
-The first version has to beat a simple baseline: roster screenshots posted into a chatbot with a fixed prompt. Matchup odds, a web app and FAAB bids come only after that test passes.
+League data comes from Yahoo pages read in a browser you are already signed in to, not from the Yahoo API. An LLM agent saves the pages unchanged, and plain Node code computes every number.
 
 ## Status
 
-Phase 0 of [`PLAN.md`](PLAN.md): v0 advice, not yet tested against the chatbot baseline. The
-league read, schedule, player ID map and legal daily lineups work. Advice gives one move,
-hold or insufficient evidence, and saves an immutable decision record. Current-season minutes
-and production update projections, with last season contributing two prior games of minutes. Scores are approximate
-category estimates, not win probabilities. Descriptive player evidence and observed transaction
-history are also available. Steps 5a–5c are implemented; the scored pilot has not started.
+The week planner (`src/engine/week-plan.mjs`) and the shadow log are the current design. [`PLAN.md`](PLAN.md) has the goals, the stop rule and the build checklist. [`docs/designs/league-move-checker.md`](docs/designs/league-move-checker.md) has the reasoning. Rules for coding agents are in [`AGENTS.md`](AGENTS.md).
 
-Tony rejected the first reviewed move because prior-season rates overruled strong current-season
-production. The conservative rate disagreement check below addresses that failure; Tony
-accepted the historical insufficient-evidence result. The pilot runs continuously and is
-scored per model version, with no freeze. Task specs are in [`tasks/`](tasks/).
+## Set up
 
-The pre-pilot rate disagreement check now tests observed season per-minute production shrunk
-toward the prior with the minutes blend's same k pseudo-games, alongside prior rates for
-pickup/drop at the fixed minutes endpoints. The prior contributes `k * prior.mpg` pseudo-minutes;
-raw observed rates remain descriptive. A conflicting case withholds the move, and the endpoints
-remain in the check as more games update the blend. Model version 6 uses the blended rates for
-nominal projections, lineup production and season value; current-season weight grows with minutes.
-k=2 was retained after a historical tuning/validation check found no superior replacement;
-see [the calibration report](docs/backtest-01.md) for its limited scope. No games uses prior rates; incomplete observed production prevents an
-otherwise supported move. Real examples still need Tony's review before the pilot starts.
-
-Rules for coding agents: [`AGENTS.md`](AGENTS.md).
-
-Trade research requested by Tony may also read other teams' rosters and the draft and draft-results
-pages. See [`docs/update-league.md`](docs/update-league.md#trade-research-pages-only-when-tony-asks)
-for the capture workflow. These pages are separate from a routine refresh; all Yahoo access stays
-read only.
-
-## Setup
-
-Requires Node 20 or later.
+Node 20 or later is required.
 
 ```
 cp .env.example .env        # add your league and team IDs
 npm test
 ```
 
-## Get advice
+## Run a league check
 
-After a browser capture, run `npm run refresh:analyze -- local/raw/YYYY-MM-DD-HHmm` to build
-the snapshot, refresh logs, archive transactions, produce evidence and run advice together.
-It prints a compact summary with newly observed transaction details and saves full output
-privately. Browser collection is still a separate read-only step. Known evidence and model
-limits are tracked in [the limitations register](docs/limitations.md).
-
-Then run `npm run brief -- <decisionId>` using the ID from that analysis to write `local/briefs/<decisionId>.md` from the newest decision, and
-paste that file into a ChatGPT chat. It holds the tool's numbers and a fixed prompt that asks for
-news, role changes, trade ideas and packed days. ChatGPT's answer is context for you; nothing feeds
-it back into the engine. Don't use a brief for the pilot: it shows the tool's recommendation. See
-[the brief prompt](docs/chatgpt-brief.md).
-
-Add `--state <path>` to copy your standing preferences, decisions and open questions from the
-vault state note into the brief. ChatGPT ends with a carry-forward section; paste it back into
-that note, where it stays unreviewed until checked. Preferences that should change advice (IL
-candidates and lineup locks) go in `local/preferences.json`, which `advise` enforces:
-
-```json
-{ "ilCandidates": ["Name"], "notIlCandidates": ["Name"],
-  "lineupLocks": [{ "date": "2026-10-26", "slot": "Util", "player": "Name" }] }
-```
-
-Every name must be on your roster. Only listed IL candidates with an IL-eligible status (O, INJ
-or NA) and a free IL slot are assumed to move to IL.
-
-Refresh on demand after completed game slates, when Tony requests it. No daily watch or
-background monitor is needed. At each refresh, compare watched players' minutes, starts and
-production with the prior capture, keeping the sample size visible. User-reported pending
-trade status and the current watch are in ignored `local/trade-watch-status.json` when present.
-These private files stay on this computer; another checkout needs its own local inputs.
-
-Individual steps for debugging:
-
-1. In Claude Code, say "update league". The `yahoo-reader` agent saves the Yahoo pages to
-   `local/raw/`, as described in [`docs/update-league.md`](docs/update-league.md).
-2. Build the snapshot from the newest folder in `local/raw/`:
+1. Capture the Yahoo pages to `local/raw/YYYY-MM-DD-HHmm`. Codex is the primary capture host: see [`docs/codex-refresh.md`](docs/codex-refresh.md). Claude is the maintained backup: in Claude Code, say "update league" and the `yahoo-reader` agent saves the pages. See [`docs/update-league.md`](docs/update-league.md).
+2. Run the analysis on that folder:
 
    ```
-   node scripts/build-snapshot.mjs
+   npm run refresh:analyze -- local/raw/YYYY-MM-DD-HHmm
    ```
 
-3. Refresh current-season game logs for that exact snapshot (replace the example path):
+   The command builds the snapshot, fetches game logs, runs `advise` and prints a summary with the decision ID. The step logs and the full report go to `local/refreshes/YYYY-MM-DD-HHmm/`.
+
+3. Optional: write a context-check prompt for ChatGPT.
 
    ```
-   npm run fetch:gamelogs -- --season 2026-27 --snapshot local/snapshots/YYYY-MM-DD-HHmm.json
+   npm run brief -- <decisionId>
    ```
 
-   This checks scoreboards, reuses cached final box scores and rebuilds daily files with DNP
-   reasons and starter flags. Advice requires checked coverage through the snapshot date,
-   including off-days. An older file or missing day is never accepted as zero production.
+   The command writes `local/briefs/<decisionId>.md`. Without an ID it uses the newest decision. The brief hides the chosen action. See [`docs/chatgpt-brief.md`](docs/chatgpt-brief.md).
 
-4. Get the advice for that snapshot:
+4. Decide, then record what you did:
 
    ```
-   npm run advise -- local/snapshots/YYYY-MM-DD-HHmm.json
+   npm run did -- <decisionId> hold --tag T [--minutes N] [--rescue] [--reason "..."] [--replace]
+   npm run did -- <decisionId> add "<player>" [--drop "<player>"] --on YYYY-MM-DD --tag T [same flags]
    ```
 
-The advice is also saved as JSON in `local/advice/`. Every successful run also writes a new,
-immutable `local/decisions/<decisionId>.json` and prints its ID. The record keeps effective
-options, baseline and proposed daily starts, the snapshot path and hash, projection version,
-input hashes and code commit. A dirty checkout is explicitly marked; its commit alone does
-not reproduce uncommitted code. Repeated runs never overwrite a decision record.
+   `--tag` is required. The tags are `changed-decision`, `caught-mistake`, `no-effect` and `wasted-time`. `--minutes` records how long the decision took, and `--rescue` marks a league check that needed rescuing.
 
-Every tool, chatbot and do-nothing bakeoff entry must include the same `decisionId` for the
-comparison, with `week` and `asOf` matching that record. `npm run bakeoff -- record <entries.json>`
-checks that each referenced record exists before appending the batch. Old rehearsal entries
-without an ID cannot be scored as recorded decisions; do not invent a link retrospectively.
+## Read the proposal
 
-New bakeoff entries retain source-specific baseline/proposed/opponent starts and banked
-production. Outcome scoring replays those lineups, counts benched games as nothing, subtracts
-displaced starters and marks missing evidence unscored. Category changes describe independent
-fixed-lineup counterfactuals; overlapping suggestions are not a weekly plan. Old rehearsals
-without replay evidence cannot be made scored decisions after the fact.
+The report names one action: add, wait or hold. A `dependsOn` line names a player when a cautious case changes the action: the pickup at his weakest minutes and rates, or the drop at his strongest. It gives his games, his season and prior minutes, and the cautious action. A pickup with no prior season always gets one. The report also shows each category's change and the as-of time of the data. [`docs/limitations.md`](docs/limitations.md) lists the known limits of the evidence and the model.
 
-Minutes blend this season's eligible games with two prior pseudo-games. `--minutes-k` changes
-that starting weight; it is not calibrated. Rates per minute remain from the prior season.
-Reports show observed games/starts, prior/season/projected MPG and four fixed pickup/drop
-minutes cases. A move must gain in every case, including missing-production cases, and its
-nominal score must reach the bar: 0.15 expected categories with a drop (`--hold-below`), 0.05
-for an add-only move into an open spot (`--add-only-below`). Fixed prior-MPG scenarios do not
-converge as more games arrive, so uncertainty may continue to withhold a move. This is a minutes update, not a current-season rate model.
+`npm run advise` runs the planner on one snapshot. `refresh:analyze` calls it for you. To run it alone, pass a file from `local/snapshots/`. Without a path, it uses the newest snapshot. Add `--allow-stale` to override the snapshot age limit, or `--max-age-hours N` to change it. Every run writes an immutable record to `local/decisions/<decisionId>.json` and a copy of the advice to `local/advice/`.
 
+## Compare the engine with your choices
 
-## Priors from Draft Lab
-
-Last season's per-game lines, positions, teams, minutes and playoff-week game counts come from the [Draft Lab](https://github.com/tonesjones/fantasy-basketball-mock-draft) repo, imported once into `data/priors/` with the source commit recorded in `PROVENANCE.json`. To refresh, with Draft Lab checked out next to this repo:
+`did` writes a `tony` entry to the shadow log, `local/bakeoff.jsonl`. After the decision window has passed, replay both sides against the box scores:
 
 ```
-npm run import:draftlab
+npm run bakeoff -- replay --to YYYY-MM-DD
 ```
 
+The replay prints, for each decision you recorded, what the engine's action and your action would have gained against doing nothing, or "unscored" with the reason. Other `bakeoff` commands are `record <entries.json>` and `score --week N --from YYYY-MM-DD --to YYYY-MM-DD`.
+
+## Data commands
+
+| Command | What it does |
+|---|---|
+| `npm run import:draftlab` | Imports last season's priors into `data/priors/` from a [Draft Lab](https://github.com/tonesjones/fantasy-basketball-mock-draft) checkout next to this repo. Never hand-edit that folder. |
+| `npm run fetch:schedule` | Writes the 2026-27 NBA schedule to `data/schedule-2026-27.json`. |
+| `npm run build:ids` | Writes the player ID map `data/ids.json`. |
+| `npm run match:ids` | Matches the newest snapshot's players against the ID map. |
+| `npm run fetch:gamelogs -- --season 2026-27 --snapshot <file>` | Fetches box scores through the snapshot date. `--from` and `--to` change the date range. `refresh:analyze` runs this for you. |
+
+## Where outputs go
+
+Everything the tool reads from Yahoo or writes about your team goes in `local/`, which Git ignores: `raw/`, `snapshots/`, `refreshes/`, `advice/`, `decisions/`, `briefs/` and `bakeoff.jsonl`. Preferences that change advice, such as protected players, live in `local/protected.json` and `local/preferences.json`. Another checkout needs its own copies.
+
+## Retired work
+
+Specs for the earlier phases are in [`tasks/archive/`](tasks/archive/). [`tasks/`](tasks/) holds the first two task specs.

@@ -28,7 +28,7 @@ Carried over from Draft Lab's season manager. Treat them as tests, not suggestio
 - Never suggest a drop without a named pickup who is better by the engine's own measure.
 - Never suggest dropping a player Tony marks as protected (`local/protected.json`, git-ignored because it holds real names).
 - Never suggest picking up a player who is out or has no return timeline.
-- Every recommendation shows its numbers and the as-of time of the data behind it. In Phase 0 the numbers are approximate: the change in expected categories won and each category's change. Δ P(win this week) is required once matchup odds land (Task 03), and Δ P(title) once the season simulation does.
+- Every recommendation shows its numbers, the as-of time of its data, and what it depends on (the planner report).
 - Recommend one move per refresh, or hold. Other moves were scored against the roster before that move, so rerun after it.
 - When an input a category depends on is unknown (for example this week's banked shooting volume), mark that category unknown and leave it out of the score. Never project it as zero.
 - Refuse a stale snapshot unless Tony overrides it, and say how old it is.
@@ -37,17 +37,17 @@ Carried over from Draft Lab's season manager. Treat them as tests, not suggestio
 ## How to work
 
 - Node 20+, ES modules, no runtime dependencies unless a task says otherwise. Tests use `node:test`.
-- One task from `tasks/` at a time, in the order in `PLAN.md`, on its own branch off `main`, as one pull request.
+- One PR from the active design's work order at a time, in the order in `PLAN.md`, on its own branch off `main`, as one pull request.
 - One session per working directory. A session that writes code works in its own git worktree (`git worktree add ../bball-wt-<task> -b <branch> origin/main`) and leaves the main folder on `main`. Never switch branches in a folder another session may be using. A refresh edits nothing outside `local/` (see `docs/codex-refresh.md`).
 - Write each task so Sonnet or Haiku can do it. Codex is optional and may not always be available.
-- A task is done when its acceptance tests pass with `npm test` and the task file's "Done when" list is checked.
+- A task is done when its acceptance tests pass with `npm test` and the PR's "Done when" list in the active design is checked.
 - Keep pure logic (projections, simulator, planner) in `src/engine/`, free of I/O. I/O lives in `src/sources/` and `scripts/`.
 - Seed every random number generator; the same inputs must give the same output.
 - A pull request that changes recommendations or scores (projections, advice rules, lineups, replay
   scoring) bumps `MODEL_VERSION` and says so in its description. A parser fix that only lets a
   refresh succeed doesn't. A change to the chatbot prompt bumps the prompt version in
   `docs/chatgpt-brief.md`.
-- If a task's spec is wrong or impossible, stop and write what you found at the end of the task file instead of guessing.
+- If a task's spec is wrong or impossible, stop and write what you found under "Findings" at the end of the active design instead of guessing.
 - Docs-only pull requests (only `tasks/`, `docs/`, `PLAN.md`, `README.md` or `AGENTS.md`) don't wait for Tony. After opening one, check that the PR head equals the local branch tip, squash-merge it, delete the branch locally and on GitHub, and update local `main`, without asking. A pull request that touches anything else, including `.claude/` settings, still waits for Tony's OK to merge.
 - After every confirmed PR merge, clean up its branch as part of finishing the task. GitHub's automatic deletion of merged PR branches should stay enabled. Fetch with `--prune`, verify the merge is on `origin/main`, and verify each branch tip matches the merged PR head before deleting it. Squash merges may require `git branch -D` after that verification; ancestry alone does not identify a squash-merged branch. Keep branches with new commits, open PRs, or uncertain merge status. Never switch or remove another chat's worktree to free a branch; report checked-out branches as deferred. In this chat's own clean worktree, detach at `origin/main` before deleting the completed branch. Fast-forward the main checkout without disturbing local edits; if blocked, report it rather than resetting or stashing. Prune stale remote references again and report anything retained.
 
@@ -58,7 +58,7 @@ data/priors/      last season's priors imported from Draft Lab (generated)
 scripts/          command-line entry points
 src/engine/       pure logic: projections, simulator, planner, FAAB
 src/sources/      Yahoo, NBA data, news loaders
-tasks/            one spec per milestone, in build order
+tasks/            early specs (01, 02); tasks/archive/ holds the retired ones
 tests/            node:test suites and synthetic fixtures
 local/            git-ignored: Yahoo fixtures, run outputs, reports
 ```

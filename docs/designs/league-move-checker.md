@@ -180,7 +180,7 @@ All decisions were made by Tony on 2026-10-31.
 | Q1 | The tool searches and proposes. It does not check Tony's moves. |
 | Q2 | Engine vs Tony through a two-way shadow log, not a three-way bakeoff. |
 | D1 | The planner searches week plans and acts on step one (beam search). |
-| D2 | Codex runs the Yahoo capture. Built in a separate task. |
+| D2 | Codex runs the Yahoo capture. Claude stays a maintained backup host (revised 2026-10-31). The allowed-URL check is a separate task. |
 | I1 | Always propose, and show what the proposal depends on. |
 | I2 | Keep the engine. The brief becomes a context-check prompt. |
 | A4 | The 2026-10-22 requirement is relaxed by I1. |
@@ -210,17 +210,23 @@ All decisions were made by Tony on 2026-10-31.
     *   Rejected: one move for this week only, because it can't compare
         days. Deferred: next week's first days, until this works.
     *   Confirmed after review: the beam planner over a one-step day sweep.
-*   **D2. Codex runs the Yahoo capture with its in-app browser.** There is
-    no maintained backup host.
+*   **D2. Codex runs the Yahoo capture with its in-app browser.** Claude
+    is a maintained backup host.
+    *   **Revised by Tony, 2026-10-31.** Tony may cancel Codex within about
+        two weeks, so Claude's capture path stays and is kept working: the
+        `yahoo-reader` agent, the `.claude/settings.json` tool denials and
+        the Yahoo URL hook. Codex stays the primary host for now.
     *   This conflicts with `PLAN.md` ("nothing that runs during the
         season calls Codex") and with `AGENTS.md` hard rule 1 (don't weaken
         enforcement without Tony's OK in the PR).
-    *   Its implementation is moved to a separate task: the allowed-URL
-        check on saved captures, removing the Claude capture agent, and
-        updating those two files. This design's PRs don't change capture.
-    *   Rejected: Claude's browser pane, because its Yahoo sign-in lapsed
-        on 2026-10-25 and 2026-10-26. Also rejected: two hosts kept in
-        step, because the two hosts' instructions had already diverged.
+    *   Its implementation is a separate task: the allowed-URL check on
+        saved captures. It no longer removes the Claude capture agent.
+        This design's PRs don't change capture.
+    *   Known weakness: two hosts must be kept in step, and their
+        instructions had already diverged by 2026-10-31. Claude's browser
+        pane also lost its Yahoo sign-in on 2026-10-25 and 2026-10-26.
+    *   The first version rejected keeping two hosts for those reasons.
+        The revision accepts that cost so capture survives losing Codex.
 *   **I1. Propose, and show what it depends on.** The engine can't tell a
     breakout from minutes caused by a teammate's injury. That needs news,
     which stays with Tony and ChatGPT. So the planner always proposes from
@@ -512,7 +518,7 @@ would lose their tests and history.
 | Bakeoff records and replay | `src/sources/bakeoff-records.mjs`, `src/engine/bakeoff.mjs`, `scripts/bakeoff.mjs`, `src/engine/lineup-replay.mjs` | Modify: two-way, `tony` source | 4 |
 | Review UI and its check skill | `src/sources/review-ui.mjs`, `scripts/review.mjs`, `src/ui/review.*`, `.agents/skills/verify-league-refresh/` | Cut | 4 |
 | Untracked refresh skills | `.agents/skills/league-refresh/`, `league-refresh-compare/` | Left for Tony to keep or delete | — |
-| Capture-host changes | `.claude/agents/yahoo-reader.md`, capture parts of `docs/update-league.md`, `docs/codex-refresh.md` | Separate task (D2) | — |
+| Capture hosts | `.claude/agents/yahoo-reader.md` (backup host, kept), `docs/update-league.md`, `docs/codex-refresh.md` | Keep both; the allowed-URL check is a separate task (D2) | — |
 | Plan | `PLAN.md` | Rewrite | 5 |
 | Task specs | `tasks/03`–`tasks/22` | Archive | 5 |
 | README | `README.md` | Update | 5 |

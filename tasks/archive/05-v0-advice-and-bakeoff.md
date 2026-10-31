@@ -5,7 +5,7 @@ Phase 0. Needs Task 02 (league read) and Task 01 steps 2 and 3 (schedule, ID map
 ## Goal
 
 Rough add/drop advice for the current week, good enough to test the project's core bet: that
-code-computed advice beats posting roster screenshots into a chatbot. See [`PLAN.md`](../PLAN.md).
+code-computed advice beats posting roster screenshots into a chatbot. See [`PLAN.md`](../../PLAN.md).
 
 ## Inputs
 
