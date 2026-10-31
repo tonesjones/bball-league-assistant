@@ -1,6 +1,6 @@
 # Task 06: the app
 
-Phase 2. **Don't start until the Phase 0 bakeoff passes its gate** (see [`PLAN.md`](../PLAN.md)).
+Phase 2. **Don't start until the Phase 0 bakeoff passes its gate** (see [`PLAN.md`](../../PLAN.md)).
 This is a stub; the full spec is written when Phase 0 ends.
 
 ## Goal
