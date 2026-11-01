@@ -35,12 +35,20 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    Never substitute an older decision or brief. Use - for a missing ID or brief path.
 3. If the brief succeeded, copy it to the clipboard:
    Get-Content -Raw "<brief path>" | Set-Clipboard
+   Then verify it: compare (Get-Clipboard -Raw).TrimEnd() with the file's text, TrimEnd() too.
+   The sandbox may not reach the Windows clipboard. In Codex, run the copy and the check
+   outside it: request the normal tool approval with require_escalated, as in step 2.
+   If approval is denied, report the copy as unverified and go on to step 4.
    Do not claim the clipboard copy succeeded unless it did. A brief copy never proves pasting,
    reading, or a Yahoo action.
    After Tony decides, run npm run did with his answer (see docs/designs/league-move-checker.md,
    CUJ 3). Do not invent his answer.
 4. Log this run in the vault file:
    C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant runs.md
+   The vault is outside the Codex workspace, so the sandbox denies its reads, writes and git
+   commands ("Permission denied"). In Codex, run every step-4 command with the normal tool
+   approval (require_escalated). If approval is denied, report the entry as unsaved, with the
+   line you would have written. Do not bypass the denial.
    Read only what is needed to preserve this note. If missing, create it with:
    ---
    type: log
