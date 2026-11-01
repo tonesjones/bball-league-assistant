@@ -41,8 +41,9 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    If approval is denied, report the copy as unverified and go on to step 4.
    Do not claim the clipboard copy succeeded unless it did. A brief copy never proves pasting,
    reading, or a Yahoo action.
-   After Tony decides, run npm run did with his answer (see docs/designs/league-move-checker.md,
-   CUJ 3). Do not invent his answer.
+   Tony records the decision with npm run did, which asks a few questions. If Tony gives the
+   answer in this chat instead, run the flag form from README.md step 4 with it.
+   Do not invent an answer.
 4. Log this run in the vault file:
    C:\TestCode\Obsidian\Claude\10 Projects\bball-league-assistant runs.md
    The vault is outside the Codex workspace, so the sandbox denies its reads, writes and git
