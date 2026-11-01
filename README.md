@@ -39,6 +39,14 @@ npm test
 4. Decide, then record what you did:
 
    ```
+   npm run did
+   ```
+
+   It asks about the newest decision: what you did (the engine's pick, a runner-up, hold, or someone else), how much the tool mattered, your minutes, and whether the check needed rescuing. Answer each with a number or Enter. To ask about an older decision, pass its ID: `npm run did -- <decisionId>`. If you already recorded the decision, it offers to replace that entry.
+
+   Scripts and Codex can skip the questions with flags:
+
+   ```
    npm run did -- <decisionId> hold --tag T [--minutes N] [--rescue] [--reason "..."] [--replace]
    npm run did -- <decisionId> add "<player>" [--drop "<player>"] --on YYYY-MM-DD --tag T [same flags]
    ```

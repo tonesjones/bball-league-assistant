@@ -27,7 +27,7 @@ By 2026-10-30, after 13 days and 7 model versions, no decision had been scored, 
 |---|---|---|
 | G1 | One proposed action with correct counts. | The planner tests pass. Tony checks three real proposals by hand and finds no error. |
 | G2 | No guardrail is broken. | The guardrail tests in `tests/advice-correctness.test.mjs`, ported to the planner, pass. |
-| G3 | At most 5 minutes of Tony's attention per decision. | Tony records minutes with `npm run did -- ... --minutes N`. |
+| G3 | At most 5 minutes of Tony's attention per decision. | Tony records minutes when `npm run did` asks. |
 | G4 | Useful often enough to keep. | Each `did` entry has one tag (`changed-decision`, `caught-mistake`, `no-effect`, `wasted-time`). The weekly replay shows which choice gained more categories when Tony and the engine differed. The threshold is open question Q3. |
 | G5 | Low upkeep. | At most one 30-minute maintenance session and one rescued league check per week. Rescues come from `did --rescue`, sessions from the git log. |
 | G6 | Same inputs, same answer. | A test runs the planner twice on one fixture and compares the output byte for byte. |

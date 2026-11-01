@@ -10,6 +10,7 @@ import { projectPlayers } from '../src/engine/projections.mjs';
 import { saveDecision } from '../src/sources/decisions.mjs';
 import { hash } from '../src/sources/bakeoff-records.mjs';
 import { zeroLine } from '../src/engine/lineup-replay.mjs';
+import { choices } from '../scripts/did.mjs';
 
 const fixture = JSON.parse(await readFile(new URL('./fixtures/v0/league.json', import.meta.url)));
 const did = fileURLToPath(new URL('../scripts/did.mjs', import.meta.url));
@@ -18,12 +19,13 @@ const MOVE = { action: 'move', pair: { pickup: { name: 'Casey Fiction', nbaTeam:
   drop: { name: 'Alex Sample', nbaTeam: 'AAA', espnId: '1' }, pickupStart: '2026-10-21' } };
 
 // One synthetic decision in a temp dir. The engine holds on this fixture unless engine is 'move'.
-async function setup(t, { engine = 'hold' } = {}) {
+async function setup(t, { engine = 'hold', patch = {} } = {}) {
   const dir = await mkdtemp(path.join(tmpdir(), 'bball-did-'));
   t.after(() => rm(dir, { recursive: true, force: true }));
   const f = fixture, projections = projectPlayers(f.priors, f.ids, []);
   const report = planWeek({ snapshot: f.snapshot, schedule: f.schedule, projections, ids: f.ids, options: { protectRank: 0 } });
   if (engine === 'move') report.decision = MOVE;
+  Object.assign(report, patch);
   await mkdir(path.join(dir, 'data'), { recursive: true });
   await writeFile(path.join(dir, 'data/ids.json'), JSON.stringify(f.ids));
   await writeFile(path.join(dir, 'data/schedule-2026-27.json'), JSON.stringify(f.schedule));
@@ -47,7 +49,8 @@ async function setup(t, { engine = 'hold' } = {}) {
     for (const [date, espnId, p] of pts) days.set(date, [...(days.get(date) ?? []), { ...zeroLine(), date, espnId, didNotPlay: false, espnEventId: `g-${date}`, pts: p }]);
     for (const [date, lines] of days) await writeFile(path.join(out, `${date}.json`), JSON.stringify(lines));
   };
-  return { dir, id: saved.id, report, run, log, gamelogs, did: (...a) => run(did, saved.id, ...a), replay: () => run(bakeoff, 'replay', '--to', '2026-11-01') };
+  const answer = (input, ...args) => execFileSync(process.execPath, [did, ...args], { cwd: dir, encoding: 'utf8', stdio: 'pipe', input });
+  return { dir, id: saved.id, report, run, log, gamelogs, answer, did: (...a) => run(did, saved.id, ...a), replay: () => run(bakeoff, 'replay', '--to', '2026-11-01') };
 }
 
 // Alex scores 5 on each start (a losing PTS week), Blair 25 in all, Casey 40 on 10-21.
@@ -143,4 +146,45 @@ test('a pickup outside the capture is unscored with the reason, not an error', a
   assert.equal(row.lineups, null);
   await s.gamelogs(LOGS);
   assert.match(s.replay(), /tony: unscored \(Pickup is not in the captured free agents\.\)/);
+});
+
+const CASEY_STEP = { pickup: { name: 'Casey Fiction', nbaTeam: 'CCC' }, drop: { name: 'Alex Sample', nbaTeam: 'AAA' }, start: '2026-10-21' };
+const ADD_PATCH = { action: 'add', step: CASEY_STEP, waitFor: null, runnersUp: [] };
+
+test('choices lists the engine pick, the runners-up and hold', () => {
+  const list = choices({ action: 'add', step: CASEY_STEP, runnersUp: [{ step: { ...CASEY_STEP, drop: null, start: '2026-10-22' } }] });
+  assert.deepEqual(list.map((c) => c.label), ["Added Casey Fiction (CCC), dropped Alex Sample, starts 2026-10-21 (engine's pick)",
+    'Added Casey Fiction (CCC), into open spot, starts 2026-10-22', 'Held']);
+  assert.deepEqual(list[0].args, ['add', 'Casey Fiction', '--drop', 'Alex Sample', '--on', '2026-10-21']);
+  assert.deepEqual(list[1].args, ['add', 'Casey Fiction', '--on', '2026-10-22']);
+  assert.deepEqual(choices({ action: 'hold', step: null, runnersUp: [] }).map((c) => c.label), ["Held (engine's pick)"]);
+  assert.match(choices({ action: 'wait', waitFor: CASEY_STEP, runnersUp: [] })[0].label, /wait for this day/);
+});
+
+test('did with no arguments asks about the latest decision and records the chosen add', async (t) => {
+  const s = await setup(t, { patch: ADD_PATCH });
+  const out = s.answer('1\n3\n\n\n');
+  assert.match(out, new RegExp(`Decision ${s.id}`));
+  assert.match(out, /Recorded add Casey Fiction/);
+  const row = (await s.log()).find((e) => e.source === 'tony');
+  assert.deepEqual([row.decision, row.add.name, row.drop.name, row.start, row.tag, row.minutes, row.rescue], ['move', 'Casey Fiction', 'Alex Sample', '2026-10-21', 'no-effect', undefined, undefined]);
+});
+
+test('did questions take someone else, retry a bad number, and record minutes and rescue', async (t) => {
+  const s = await setup(t, { patch: ADD_PATCH });
+  // Options: 1 engine pick, 2 held, 3 someone else.
+  s.answer('9\n3\nCasey Fiction\n\n\n1\n4\ny\n', s.id);
+  const row = (await s.log()).find((e) => e.source === 'tony');
+  assert.deepEqual([row.add.name, row.drop, row.start, row.tag, row.minutes, row.rescue], ['Casey Fiction', null, '2026-10-21', 'changed-decision', 4, true]);
+});
+
+test('did questions offer to replace an earlier entry, and stop on no answer', async (t) => {
+  const s = await setup(t, { patch: ADD_PATCH });
+  s.answer('2\n3\n\n\n');
+  assert.throws(() => s.answer('2\n3\n\n\nn\n'), /Kept the earlier entry/);
+  s.answer('1\n1\n\n\ny\n');
+  const rows = (await s.log()).filter((e) => e.source === 'tony');
+  assert.deepEqual(rows.map((r) => [r.decision, r.replaces]), [['hold', undefined], ['move', true]]);
+  assert.throws(() => s.answer('1\n'), /Cancelled/);
+  assert.equal((await s.log()).filter((e) => e.source === 'tony').length, 2);
 });
