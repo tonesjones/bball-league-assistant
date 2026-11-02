@@ -392,3 +392,18 @@ test('transactions retain traded players without counting them as waiver adds', 
     {team: 'Other Fixture', time: 'Oct 30, 1:22 am', moves: [{player: 'Example Center', nbaTeam: 'MIL', type: 'trade', faab: null}]},
   ]);
 });
+
+test('transactions apply one trade label to every player in a grouped trade', () => {
+  const text = 'Recent Transactions\nFAB Offers\nExample Wing NOP - SG,SF P\nExample Forward DEN - PF\nTraded to\nFixture Team\nNov 2, 1:30 am\nExample Guard POR - PG,SG\nExample Center MIL - C\nTraded to\nOther Fixture\nNov 2, 1:30 am\nYahoo Sports - NBC';
+  assert.deepEqual(parseTransactions(text), [
+    { team: 'Fixture Team', time: 'Nov 2, 1:30 am', moves: [
+      { player: 'Example Wing', nbaTeam: 'NOP', type: 'trade', faab: null },
+      { player: 'Example Forward', nbaTeam: 'DEN', type: 'trade', faab: null },
+    ] },
+    { team: 'Other Fixture', time: 'Nov 2, 1:30 am', moves: [
+      { player: 'Example Guard', nbaTeam: 'POR', type: 'trade', faab: null },
+      { player: 'Example Center', nbaTeam: 'MIL', type: 'trade', faab: null },
+    ] },
+  ]);
+  assert.throws(() => parseTransactions(text.replace('Traded to', 'To Waivers')), /transactions layout not seen yet/);
+});
