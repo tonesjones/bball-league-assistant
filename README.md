@@ -34,7 +34,7 @@ npm test
    npm run brief -- <decisionId>
    ```
 
-   The command writes `local/briefs/<decisionId>.md`. Without an ID it uses the newest decision. The brief hides the chosen action. See [`docs/chatgpt-brief.md`](docs/chatgpt-brief.md).
+   The command writes `local/briefs/<decisionId>.md`. Without an ID it uses the decision with the latest capture time (`report.asOf`), breaking ties by `createdAt`; missing or invalid capture times sort last. The brief hides the chosen action. See [`docs/chatgpt-brief.md`](docs/chatgpt-brief.md).
 
 4. Decide, then record what you did:
 
@@ -42,7 +42,7 @@ npm test
    npm run did
    ```
 
-   It asks about the newest decision: what you did (the engine's pick, a runner-up, hold, or someone else), how much the tool mattered, your minutes, and whether the check needed rescuing. Answer each with a number or Enter. To ask about an older decision, pass its ID: `npm run did -- <decisionId>`. If you already recorded the decision, it offers to replace that entry.
+   It asks about the same latest-capture decision as `brief`: what you did (the engine's pick, a runner-up, hold, or someone else), how much the tool mattered, your minutes, and whether the check needed rescuing. Answer each with a number or Enter. To ask about an older decision, pass its ID: `npm run did -- <decisionId>`. If you already recorded the decision, it offers to replace that entry. Each new entry records a full ISO timestamp.
 
    Scripts and Codex can skip the questions with flags:
 
@@ -57,7 +57,7 @@ npm test
 
 The report names one action: add, wait or hold. A `dependsOn` line names a player when a cautious case changes the action: the pickup at his weakest minutes and rates, or the drop at his strongest. It gives his games, his season and prior minutes, and the cautious action. A pickup with no prior season always gets one. The report also shows each category's change and the as-of time of the data. [`docs/limitations.md`](docs/limitations.md) lists the known limits of the evidence and the model.
 
-`npm run advise` runs the planner on one snapshot. `refresh:analyze` calls it for you. To run it alone, pass a file from `local/snapshots/`. Without a path, it uses the newest snapshot. Add `--allow-stale` to override the snapshot age limit, or `--max-age-hours N` to change it. Every run writes an immutable record to `local/decisions/<decisionId>.json` and a copy of the advice to `local/advice/`.
+`npm run advise` runs the planner on one snapshot. `refresh:analyze` calls it for you. To run it alone, pass a file from `local/snapshots/`. Without a path, it uses the newest snapshot. Add `--allow-stale` to override the snapshot age limit, or `--max-age-hours N` to change it. It also refuses captures older than a timestamped add recorded by `did`; `--allow-roster-change` overrides this and is saved in the decision's options. Older log entries without timestamps are ignored by that check. Every successful run writes an immutable record to `local/decisions/<decisionId>.json` and a copy of the advice to `local/advice/`.
 
 ## Compare the engine with your choices
 
@@ -98,6 +98,7 @@ Everything the tool reads from Yahoo or writes about your team goes in `local/`,
 - `src/engine/` does no I/O and uses no randomness, so the same inputs give the same output.
 - A change to recommendations or scores bumps `MODEL_VERSION` in `src/engine/advice-common.mjs`.
 - Anything about your league goes in `local/`, which Git ignores. Tests use synthetic fixtures only.
+- `advise` formats and prepares output before saving a decision, removes that record if the advice write fails, and logs shadow entries only after advice succeeds. `brief` and `did` share the latest-capture default; `advise` checks for recorded roster changes unless explicitly overridden.
 
 ## Global side effects
 

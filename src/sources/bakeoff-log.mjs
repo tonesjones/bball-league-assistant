@@ -18,5 +18,5 @@ export async function appendEntries(entries, path = BAKEOFF_LOG) {
     if (keys.has(key) && entry.replaces !== true) throw new Error(`Decision/source already recorded: ${key}`);
     keys.add(key);
   }
-  await appendFile(path, entries.map((e) => JSON.stringify({ taken: false, ...e, recordedAt: new Date().toISOString() })).join('\n') + '\n');
+  await appendFile(path, entries.map((e) => JSON.stringify({ taken: false, ...e, recordedAt: e.recordedAt ?? new Date().toISOString() })).join('\n') + '\n');
 }

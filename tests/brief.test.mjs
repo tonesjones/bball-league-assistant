@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -109,6 +109,10 @@ test('brief CLI writes once, accepts --state and --fa, and refuses a changed sna
     await mkdir(path.dirname(path.join(dir, file)), { recursive: true });
     await writeFile(path.join(dir, file), body);
   }
+  const older = path.join(dir, 'local/decisions/older-rerun.json');
+  await writeFile(older, JSON.stringify({ ...record, id: 'older-rerun', createdAt: '2026-10-30T00:00:00Z',
+    report: { ...record.report, asOf: '2026-10-19T05:00:00Z' } }));
+  await utimes(older, new Date('2099-01-01'), new Date('2099-01-01'));
   const cli = fileURLToPath(new URL('../scripts/brief.mjs', import.meta.url));
   const run = (...args) => execFileSync(process.execPath, [cli, ...args], { cwd: dir, encoding: 'utf8', stdio: 'pipe' });
   assert.equal(run('--state', 'x.md', '--fa', '10'), `Brief: ${path.join('local/briefs', 'sample.md')}\n`);

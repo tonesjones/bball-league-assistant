@@ -1,7 +1,7 @@
-import { readFile, readdir, stat, mkdir, writeFile } from 'node:fs/promises';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
-import { readDecision, DECISIONS_DIR } from '../src/sources/decisions.mjs';
+import { readDecision, newestDecision, DECISIONS_DIR } from '../src/sources/decisions.mjs';
 import { decisionInputs } from '../src/sources/bakeoff-records.mjs';
 import { buildBrief } from '../src/engine/brief.mjs';
 
@@ -12,15 +12,6 @@ export function readPrompt(doc) {
   const version = /^Brief prompt version: (\d+)$/m.exec(doc)?.[1];
   if (!prompt || !version) throw new Error('docs/chatgpt-brief.md needs prompt markers and a "Brief prompt version:" line');
   return { prompt, version: Number(version) };
-}
-
-// Decision records are written once, so the newest file is the newest decision.
-async function newestDecision(dir = DECISIONS_DIR) {
-  const files = await Promise.all((await readdir(dir)).filter((f) => f.endsWith('.json')).map(async (name) =>
-    ({ name, modified: (await stat(path.join(dir, name))).mtimeMs })));
-  files.sort((a, b) => b.modified - a.modified || a.name.localeCompare(b.name));
-  if (!files.length) throw new Error(`no decisions in ${dir}; run npm run advise first`);
-  return path.basename(files[0].name, '.json');
 }
 
 async function main(args) {
@@ -35,7 +26,8 @@ async function main(args) {
     } else if (args[i].startsWith('-') || id) throw new Error(`unexpected argument: ${args[i]}`);
     else id = args[i];
   }
-  const record = await readDecision(id ?? await newestDecision());
+  const record = id ? await readDecision(id) : await newestDecision();
+  if (!record) throw new Error(`no decisions in ${DECISIONS_DIR}; run npm run advise first`);
   const { snapshot } = await decisionInputs(record);
   const { prompt, version } = readPrompt(await readFile(PROMPT_FILE, 'utf8'));
   const brief = buildBrief({ record, snapshot, prompt, promptVersion: version });

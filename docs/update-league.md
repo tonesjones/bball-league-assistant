@@ -153,9 +153,12 @@ itself proof that ESPN is down.
 
 If Tony requests another attempt after a network-only failure, the same complete capture can
 be processed again without reading Yahoo again, provided the snapshot still passes the existing
-freshness checks and Tony has made no roster changes. The rerun moves the earlier step logs for
-that timestamp into `local/refreshes/<timestamp>/attempt-<n>/`, so nothing is lost. Do not use
-`--allow-stale` without Tony's explicit override. The failed vault log remains historical evidence;
+freshness checks and Tony has made no roster changes. `advise` refuses a snapshot older than a
+timestamped add recorded by `did`, naming both times and asking Tony to capture again. Older log
+entries without `recordedAt` cannot be checked. `--allow-roster-change` is an explicit override
+saved in the decision's options; `refresh:analyze` never passes it. The rerun moves the earlier
+step logs for that timestamp into `local/refreshes/<timestamp>/attempt-<n>/`, so nothing is lost.
+Do not use `--allow-stale` or `--allow-roster-change` without Tony's explicit override. The failed vault log remains historical evidence;
 a successful retry is a separate run, not a reason to rewrite it.
 
 This runs three steps and stops at the first that fails: `snapshot` (parse the capture),

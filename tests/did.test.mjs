@@ -75,6 +75,17 @@ test('did records a hold', async (t) => {
   assert.deepEqual(row.lineups.proposed, row.lineups.baseline);
 });
 
+test('did records the supplied full timestamp and the log preserves it', async (t) => {
+  const s = await setup(t), recordedAt = '2026-10-21T01:23:45.678Z';
+  const code = `import { did } from ${JSON.stringify(new URL('../scripts/did.mjs', import.meta.url).href)};
+    const entry = await did(${JSON.stringify([s.id, 'hold', '--tag', 'no-effect'])}, new Date(${JSON.stringify(recordedAt)}));
+    console.log(JSON.stringify(entry));`;
+  const entry = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', code],
+    { cwd: s.dir, encoding: 'utf8', stdio: 'pipe' }));
+  assert.equal(entry.recordedAt, recordedAt);
+  assert.equal((await s.log()).find((e) => e.source === 'tony').recordedAt, recordedAt);
+});
+
 test('did refuses a missing tag, an unknown name and a duplicate without --replace', async (t) => {
   const s = await setup(t);
   assert.throws(() => s.did('hold'), /--tag is required/);
@@ -163,6 +174,9 @@ test('choices lists the engine pick, the runners-up and hold', () => {
 
 test('did with no arguments asks about the latest decision and records the chosen add', async (t) => {
   const s = await setup(t, { patch: ADD_PATCH });
+  const record = JSON.parse(await readFile(path.join(s.dir, `local/decisions/${s.id}.json`), 'utf8'));
+  await writeFile(path.join(s.dir, 'local/decisions/older-rerun.json'), JSON.stringify({ ...record, id: 'older-rerun',
+    createdAt: '2099-01-01T00:00:00Z', report: { ...record.report, asOf: '2026-10-19T00:00:00Z' } }));
   const out = s.answer('1\n3\n\n\n');
   assert.match(out, new RegExp(`Decision ${s.id}`));
   assert.match(out, /Recorded add Casey Fiction/);

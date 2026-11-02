@@ -1,8 +1,8 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { DECISIONS_DIR, readDecision } from '../src/sources/decisions.mjs';
+import { DECISIONS_DIR, readDecision, newestDecision } from '../src/sources/decisions.mjs';
 import { findPlayer } from '../src/engine/names.mjs';
 import { validateEntry } from '../src/engine/bakeoff.mjs';
 import { attachLineups } from '../src/sources/bakeoff-records.mjs';
@@ -47,7 +47,7 @@ export async function did(args, now = new Date()) {
   if (verb === 'add' && !/^\d{4}-\d{2}-\d{2}$/.test(flags['--on'] ?? '')) throw new Error('add needs --on YYYY-MM-DD');
   if (verb === 'add' && flags['--drop'] === '') throw new Error('--drop needs a name');
   const record = await readDecision(decisionId);
-  const entry = { decisionId, week: record.report.week, asOf: record.report.asOf, date: now.toISOString().slice(0, 10),
+  const entry = { decisionId, week: record.report.week, asOf: record.report.asOf, date: now.toISOString().slice(0, 10), recordedAt: now.toISOString(),
     source: 'tony', chatbot: null, rating: null, tag: flags['--tag'], decision: 'hold', add: null, drop: null };
   if (flags['--minutes'] !== undefined) {
     if (!flags['--minutes'].trim() || !Number.isFinite(Number(flags['--minutes']))) throw new Error('--minutes must be a number');
@@ -85,10 +85,9 @@ export function choices(report) {
 }
 
 export async function latestDecisionId(dir = DECISIONS_DIR) {
-  const records = await Promise.all((await readdir(dir)).filter((f) => f.endsWith('.json'))
-    .map(async (f) => JSON.parse(await readFile(path.join(dir, f), 'utf8'))));
-  if (!records.length) throw new Error(`No decisions in ${dir}. Run a league check first.`);
-  return records.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).at(-1).id;
+  const record = await newestDecision(dir);
+  if (!record) throw new Error(`No decisions in ${dir}. Run a league check first.`);
+  return record.id;
 }
 
 // Asks numbered questions and records the answer through did(). Lines are read from an async
