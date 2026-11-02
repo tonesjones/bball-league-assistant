@@ -83,6 +83,8 @@ test('CLI reads synthetic inputs, prints the plan, and writes equivalent JSON', 
     assert.ok(['add', 'wait', 'hold'].includes(report.action));
     const saved = JSON.parse(await readFile(path.join(dir, `local/decisions/${report.decisionId}.json`), 'utf8'));
     assert.equal(saved.provenance.modelVersion, MODEL_VERSION);
+    assert.equal(saved.options.allowRosterChange, false);
+    assert.equal(saved.report.decisionId, saved.id);
     assert.equal(saved.projections.version, 'current-season-rates-v4');
     assert.equal(saved.projections.k, 2);
     assert.equal(saved.projections.players.length, f.priors.length);

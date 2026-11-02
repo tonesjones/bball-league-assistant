@@ -36,7 +36,10 @@ test('reruns retain separate immutable records, options and exact daily lineups'
   assert.ok(a.report.startsByDay.length);
   for (const day of a.report.startsByDay) assert.ok(Number.isInteger(day.pickupStarts));
   assert.equal(a.provenance.commit, 'abc123');
+  await assert.rejects(saveDecision({ id: first.id, report, provenance }, dir), { code: 'EEXIST' });
+  assert.equal(await readFile(first.path, 'utf8'), before);
   await assert.rejects(readDecision('../outside', dir), /decisionId/);
+  await assert.rejects(saveDecision({ id: '../outside', report, provenance }, dir), /decisionId/);
 });
 
 test('every bakeoff source must identify the shared decision record', () => {

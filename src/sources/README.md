@@ -25,7 +25,7 @@ Data loading and storage. This directory fetches and parses ESPN data, checks Ya
 
 **Decisions and shadow log**
 
-- `decisions.mjs:saveDecision`, `readDecision`, `validDecisionId`, `DECISIONS_DIR`: write and read decision records in `local/decisions`.
+- `decisions.mjs:saveDecision`, `readDecision`, `newestDecision`, `validDecisionId`, `DECISIONS_DIR`: write, read and select decision records in `local/decisions`. `newestDecision` returns the selected record, or `undefined` for an empty directory.
 - `bakeoff-log.mjs:appendEntries`, `readEntries`, `BAKEOFF_LOG`: append to and read the shadow log `local/bakeoff.jsonl`.
 - `bakeoff-records.mjs:decisionInputs`: loads a decision's snapshot, ID map and schedule after checking their hashes.
 - `bakeoff-records.mjs:attachLineups`: rebuilds the baseline, proposed and opponent lineups for a log entry, or marks it unscored.
@@ -35,8 +35,9 @@ Data loading and storage. This directory fetches and parses ESPN data, checks Ya
 
 - `checkUrl` guards Yahoo only. It allows any URL outside yahoo.com, and empty or non-string input. On yahoo.com it allows only `https://basketball.fantasysports.yahoo.com` with paths of the form `/nba/<league>/<page or team number>`. When a league ID is given, the league must match it; without one, any league passes. Named pages allow only the query keys listed in `PAGES`, and team-number pages allow none. It refuses `back`, `forward` and strings that do not parse as a URL.
 - `getJson` waits at least 500 ms between requests, times out after 30 s, and makes up to 4 attempts with `2000 * 2^attempt` ms backoff. It retries on 429, 500, 502, 503 and 504, on network errors, and on a 2xx response whose body is not valid JSON. Other statuses fail at once. It uses a cache file younger than `maxAgeHours` (default 24). A cache read error other than a missing file, such as a corrupt cache file, is thrown, not refetched.
-- `saveDecision` writes with the `wx` flag under a new random UUID, so it never overwrites a record. `readDecision` throws on a bad ID or when the stored `id` differs.
-- `appendEntries` throws on a duplicate decision and source unless `replaces` is `true`.
+- `saveDecision` writes with the `wx` flag under a supplied ID or a new random UUID, so it never overwrites a record. It rejects invalid IDs. `advise` supplies its ID before formatting and removes its record if writing advice fails; shadow entries follow only a successful advice write. `readDecision` throws on a bad ID or when the stored `id` differs.
+- `newestDecision` selects the latest parseable `report.asOf`, then the latest `createdAt`. Missing or invalid capture times sort last. Both `brief` and `did` use it.
+- `appendEntries` throws on a duplicate decision and source unless `replaces` is `true`. It preserves a supplied `recordedAt` or adds the current ISO timestamp. `readEntries` accepts older entries without it; `advise` ignores those entries when checking for roster changes since capture.
 - `loadProjectionLogs` throws on a bad window, coverage checked before `asOf` or not spanning the window, a missing day file, a hash mismatch, or rows missing `didNotPlay` or `starter`. `loadGameLogs` skips missing days.
 - `decisionInputs` throws when a snapshot, ID map or schedule hash differs from the decision's provenance.
 - `decisionInputs` also throws "Decision predates replay evidence" when the record has no `projections.players` or `report.banked`.

@@ -1,4 +1,4 @@
-import { readFile, readdir, stat, mkdir, writeFile } from 'node:fs/promises';
+import { readFile, readdir, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { planWeek } from '../src/engine/week-plan.mjs';
@@ -9,10 +9,10 @@ import { addDays, tomorrow } from '../src/engine/weeks.mjs';
 import { loadProjectionLogs } from '../src/sources/gamelogs.mjs';
 import { projectPlayers } from '../src/engine/projections.mjs';
 import { saveDecision } from '../src/sources/decisions.mjs';
-import { appendEntries } from '../src/sources/bakeoff-log.mjs';
+import { appendEntries, readEntries } from '../src/sources/bakeoff-log.mjs';
 import { attachLineups } from '../src/sources/bakeoff-records.mjs';
 import { validateEntry } from '../src/engine/bakeoff.mjs';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
 const readJson = async (file) => JSON.parse(await readFile(file, 'utf8'));
@@ -70,6 +70,16 @@ export function snapshotFreshness(asOf, { maxAgeHours = 12, allowStale = false, 
   const stale = ageHours > maxAgeHours;
   if (stale && !allowStale) throw new Error(`Snapshot is ${ageHours.toFixed(2)} hours old (maximum ${maxAgeHours}); refresh it or pass --allow-stale.`);
   return { ageHours, maxAgeHours, stale };
+}
+
+// did's add command is stored as a move. Legacy entries without timestamps cannot be checked.
+export function snapshotRosterChanges(asOf, entries, { allowRosterChange = false } = {}) {
+  const timestamp = Date.parse(asOf);
+  if (!Number.isFinite(timestamp)) throw new Error('invalid snapshot asOf');
+  if (allowRosterChange) return;
+  const move = entries.find((e) => e.source === 'tony' && e.decision === 'move'
+    && Date.parse(e.recordedAt) > timestamp);
+  if (move) throw new Error(`Snapshot as of ${asOf} predates Tony's roster move recorded at ${move.recordedAt}; capture again or pass --allow-roster-change.`);
 }
 
 const WIDTH = 72;
@@ -171,13 +181,14 @@ const INTEGER_FLAGS = {
 
 async function main(args) {
   let snapshotPath;
-  const options = {}, freshnessOptions = {};
+  const options = {}, freshnessOptions = {}, rosterOptions = {};
   let minutesK;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--from') options.fromDate = date(args[++i]);
     else if (arg === '--adds-from') options.fromDate = date(args[++i]);
     else if (arg === '--allow-stale') freshnessOptions.allowStale = true;
+    else if (arg === '--allow-roster-change') rosterOptions.allowRosterChange = true;
     else if (arg === '--max-age-hours' || arg === '--drop-bar' || arg === '--add-bar' || arg === '--minutes-k') {
       const value = args[++i];
       if (!value?.trim() || !Number.isFinite(Number(value)) || Number(value) < 0) throw new Error(`${arg} must be a nonnegative finite number`);
@@ -213,6 +224,7 @@ async function main(args) {
   }
   const snapshot = await readJson(snapshotPath);
   const freshness = snapshotFreshness(snapshot.asOf, freshnessOptions);
+  snapshotRosterChanges(snapshot.asOf, await readEntries(), rosterOptions);
   const [ids, priors, schedule] = await Promise.all([
     'data/ids.json', 'data/priors/players.json', 'data/schedule-2026-27.json',
   ].map(readJson));
@@ -252,13 +264,21 @@ async function main(args) {
     gameLogCoverage: coverage,
     scheduleHash: hash(JSON.stringify(schedule)), idsHash: hash(JSON.stringify(ids)), roles,
   };
-  const saved = await saveDecision({ report, options: { ...report.options, ...freshnessOptions, maxAgeHours: freshness.maxAgeHours, allowStale: freshnessOptions.allowStale ?? false }, provenance, projections });
-  report.decisionId = saved.id;
-  await logShadowEntries(saved.id, report);
+  report.decisionId = randomUUID();
   const text = formatPlan(report);
+  const json = `${JSON.stringify(report, null, 2)}\n`;
   const output = path.join('local/advice', path.basename(snapshotPath));
   await mkdir(path.dirname(output), { recursive: true });
-  await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
+  const saved = await saveDecision({ id: report.decisionId, report,
+    options: { ...report.options, ...freshnessOptions, maxAgeHours: freshness.maxAgeHours,
+      allowStale: freshnessOptions.allowStale ?? false, allowRosterChange: rosterOptions.allowRosterChange ?? false }, provenance, projections });
+  try {
+    await writeFile(output, json);
+  } catch (err) {
+    await unlink(saved.path);
+    throw err;
+  }
+  await logShadowEntries(saved.id, report);
   console.log(text);
   console.log(`JSON: ${output}`);
   console.log(`Decision: ${saved.id}\nRecord: ${saved.path}`);
