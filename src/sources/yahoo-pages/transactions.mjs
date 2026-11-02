@@ -23,7 +23,16 @@ export function parseTransactions(text, page = 'transactions') {
     let m;
     while (i < L.length && (m = MOVE_RE.exec(L[i].s))) {
       const line = L[i++];
+      const players = [m];
+      while (i < L.length && (m = MOVE_RE.exec(L[i].s))) {
+        players.push(m);
+        i++;
+      }
       const action = L[i++];
+      // Yahoo groups multiple traded players under one destination label.
+      if (players.length > 1 && action?.s !== 'Traded to') {
+        throw fail(page, action ?? line, 'transactions layout not seen yet');
+      }
       if (!action) throw fail(page, line, 'transactions layout not seen yet');
       let type, faab = null;
       const waiver = /^\$(\d+(?:\.\d+)?) Waiver$/.exec(action.s);
@@ -31,7 +40,7 @@ export function parseTransactions(text, page = 'transactions') {
       else if (action.s === 'To Waivers') type = 'drop';
       else if (action.s === 'Traded to') type = 'trade';
       else throw fail(page, action, 'transactions layout not seen yet');
-      moves.push({ player: m[1], nbaTeam: m[2], type, faab });
+      for (const player of players) moves.push({ player: player[1], nbaTeam: player[2], type, faab });
     }
     if (!moves.length) throw fail(page, L[i] ?? L.at(-1), 'transactions layout not seen yet');
     const team = L[i++];
