@@ -47,11 +47,11 @@ npm test
    Scripts and Codex can skip the questions with flags:
 
    ```
-   npm run did -- <decisionId> hold --tag T [--minutes N] [--rescue] [--reason "..."] [--replace]
+   npm run did -- <decisionId> hold --tag T [--minutes N] [--rating 1-5] [--rescue] [--reason "..."] [--replace]
    npm run did -- <decisionId> add "<player>" [--drop "<player>"] --on YYYY-MM-DD --tag T [same flags]
    ```
 
-   `--tag` is required. The tags are `changed-decision`, `caught-mistake`, `no-effect` and `wasted-time`. `--minutes` records how long the decision took, and `--rescue` marks a league check that needed rescuing.
+   `--tag` is required. The tags are `changed-decision`, `caught-mistake`, `no-effect` and `wasted-time`. `--minutes` records how long the decision took, `--rating` scores the engine's suggestion from 1 to 5, and `--rescue` marks a league check that needed rescuing.
 
 ## Read the proposal
 

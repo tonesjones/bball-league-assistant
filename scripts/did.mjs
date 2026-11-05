@@ -11,9 +11,9 @@ import { appendEntries } from '../src/sources/bakeoff-log.mjs';
 const USAGE = `usage:
   npm run did                (asks what you did about the latest decision)
   npm run did -- <decisionId>   (asks about that decision)
-  npm run did -- <decisionId> hold --tag T [--minutes N] [--rescue] [--reason "..."] [--replace]
+  npm run did -- <decisionId> hold --tag T [--minutes N] [--rating 1-5] [--rescue] [--reason "..."] [--replace]
   npm run did -- <decisionId> add "<player>" [--drop "<player>"] --on YYYY-MM-DD --tag T [same flags]`;
-const VALUE_FLAGS = ['--tag', '--minutes', '--reason', '--drop', '--on'], BOOLEAN_FLAGS = ['--rescue', '--replace'];
+const VALUE_FLAGS = ['--tag', '--minutes', '--rating', '--reason', '--drop', '--on'], BOOLEAN_FLAGS = ['--rescue', '--replace'];
 
 export function parseArgs(args) {
   const positional = [], flags = {};
@@ -52,6 +52,10 @@ export async function did(args, now = new Date()) {
   if (flags['--minutes'] !== undefined) {
     if (!flags['--minutes'].trim() || !Number.isFinite(Number(flags['--minutes']))) throw new Error('--minutes must be a number');
     entry.minutes = Number(flags['--minutes']);
+  }
+  if (flags['--rating'] !== undefined) {
+    if (!/^[1-5]$/.test(flags['--rating'])) throw new Error('--rating must be 1 to 5');
+    entry.rating = Number(flags['--rating']);
   }
   if (flags['--rescue']) entry.rescue = true;
   if (flags['--replace']) entry.replaces = true;
