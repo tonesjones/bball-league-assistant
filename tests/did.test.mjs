@@ -67,6 +67,13 @@ test('did records an add with the ESPN ID, week and asOf from the decision', asy
   assert.ok(row.lineups.proposed.some((g) => g.espnId === '3'));
 });
 
+test('did records a 1-5 rating and rejects others', async (t) => {
+  const s = await setup(t);
+  s.did('hold', '--tag', 'wasted-time', '--rating', '1');
+  assert.equal((await s.log()).find((e) => e.source === 'tony').rating, 1);
+  assert.throws(() => s.did('hold', '--tag', 'wasted-time', '--rating', '6', '--replace'), /--rating must be 1 to 5/);
+});
+
 test('did records a hold', async (t) => {
   const s = await setup(t);
   s.did('hold', '--tag', 'no-effect');

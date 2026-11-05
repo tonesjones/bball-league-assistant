@@ -31,7 +31,6 @@ export function validateEntry(e, { allowLegacyPromptVersion = true } = {}) {
     else if (!e[key] || typeof e[key].name !== 'string' || !e[key].name || (typeof e[key].espnId !== 'string' && typeof e[key].espnId !== 'number')) bad.push(`${key} needs name and espnId`);
   }
   if (e.source === 'tony') {
-    if (e.rating !== null) bad.push('tony rating must be null');
     if (!TONY_TAGS.includes(e.tag)) bad.push(`tag must be one of ${TONY_TAGS.join(', ')}`);
     if (e.minutes !== undefined && !(typeof e.minutes === 'number' && Number.isFinite(e.minutes) && e.minutes >= 0)) bad.push('minutes must be a number');
     if (e.rescue !== undefined && typeof e.rescue !== 'boolean') bad.push('rescue must be boolean');

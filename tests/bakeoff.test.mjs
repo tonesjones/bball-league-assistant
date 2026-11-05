@@ -90,8 +90,9 @@ test('a move may omit the drop for an open roster spot but still needs an add', 
 
 const tony = { ...entries[0], source: 'tony', chatbot: null, rating: null, tag: 'no-effect' };
 test('tony entries need a G4 tag and accept the optional fields; chatbot rows stay valid', () => {
+  assert.equal(validateEntry({ ...tony, rating: 1 }).rating, 1);
   assert.equal(validateEntry({ ...tony, minutes: 3, rescue: true, replaces: true, note: 'why' }).minutes, 3);
-  for (const [fields, error] of [[{ tag: undefined }, /tag must be/], [{ tag: 'busy' }, /tag must be/], [{ rating: 4 }, /rating/],
+  for (const [fields, error] of [[{ tag: undefined }, /tag must be/], [{ tag: 'busy' }, /tag must be/], [{ rating: 6 }, /rating/],
     [{ chatbot: 'Bot A' }, /chatbot/], [{ minutes: '3' }, /minutes/], [{ rescue: 'yes' }, /rescue/], [{ replaces: false }, /replaces/], [{ note: 1 }, /note/]]) {
     assert.throws(() => validateEntry({ ...tony, ...fields }), error);
   }
