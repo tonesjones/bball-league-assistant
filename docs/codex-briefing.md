@@ -84,11 +84,18 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    clipboard copy verified. A successful analysis alone does not establish a complete run.
    Report missing stages explicitly. Vault commit/push status is separate.
 
-   Report in chat, in this order:
+   Report in chat, in this order, so Tony needs no follow-up question:
+   - The engine's suggestion, from this run's script output: the action (add, wait or hold) and,
+     for an add, the player to add and the player to drop, with the start date. Quote the
+     script's wording; do not rephrase it or add numbers.
    - "Brief copied to clipboard: paste it into ChatGPT." with the brief path, or the failed step.
+   - The full text of the brief file, verbatim, in one fenced block, so Tony can copy it if the
+     clipboard copy failed or he is not at this PC. Read it from the file; do not edit it.
    - Capture folder, decision ID and the one-line log entry. If logging failed, label the
      entry unsaved or unpushed as appropriate.
-   Report failures by step name. Never paste page text or brief text.
+   - If the vault push was refused or denied, say "committed but unpushed" with the hash. Do
+     not ask Tony to approve a retry.
+   Report failures by step name. Never paste Yahoo page text.
 
 Rules:
 - In the league repo, edit no files outside local/. Report parser or script failures; do not fix them.
