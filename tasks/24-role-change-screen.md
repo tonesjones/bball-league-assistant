@@ -93,6 +93,18 @@ lifts players who got minutes but did little with them.
 
 Leave the brief alone. It hides the chosen action, and this list is not part of the decision.
 
+### Codex report: `docs/codex-briefing.md`
+
+Codex shows Tony the summary and the brief, not `advice.txt`, so without this step the list
+never reaches him. In step 5's report list, after the engine's suggestion, add:
+
+- The "Role changes (watch list)" section from this run's full advice, verbatim, in one fenced
+  block. Read it from the run's `advice.txt`; do not rephrase it or add players. If the section
+  says `none`, print `Role changes: none`.
+
+The rule that the vault runs note holds no player names stays. The list goes in the chat report
+only.
+
 ## Tests
 
 Add `tests/role-change.test.mjs` with a synthetic fixture in `tests/fixtures/`. Use made-up
@@ -125,6 +137,8 @@ Also test:
   PR, only "both found" or which one is missing and why.
 - [ ] The planner's chosen action and runners-up in that run match the run before the change.
 - [ ] The PR description says there is no `MODEL_VERSION` bump, and why.
+- [ ] `docs/codex-briefing.md` has the report step above, and a Codex refresh after the merge
+  prints the role-change section in its chat report.
 
 ## Blind test of this spec (2026-11-06)
 
