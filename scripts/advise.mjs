@@ -3,10 +3,11 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { planWeek } from '../src/engine/week-plan.mjs';
 import { normalizeRoles, MODEL_VERSION } from '../src/engine/advice-common.mjs';
+import { roleChanges } from '../src/engine/role-change.mjs';
 import { estimateVolume } from '../src/engine/shooting-volume.mjs';
 import { findPlayer } from '../src/engine/names.mjs';
 import { addDays, tomorrow } from '../src/engine/weeks.mjs';
-import { loadProjectionLogs } from '../src/sources/gamelogs.mjs';
+import { loadProjectionLogs, easternDate } from '../src/sources/gamelogs.mjs';
 import { projectPlayers } from '../src/engine/projections.mjs';
 import { saveDecision } from '../src/sources/decisions.mjs';
 import { appendEntries, readEntries } from '../src/sources/bakeoff-log.mjs';
@@ -121,8 +122,61 @@ export function asOfLines(report) {
   return [`Snapshot as of: ${report.asOf}`, `Projections as of: ${report.projection?.asOf ?? 'unknown'}`, `MODEL_VERSION: ${MODEL_VERSION}`];
 }
 
-// What analyze-refresh prints: sections 1, 2 and 8.
-export const planSummary = (report) => [...actionLines(report), ...dependsOnLines(report), ...asOfLines(report)];
+const roleSkipped = (rc) => `Role changes: skipped (${rc.reason})`;
+
+// Report section: the watch list of role changes, or why it was skipped.
+export function roleChangeLines(report) {
+  const rc = report.roleChanges;
+  if (rc.status === 'skipped') return wrap(roleSkipped(rc), '    ', '  ');
+  if (!rc.players.length) return ['  none'];
+  return rc.players.flatMap((p) => {
+    const b = p.box, n = (v) => Math.round(v);
+    const z = (v) => `${v >= 0 ? '+' : '-'}${Math.abs(v).toFixed(1)}`;
+    return wrap(`${p.name} (${p.team}) ${n(p.minutes)} min vs ${n(p.earlierMpg)} earlier (${n(p.minutes) >= n(p.earlierMpg) ? '+' : '-'}${Math.abs(n(p.minutes) - n(p.earlierMpg))}), started ${p.recentStarts} of last ${p.recentGames}; ${n(b.pts)}p ${n(b.reb)}r ${n(b.ast)}a ${n(b.stl)}s ${n(b.blk)}b ${n(b.fg3m)}x3 ${n(b.fgm)}/${n(b.fga)} ${n(b.ftm)}/${n(b.fta)} ${n(b.to)}to; game z ${z(p.gameZ)}, season z ${z(p.seasonZ)}; availability ${p.availability}`, '    ', '  ');
+  });
+}
+const roleSummary = (report) => {
+  const rc = report.roleChanges;
+  if (!rc) return [];
+  return rc.status === 'skipped' ? wrap(roleSkipped(rc)) : [`Role changes: ${rc.players.length} (see full advice)`];
+};
+
+// What analyze-refresh prints: sections 1 and 2, the role-change count, and section 8.
+export const planSummary = (report) => [...actionLines(report), ...dependsOnLines(report), ...roleSummary(report), ...asOfLines(report)];
+
+// The watch list needs every league roster, or an owned player could be listed as available.
+export function roleChangeReport({ snapshot, ids, logs }) {
+  const skipped = (reason) => ({ status: 'skipped', reason });
+  const teams = snapshot.league?.teams;
+  if (!Array.isArray(teams)) return skipped('no league rosters in this capture');
+  const size = Number(snapshot.settings?.raw?.['Max Teams']);
+  if (!Number.isInteger(size) || size < 2) return skipped('league size unknown (no Max Teams setting)');
+  if (teams.length !== size - 1) return skipped(`${size - 1} team rosters expected, ${teams.length} found`);
+  const seen = new Set();
+  for (const t of teams) {
+    if (!Number.isInteger(t.teamNumber) || t.teamNumber < 1 || t.teamNumber > size) return skipped(`team number ${t.teamNumber} is outside 1 to ${size}`);
+    if (seen.has(t.teamNumber)) return skipped(`team ${t.teamNumber} appears twice`);
+    seen.add(t.teamNumber);
+  }
+  const empty = teams.find((t) => !t.roster?.length);
+  if (empty) return skipped(`team ${empty.teamNumber} roster is empty`);
+  const idOf = (p) => {
+    const id = findPlayer(ids.players, p.name, p.nbaTeam).player?.espnId;
+    return id == null ? null : String(id);
+  };
+  const owned = [...snapshot.team.roster, ...(snapshot.matchup.opponentRoster ?? []), ...teams.flatMap((t) => t.roster)];
+  const matched = owned.map((p) => ({ p, id: idOf(p) }));
+  const unmatched = matched.filter((m) => !m.id);
+  if (unmatched.length) return skipped(`unmatched rostered players: ${unmatched.map((m) => `${m.p.name} (${m.p.nbaTeam})`).join(', ')}`);
+  const today = easternDate(snapshot.asOf);
+  const date = logs.filter((r) => !r.didNotPlay && r.date <= today).map((r) => r.date).sort().pop();
+  if (!date) return skipped('no played games in the game logs');
+  // With every roster in hand, anyone not on one is available (possibly on waivers).
+  const exclude = new Set(matched.map((m) => m.id));
+  const available = new Set(logs.map((r) => String(r.espnId)).filter((id) => !exclude.has(id)));
+  const players = roleChanges({ logs, date, exclude, available });
+  return { status: 'ok', date, players };
+}
 
 export function formatPlan(report) {
   const lines = [];
@@ -143,6 +197,7 @@ export function formatPlan(report) {
   lines.push('', 'Runners-up');
   for (const r of report.runnersUp) lines.push(...wrap(`${stepText(r.step).replace(/^ADD /, '')}: gain ${signed(r.gain)}, ${r.whyLost}`, '    ', '  '));
   if (!report.runnersUp.length) lines.push('  none');
+  if (report.roleChanges) lines.push('', 'Role changes (watch list)', ...roleChangeLines(report));
   lines.push('', 'Unknowns');
   for (const u of report.unknowns) {
     const who = u.category ?? `${u.player}${u.side ? ` (${u.side}${u.starts ? `, ${u.starts} starts` : ''})` : ''}`;
@@ -252,7 +307,8 @@ async function main(args) {
       }
     }
   }
-  const report = { ...planWeek({ snapshot, schedule, projections, ids, roles, preferences, volumeStatus, options }), freshness };
+  const report = { ...planWeek({ snapshot, schedule, projections, ids, roles, preferences, volumeStatus, options }), freshness,
+    roleChanges: roleChangeReport({ snapshot, ids, logs }) };
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   const gitOptions = { cwd: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), encoding: 'utf8' };
   const provenance = {

@@ -126,10 +126,11 @@ Replace `{L}` with `YAHOO_LEAGUE_ID`, `{T}` with `YAHOO_TEAM_ID`. Base URL:
 | 6 | `fa-3.txt` | same, `count=50` | |
 | 7 | `fa-4.txt` | same, `count=75` | |
 | 8 | `transactions.txt` | `/{L}/transactions` | Adds used this week, other teams' moves, winning FAAB bids, and the check that nothing changed on Tony's team. |
+| 9 | `teams/<N>.txt` | `/{L}/{N}`, for every team number `{N}` from 1 to the league size except `{T}` | Every other roster. The role-change watch list leaves out players on any league roster, and skips itself unless it has all of them. `build-snapshot` parses these into `league.teams`. In a 12-team league that is 11 more page reads. |
 
-The opponent's own team page isn't read: the matchup page already lists both rosters. If the
-Task 02 parser finds a field missing there, add the opponent page back, finding the opponent's team
-number with `read_page`, not a page script.
+The matchup page already lists the opponent's roster, but the opponent's team page is still read
+as part of row 9. If the Task 02 parser finds a field missing on the matchup page, find the
+opponent's team number with `read_page`, not a page script.
 
 For each page:
 
@@ -145,15 +146,12 @@ For each page:
 Write `local/raw/<timestamp>/_log.txt` with one line per page: file name, the URL you opened,
 and `ok`, `skipped` or `sign-in`. Then tell Tony the folder path and any page that wasn't `ok`.
 
-## Trade research pages (only when Tony asks)
+## Draft and trade pages (only when Tony asks)
 
-Not part of a routine refresh. Fetch these only when Tony asks for trades (`--trades`). Read
-each other team's page `/{L}/{N}` (every team number from 1 to the league size except `{T}`) and
-save its text unchanged as `local/raw/<timestamp>/teams/<N>.txt`. `build-snapshot` parses them
-into `league.teams` (team number and roster only). Without `--trades`, no team pages are
-fetched and the snapshot has no `league` field. The draft pages `/{L}/draft` and
-`/{L}/draftresults` are optional, saved as `draft.txt` and `draftresults.txt`. The draft pages accept no query parameters. Trade proposal, draft editing,
-lineup and transaction pages stay blocked, and no trade is submitted.
+Not part of a routine refresh. The other teams' pages are routine (row 9). The draft pages
+`/{L}/draft` and `/{L}/draftresults` are optional, saved as `draft.txt` and `draftresults.txt`.
+They accept no query parameters. Trade proposal, draft editing, lineup and transaction pages stay
+blocked, and no trade is submitted.
 
 ## Analyze the capture
 
