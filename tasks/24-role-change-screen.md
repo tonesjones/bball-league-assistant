@@ -23,6 +23,13 @@ A watch list of players whose role grew in the last night of games, added to the
 It is information, not a recommendation: it pairs no drop, feeds nothing into the planner and
 changes no score. No `MODEL_VERSION` bump.
 
+This doesn't yet meet Tony's goal of having the engine weigh these players before it recommends
+a move. That is a separate follow-up, listed under "Parked" in `PLAN.md`: feeding confirmed
+role-change players into the planner's candidate pool changes recommendations, needs a
+`MODEL_VERSION` bump, and would change the model in the middle of the trial that ends
+2026-11-14. This task builds the list and its checks first, so the follow-up starts from data
+that's known to be correct.
+
 ### Engine: `src/engine/role-change.mjs`
 
 Pure, no I/O. Export `roleChanges({ logs, date, exclude, available, options })`.
@@ -80,13 +87,23 @@ lifts players who got minutes but did little with them.
   `findPlayer(ids.players, name, nbaTeam)` as `advise` already does for shooting volume.
 - `available`: `snapshot.freeAgents` matched the same way.
 - Add every player in `snapshot.league.teams[].roster[]` (each entry has `name` and `nbaTeam`) to
-  `exclude`, and mark the rest `confirmed`, because every roster in the league is known.
-- **No league rosters, no list.** If `snapshot.league.teams` is missing, don't screen. Print
-  `Role changes: skipped (no league rosters in this capture)` in the section and the summary.
-  An unconfirmed list mostly names players other managers already have: on 2026-11-06 it put 4
-  rostered players in the top 11.
-- If any rostered player fails to match an ESPN ID, list those names under the section as
-  `Unmatched rostered players: ...`, because they could show up as available by mistake.
+  `exclude`. A listed player is `confirmed` only when every check below passes.
+- **No complete, matched rosters, no list.** Screen only when all of these hold. Otherwise print
+  `Role changes: skipped (<reason>)` in the section and the summary, with no players:
+  - `snapshot.league.teams` exists.
+  - It holds exactly `Max Teams - 1` entries, read from `snapshot.settings.raw["Max Teams"]`,
+    with distinct `teamNumber` values from 1 to `Max Teams`. Tony's own page is filtered out by
+    `buildSnapshot`, which accounts for the one missing number.
+  - Every entry's `roster` has at least one player.
+  - Every player on Tony's roster, the opponent's and every `league.teams` roster matches an
+    ESPN ID with `findPlayer`. If any doesn't, the reason names them:
+    `skipped (unmatched rostered players: Name (TEAM), ...)`. An unmatched owned player could
+    otherwise be listed as available.
+
+  The reason names the first check that failed, for example `no league rosters in this
+  capture`, `11 team rosters expected, 9 found` or `team 4 roster is empty`. An unconfirmed list
+  mostly names players other managers already have: on 2026-11-06 it put 4 rostered players in
+  the top 11.
 - Store the result as `report.roleChanges`, so it lands in the advice JSON and the decision
   record.
 - Add a "Role changes (watch list)" section to `formatPlan`, after "Runners-up". One line per
@@ -143,9 +160,9 @@ Also test:
 - The same inputs give byte-identical output.
 - `formatPlan` prints the section, and `none` for an empty list.
 - A player on another team in `league.teams` is left out, and every listed player is
-  `confirmed` when `league.teams` exists.
-- Without `league.teams`, the section and the summary print the `skipped` line and no players.
-- A rostered name that matches no ESPN ID is listed under `Unmatched rostered players`.
+  `confirmed` when all the checks pass.
+- Each failed check prints its own `skipped` reason and no players: no `league.teams`, one team
+  missing, a duplicate `teamNumber`, an empty roster, and an unmatched rostered player.
 
 ## Done when
 
