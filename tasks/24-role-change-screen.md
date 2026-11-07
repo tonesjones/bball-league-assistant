@@ -36,7 +36,10 @@ Pure, no I/O. Export `roleChanges({ logs, date, exclude, available, options })`.
   - `minJump: 8`: the minutes jump that flags a player.
   - `minMinutes: 24`: the fewest minutes on `date` for a minutes flag.
   - `minPriorGames: 3`: the fewest games before `date`. Players with fewer are left out.
-  - `limit: 10`: the length of the list.
+  - `limit: 15`: the length of the list.
+
+Ignore log rows dated after `date`, so the screen gives the same answer for a past night as it
+did on that night.
 
 For each player who played on `date` and isn't in `exclude`:
 
@@ -57,12 +60,17 @@ Keep a player if either flag is set. For each one, return:
 - the one-game z and the season z
 - `availability`: `confirmed` if the ID is in `available`, else `unconfirmed`
 
-Compute both z values with `seasonValues` from `src/engine/season-value.mjs`. The reference pool
-is every player with at least 3 games, at their season per-game averages. The season z is the
-player's entry in that pool. The one-game z scores the box score on `date` against the same pool.
+Compute both z values with `seasonValues` from `src/engine/season-value.mjs`, and use its
+`perGameZ` (the sum over the 9 categories), not `value`. The reference pool is every player with
+at least 3 games through `date`, at their per-game averages. Pass `poolSize` as the pool's length,
+because the default keeps only the top 150. The season z is the player's entry in that pool. The
+one-game z scores the box score on `date` against the same pool: pass it in as an extra entry and
+keep it out of the reference with `poolFilter`.
 
-Sort by jump, highest first, then one-game z, highest first, then ESPN ID. Return the first
-`limit`.
+Sort by one-game z, highest first, then jump, highest first, then ESPN ID. Return the first
+`limit`. The flags decide who is on the list, and the night's production decides the order.
+Sorting by jump alone pushes down players who barely cleared `minJump` but had big nights, and
+lifts players who got minutes but did little with them.
 
 ### Wiring: `scripts/advise.mjs`
 
@@ -72,7 +80,8 @@ Sort by jump, highest first, then one-game z, highest first, then ESPN ID. Retur
   `findPlayer(ids.players, name, nbaTeam)` as `advise` already does for shooting volume.
 - `available`: `snapshot.freeAgents` matched the same way.
 - If `snapshot.league.teams` exists (a `--trades` capture), add every player on those rosters to
-  `exclude`, and mark the rest `confirmed`, because every roster in the league is known.
+  `exclude`, and mark the rest `confirmed`, because every roster in the league is known. Take the
+  roster shape from `scripts/build-snapshot.mjs`, and test it with a fixture built the same way.
 - Store the result as `report.roleChanges`, so it lands in the advice JSON and the decision
   record.
 - Add a "Role changes (watch list)" section to `formatPlan`, after "Runners-up". One line per
@@ -100,7 +109,10 @@ names. This repo is public.
 
 Also test:
 
-- The sort order (jump, then one-game z, then ID) and `limit`.
+- The sort order (one-game z, then jump, then ID) and `limit`. Include a player with a jump of
+  exactly `minJump` and a big night who must rank above a player with a larger jump and a poor
+  night.
+- Log rows after `date` don't change the result.
 - A DNP row on `date` doesn't count as playing.
 - The same inputs give byte-identical output.
 - `formatPlan` prints the section, and `none` for an empty list.
@@ -113,6 +125,24 @@ Also test:
   PR, only "both found" or which one is missing and why.
 - [ ] The planner's chosen action and runners-up in that run match the run before the change.
 - [ ] The PR description says there is no `MODEL_VERSION` bump, and why.
+
+## Blind test of this spec (2026-11-06)
+
+An agent that hadn't seen the two names built a throwaway prototype from the first version of
+this spec, and it ran on that night's box scores. 200 players played, and 23 were flagged. With
+the first version's order (jump first, limit 10), one of Tony's two players ranked 3rd. The other
+was flagged but ranked 15th, because his jump was exactly `minJump`. Sorting by one-game z put
+them 10th and 6th, so this version sorts by one-game z with a limit of 15.
+
+The thresholds were set after seeing these two players, so this was a check, not proof. The
+earlier nights also showed that:
+
+- one of the players was flagged on 2026-11-02, his first start, four days before Tony spotted
+  him, but outside the top 10.
+- many `unconfirmed` players are on other teams' rosters.
+
+The real test runs forward: on later nights, compare the list with Tony's picks before he names
+them.
 
 ## Out of scope
 
