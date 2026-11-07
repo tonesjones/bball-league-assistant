@@ -21,6 +21,7 @@ Pure planning and scoring logic. It holds the week planner (`planWeek`), the per
 - `projections.mjs:projectPlayers`: blends prior minutes and rates with this season's game logs. Returns `{players, k, asOf, version: 'current-season-rates-v4'}`.
 - `projections.mjs:minutesCase`: rescales a player to a prior or season minutes case, using prior or season rates (`rateMode`).
 - `season-value.mjs:seasonValues`: `Map` of name to `{value, rank, ...}` from z-scores against the top `poolSize` players.
+- `role-change.mjs:roleChanges`: watch list of players whose minutes or starting role grew on a night, sorted by one-game z. Information only: it feeds nothing into the planner.
 - `shooting-volume.mjs:estimateVolume`: rebuilds this week's banked FGM/FGA/FTM/FTA from game logs. Returns `{status: 'matched' | 'unknown', ...}`.
 
 **Shared advice rules**

@@ -97,7 +97,7 @@ Merging PR 4 started the trial window on 2026-10-31.
   captures, so a Codex capture meets the same read-only rule as the Claude one. The Claude capture
   path (`yahoo-reader`, `.claude/settings.json` and the URL hook) stays as a maintained backup. It
   weakens no enforcement without Tony's OK in its PR.
-- [ ] **[`tasks/24-role-change-screen.md`](tasks/24-role-change-screen.md).** A watch list in the
+- [x] **[`tasks/24-role-change-screen.md`](tasks/24-role-change-screen.md).** A watch list in the
   advice report of players whose minutes or starting role jumped in the last night of games,
   screened across every box score rather than the 100 captured free agents. Information only:
   no change to the planner or scores. Requested 2026-11-06 after the free-agent ranking missed

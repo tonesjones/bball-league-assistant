@@ -88,6 +88,10 @@ Run one league check in C:\TestCode\bball-league-assistant. Do not install a sch
    - The engine's suggestion, from this run's script output: the action (add, wait or hold) and,
      for an add, the player to add and the player to drop, with the start date. Quote the
      script's wording; do not rephrase it or add numbers.
+   - The "Role changes (watch list)" section from this run's full advice, verbatim, in one
+     fenced block. Read it from the run's `advice.txt`; do not rephrase it or add players. If
+     the section says `none`, print `Role changes: none`. The vault runs note still holds no
+     player names: the list goes in the chat report only.
    - "Brief copied to clipboard: paste it into ChatGPT." with the brief path, or the failed step.
    - The full text of the brief file, verbatim, in one fenced block, so Tony can copy it if the
      clipboard copy failed or he is not at this PC. Read it from the file; do not edit it.
