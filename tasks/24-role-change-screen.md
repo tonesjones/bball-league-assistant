@@ -79,9 +79,14 @@ lifts players who got minutes but did little with them.
 - `exclude`: Tony's roster and `snapshot.matchup.opponentRoster`, matched to ESPN IDs with
   `findPlayer(ids.players, name, nbaTeam)` as `advise` already does for shooting volume.
 - `available`: `snapshot.freeAgents` matched the same way.
-- If `snapshot.league.teams` exists (a `--trades` capture), add every player on those rosters to
-  `exclude`, and mark the rest `confirmed`, because every roster in the league is known. Take the
-  roster shape from `scripts/build-snapshot.mjs`, and test it with a fixture built the same way.
+- Add every player in `snapshot.league.teams[].roster[]` (each entry has `name` and `nbaTeam`) to
+  `exclude`, and mark the rest `confirmed`, because every roster in the league is known.
+- **No league rosters, no list.** If `snapshot.league.teams` is missing, don't screen. Print
+  `Role changes: skipped (no league rosters in this capture)` in the section and the summary.
+  An unconfirmed list mostly names players other managers already have: on 2026-11-06 it put 4
+  rostered players in the top 11.
+- If any rostered player fails to match an ESPN ID, list those names under the section as
+  `Unmatched rostered players: ...`, because they could show up as available by mistake.
 - Store the result as `report.roleChanges`, so it lands in the advice JSON and the decision
   record.
 - Add a "Role changes (watch list)" section to `formatPlan`, after "Runners-up". One line per
@@ -92,6 +97,15 @@ lifts players who got minutes but did little with them.
   advice)`.
 
 Leave the brief alone. It hides the chosen action, and this list is not part of the decision.
+
+### Capture: `docs/update-league.md`
+
+The screen needs every other team's roster, so the team pages move from "Trade research pages
+(only when Tony asks)" into the routine page table: read `/{L}/{N}` for every team number from 1
+to the league size except `{T}`, and save it as `teams/<N>.txt`. `build-snapshot` already parses
+them into `league.teams`. These URLs are already on the read-only list, so nothing in
+`src/sources/yahoo-urls.mjs` or the hook changes. This adds 11 page reads to each refresh in a
+12-team league.
 
 ### Codex report: `docs/codex-briefing.md`
 
@@ -128,13 +142,21 @@ Also test:
 - A DNP row on `date` doesn't count as playing.
 - The same inputs give byte-identical output.
 - `formatPlan` prints the section, and `none` for an empty list.
+- A player on another team in `league.teams` is left out, and every listed player is
+  `confirmed` when `league.teams` exists.
+- Without `league.teams`, the section and the summary print the `skipped` line and no players.
+- A rostered name that matches no ESPN ID is listed under `Unmatched rostered players`.
 
 ## Done when
 
 - [ ] `npm test` passes, with the new tests.
-- [ ] `npm run advise local/snapshots/2026-11-06-2225.json --allow-stale` lists both players Tony
-  named on 2026-11-06 in the role-change section. Check this locally. Put no player names in the
-  PR, only "both found" or which one is missing and why.
+- [ ] `npm run advise local/snapshots/2026-11-06-2226.json --allow-stale` lists both players Tony
+  named on 2026-11-06 in the role-change section, and no player on any league roster. That
+  snapshot is the 2026-11-06 capture plus all 11 other team pages. Check this locally. Put no
+  player names in the PR, only "both found" or which one is missing and why.
+- [ ] `npm run advise local/snapshots/2026-11-06-2225.json --allow-stale` (no team pages) prints
+  the `skipped` line.
+- [ ] `docs/update-league.md` lists the team pages as routine pages, as above.
 - [ ] The planner's chosen action and runners-up in that run match the run before the change.
 - [ ] The PR description says there is no `MODEL_VERSION` bump, and why.
 - [ ] `docs/codex-briefing.md` has the report step above, and a Codex refresh after the merge
@@ -158,11 +180,18 @@ earlier nights also showed that:
 The real test runs forward: on later nights, compare the list with Tony's picks before he names
 them.
 
+Later the same night, Codex ran the same screen by hand from a prompt and got the same numbers.
+Tony rejected the list because it named players other managers already had. Four of its top 11
+were on other teams. The 11 other team pages were then captured into `2026-11-06-2226`, and the
+prototype reran with every league roster excluded. All 187 rostered players matched an ESPN ID.
+18 players were flagged, all available, and Tony's two picks ranked 4th and 6th. That is why this
+version requires the team pages and skips the list without them.
+
 ## Out of scope
 
-- Confirming availability past the top 100. That needs a Yahoo page for available players sorted
-  by recent stats ("Today (live)" or "Last 7 Days"), and its query parameter isn't on the
-  read-only URL list. Tony can paste that URL from his own browser, and adding it is a separate
-  PR that needs his OK.
+- A Yahoo page for available players sorted by recent stats ("Today (live)" or "Last 7 Days").
+  The team pages already confirm availability, so this is no longer needed for the screen.
+- Telling a free agent from a player on waivers. "Confirmed" means on no roster; the player may
+  still need a waiver claim.
 - Scoring rest-of-season adds in the planner, or pairing a drop with a watch-list player.
 - Injury or news context for a role change.
