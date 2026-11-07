@@ -115,6 +115,11 @@ None of these is needed for the trial.
 - Untracked refresh skills in `.agents/skills/league-refresh/`: Tony decides whether to keep them.
 - A paid projection source (design Alternative C), if the replay shows poor proposals come from
   projections.
+- Role-change players in the planner (after task 24, and after the 2026-11-14 stop rule). Add the
+  confirmed players from task 24's list to the planner's candidate pool, so the engine weighs them
+  before it recommends a move. It changes recommendations, so it bumps `MODEL_VERSION`. Valuing a
+  player for the rest of the season, not just this week, runs into the design's "no chained plans
+  past this week" non-goal, so that part starts with a design review.
 
 Out of scope by the design's non-goals: win probabilities, title odds, trade scoring, FAAB bid
 amounts, a web app, scheduled runs, and chained plans past this week.
