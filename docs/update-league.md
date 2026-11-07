@@ -13,7 +13,9 @@ not verified live trade status. New checkouts do not include ignored local input
 
 1. Read `YAHOO_LEAGUE_ID` and `YAHOO_TEAM_ID` from `.env`. If either is empty, stop and ask Tony.
 2. Make the folder `local/raw/<YYYY-MM-DD-HHmm>/`, using the current local time. Example:
-   `local/raw/2026-10-19-2130/`. Save every page of this refresh in that one folder.
+   `local/raw/2026-10-19-2130/`. Save every page of this refresh in that one folder. The
+   `yahoo-reader` agent can't read the clock, so the session that starts it gives it the
+   folder name.
 3. Use the browser Tony is signed in to (see `docs/sources.md`, "Yahoo league pages"). Open a new
    tab for the refresh.
 
@@ -89,6 +91,24 @@ lost all of them passing the text through the browser clipboard to PowerShell. R
 - **Check every page after saving.** Read the saved file back. It must exist and have the same
   length as the string the read returned. Only then log the page `ok`. A failed save is
   `skipped` with the reason, not `ok`.
+
+The last two rules are for Codex, whose runtime holds the read result as a string. Claude can't
+meet them: `get_page_text` returns the text to the model, and the only way to save it is to
+write that text out again with the Write tool. On 2026-11-06 the `yahoo-reader` agent stopped
+on these rules after three pages. For Claude, save pages this way instead:
+
+- Write each page with the Write tool, copying the text exactly as `get_page_text` returned it.
+  Leave out the tool's own header (the `Title:`, `URL:` and `Source element:` lines and the `---`
+  under them); the file starts at the first line of the page body. Don't fix, trim or reorder
+  anything else.
+- If two pages return identical text (`matchup.txt` and `matchup-totals.txt` often do), save
+  the second by copying the first file.
+- Skip the write test and the length check. Log each saved page `ok`, and note in `_log.txt`
+  that the length check wasn't possible.
+- The parse in `refresh:analyze` is the check. If `build-snapshot` fails on a page, capture
+  that page again; don't edit the saved file.
+
+A capture saved this way on 2026-11-06 parsed on the first try.
 
 ## Pages
 
