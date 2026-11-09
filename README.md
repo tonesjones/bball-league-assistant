@@ -19,7 +19,7 @@ npm test
 
 ## Run a league check
 
-1. Capture the Yahoo pages to `local/raw/YYYY-MM-DD-HHmm`. Codex is the primary capture host: see [`docs/codex-refresh.md`](docs/codex-refresh.md). Claude is the maintained backup: in Claude Code, say "update league" and the `yahoo-reader` agent saves the pages. See [`docs/update-league.md`](docs/update-league.md).
+1. Capture the Yahoo pages to `local/raw/YYYY-MM-DD-HHmm`. Codex is the primary capture host: see [`docs/codex-refresh.md`](docs/codex-refresh.md). Claude is the maintained backup: in Claude Code, say "update league" and the `update-league` skill runs capture, analyze and `did` in one go. See [`docs/update-league.md`](docs/update-league.md).
 2. Run the analysis on that folder:
 
    ```
