@@ -93,6 +93,9 @@ Merging PR 4 started the trial window on 2026-10-31.
 
 ## Next tasks
 
+- [x] **2026-11-09: Q3 set and code frozen (F1).** See Decisions.
+- [ ] **One-step refresh skill ([PR 98](https://github.com/tonesjones/bball-league-assistant/pull/98)).** Waits for Tony's OK to merge. Then Tony says "update league" once. It is done when that run leaves 20 page files, a `status.json` with no `failedStep`, the report and a new `tony` line in `local/bakeoff.jsonl`. It has not been tested end to end.
+- [ ] **2026-11-14: apply the stop rule** with the Q3 threshold. After that, run the post-trial design review and the Claude-only docs cleanup.
 - [ ] **`tasks/23-codex-capture.md` (D2), not written yet.** Check the allowed URLs on saved
   captures, so a Codex capture meets the same read-only rule as the Claude one. The Claude capture
   path (`yahoo-reader`, `.claude/settings.json` and the URL hook) stays as a maintained backup. It
