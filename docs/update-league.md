@@ -5,6 +5,8 @@ edit what a page says: copy its text and save it.
 
 ## Before you start
 
+The `update-league` skill (`.claude/skills/update-league/SKILL.md`) is the entry point in Claude Code. It runs these steps in the main session, then analyze and `did`.
+
 A stale capture stops at the advice step: `refresh:analyze` never passes `--allow-stale`.
 
 Run on Tony's request, usually after a completed game slate. Do not install a daily schedule
@@ -19,8 +21,8 @@ not verified live trade status. New checkouts do not include ignored local input
 3. Use the browser Tony is signed in to (see `docs/sources.md`, "Yahoo league pages"). Open a new
    tab for the refresh.
 
-The `yahoo-reader` agent (`.claude/agents/yahoo-reader.md`) runs these steps. Use it rather than a
-general agent.
+The `yahoo-reader` agent (`.claude/agents/yahoo-reader.md`) is a fallback only; the skill captures in
+the main session because the agent stopped early on 2026-11-06 (see the save rule below).
 
 ## Codex browser startup
 
