@@ -28,7 +28,7 @@ By 2026-10-30, after 13 days and 7 model versions, no decision had been scored, 
 | G1 | One proposed action with correct counts. | The planner tests pass. Tony checks three real proposals by hand and finds no error. |
 | G2 | No guardrail is broken. | The guardrail tests in `tests/advice-correctness.test.mjs`, ported to the planner, pass. |
 | G3 | At most 5 minutes of Tony's attention per decision. | Tony records minutes when `npm run did` asks. |
-| G4 | Useful often enough to keep. | Each `did` entry has one tag (`changed-decision`, `caught-mistake`, `no-effect`, `wasted-time`). The weekly replay shows which choice gained more categories when Tony and the engine differed. The threshold is open question Q3. |
+| G4 | Useful often enough to keep. | Each `did` entry has one tag (`changed-decision`, `caught-mistake`, `no-effect`, `wasted-time`). The weekly replay shows which choice gained more categories when Tony and the engine differed. The threshold is decision Q3. |
 | G5 | Low upkeep. | At most one 30-minute maintenance session and one rescued league check per week. Rescues come from `did --rescue`, sessions from the git log. |
 | G6 | Same inputs, same answer. | A test runs the planner twice on one fixture and compares the output byte for byte. |
 
@@ -41,7 +41,7 @@ Apply the stop rule on 2026-11-14. The 2026-10-30 usability trial ended on 2026-
 
 ## Decisions
 
-All made by Tony on 2026-10-31. The design has the rejected options and known weaknesses.
+Made by Tony on 2026-10-31 unless dated otherwise. The design has the rejected options and known weaknesses.
 
 | ID | Decision |
 |---|---|
@@ -54,11 +54,11 @@ All made by Tony on 2026-10-31. The design has the rejected options and known we
 | A4 | The 2026-10-22 requirement (never propose a drop on one strong game) is relaxed by I1. |
 | Q7 | A player with no prior season gets a season-only projection after 5 games or 100 minutes. |
 | Q4 | End the 2026-10-30 trial now. A new two-week window starts when PR 4 merges. |
+| Q3 | G4 threshold: keep the tool if at least 2 of the trial's decisions are tagged `changed-decision` or `caught-mistake` (Tony, 2026-11-09). |
+| F1 | Code freeze until the stop rule is applied on 2026-11-14, except a fix for a refresh that fails outright. Role-change players do not enter the planner (Tony, 2026-11-09). |
 
 ## Open questions
 
-- **Q3. G4 threshold.** How many `changed-decision` or `caught-mistake` tags out of how many
-  decisions mean "keep"?
 - **Q6. The I2 fallback trigger.** For example: after 5 decisions, Tony overrode the engine on
   context grounds in at least 3. If I2 fails, the fallback is "code computes, ChatGPT decides". It
   changes Q1, D1, the planner and `AGENTS.md` hard rule 2, so it needs a new design.
