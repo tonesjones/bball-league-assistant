@@ -126,6 +126,20 @@ None of these is needed for the trial.
     `MODEL_VERSION`.
   - **Rest-of-season value.** Score a player beyond this week. This runs into the design's "no
     chained plans past this week" non-goal, so it starts with a design review.
+- **Week-start banked totals.** On Monday, before any game is banked, the matchup page has no
+  counting totals, and the planner marks all seven counting categories unknown (seen 2026-11-09,
+  when only FG% and FT% were scored). Banked totals should be zero when no games are played.
+  It changes scores, so it bumps `MODEL_VERSION`. Acceptance: a synthetic week-start matchup
+  fixture scores all nine categories.
+- **Opponent category profile from past weeks.** Tony judges adds by what this week's opponent is
+  strong at (2026-11-09: an opponent with an elite center makes REB and BLK adds poor). Capture
+  the opponent's past weekly matchup results and have code report their per-category strength
+  next to the recommendation. Needs a new read-only page in `src/sources/yahoo-urls.mjs`.
+  Acceptance: the advice shows the opponent's category averages from captured past weeks, with
+  the weeks used.
+- **Recent form vs prior rates.** Projections lean on last season's per-minute rates, so a player
+  whose minutes are rising this season (Queta, 2026-11-09) is undervalued. Tony has
+  held drops like this before. Starts with a design note.
 
 Out of scope by the design's non-goals: win probabilities, title odds, trade scoring, FAAB bid
 amounts, a web app, scheduled runs, and chained plans past this week.
