@@ -137,9 +137,25 @@ None of these is needed for the trial.
   next to the recommendation. Needs a new read-only page in `src/sources/yahoo-urls.mjs`.
   Acceptance: the advice shows the opponent's category averages from captured past weeks, with
   the weeks used.
-- **Recent form vs prior rates.** Projections lean on last season's per-minute rates, so a player
-  whose minutes are rising this season (Queta, 2026-11-09) is undervalued. Tony has
-  held drops like this before. Starts with a design note.
+- **Recent minutes.** `src/engine/projections.mjs` projects minutes from the season average
+  blended with last season's, so a player whose minutes are rising (Queta, 2026-11-09: season
+  21.7 against 25.3 last year) is undervalued. Tony has held drops like this before. Project
+  minutes from the last 3 to 5 games; the ESPN box scores are already in `local/gamelogs/`. It
+  changes scores, so it bumps `MODEL_VERSION`. Starts with a design note that picks the window.
+  Acceptance: a fixture player whose last games are well above his season average projects
+  nearer the recent figure, and the report prints both.
+- **Cautious case sets the headline.** On 2026-11-09 the report said ADD with a gain of 0.159
+  against a bar of 0.15, while its own cautious case said hold for both players and only FG% and
+  FT% were scored. When the cautious action is hold, the headline says HOLD and the move is
+  shown as a lean. The planner also holds when fewer than five categories are scored. It changes
+  recommendations, so it bumps `MODEL_VERSION`. Acceptance: a fixture whose cautious case fails
+  the bar prints HOLD with the lean below it, and a fixture with four scored categories holds.
+- **Team injury context.** Tony asks ChatGPT who is out on a player's team to judge whether a
+  minutes jump will last. ESPN's injury feed (the API `src/sources/espn.mjs` already uses) lists
+  who is out. Code labels each role-change player and each proposed pickup with the teammates
+  out at his position. Information only: no change to scores. Add the endpoint to
+  `docs/sources.md`. Acceptance: the report names the teammates out, with the feed's as-of time,
+  or says the feed was unavailable.
 
 Out of scope by the design's non-goals: win probabilities, title odds, trade scoring, FAAB bid
 amounts, a web app, scheduled runs, and chained plans past this week.
