@@ -5,7 +5,7 @@ import { BLOCKED, STAT, projectTeam, needs, strongLine, openRosterSpots } from '
 import { monthDay, pickupStart, normalizeRoles, matchPlayers, dropBlock, identity } from './advice-common.mjs';
 import { minutesCase } from './projections.mjs';
 import { seasonValues } from './season-value.mjs';
-import { applyPreferences } from './preferences.mjs';
+import { applyPreferences, IL_STATUS } from './preferences.mjs';
 
 const EPSILON = 1e-9;
 const INACTIVE = ['BN', 'IL', 'IL+'];
@@ -241,6 +241,11 @@ export function planWeek({ snapshot, schedule, projections, ids, roles = {}, pro
       [action, drivingPlan, proposed] = ['add', todayBest, todayBest.steps[0]];
     } else [action, drivingPlan, proposed] = ['wait', best, best.steps[0]];
   }
+  // Yahoo blocks every add and drop while a player sits in an IL slot without an IL status
+  // (for example Q, P or D). Hold until he moves out of IL or is ruled out again.
+  const ilLock = snapshot.team.roster.filter((p) => p.slot === 'IL' && !IL_STATUS.includes(p.status))
+    .map((p) => ({ name: p.name, status: p.status }));
+  if (ilLock.length) [action, drivingPlan, proposed] = ['hold', best, null];
 
   // Step 10: the cautious case. The pickup takes his lowest-value case and the drop his highest.
   const valueOf = (prior, line) => seasonValues(priors.map((x) => (x === prior ? line : x)), { poolSize, poolFilter: priorBacked }).get(prior.name)?.value;
@@ -335,7 +340,7 @@ export function planWeek({ snapshot, schedule, projections, ids, roles = {}, pro
     plan: best.steps.map(publicStep),
     gain: drivingPlan.gain, gainRange: drivingPlan.gainRange, bar: barOf(drivingPlan),
     baseline: { categories: baseline.categories, expectedCategories: baseline.expectedCategories },
-    categories, startsByDay, runnersUp, unknowns, dependsOn, guardrail, preferenceNotes,
+    categories, startsByDay, runnersUp, unknowns, dependsOn, guardrail, preferenceNotes, ilLock,
     baselineLineups: { mine: mine.started, opponent: opponent.started },
     banked: Object.fromEntries(['mine', 'opponent'].map((side) => [side, {
       ...Object.fromEntries(Object.entries(STAT).map(([c, k]) => [k, !banked ? 0 : snapshot.matchup.totals?.[side]?.[c] ?? null])),

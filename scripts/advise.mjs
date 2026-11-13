@@ -108,6 +108,8 @@ const stepText = (step) => `ADD ${step.pickup.name} (${step.pickup.nbaTeam}), ${
 export function actionLines(report) {
   if (report.action === 'add') return wrap(stepText(report.step));
   if (report.action === 'wait') return wrap(`WAIT: add ${report.waitFor.pickup.name} to start ${report.waitFor.start}`);
+  if (report.ilLock?.length) return ['HOLD: roster moves locked', ...report.ilLock.flatMap((p) =>
+    wrap(`${p.name} is in an IL slot with status ${p.status ?? 'healthy'}. Move him out of IL, or wait until he is O again.`))];
   return ['HOLD'];
 }
 
