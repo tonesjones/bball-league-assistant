@@ -56,6 +56,7 @@ Made by Tony on 2026-10-31 unless dated otherwise. The design has the rejected o
 | Q4 | End the 2026-10-30 trial now. A new two-week window starts when PR 4 merges. |
 | Q3 | G4 threshold: keep the tool if at least 2 of the trial's decisions are tagged `changed-decision` or `caught-mistake` (Tony, 2026-11-09). |
 | F1 | Code freeze until the stop rule is applied on 2026-11-14, except a fix for a refresh that fails outright. Role-change players do not enter the planner (Tony, 2026-11-09). |
+| F2 | Exception to F1: the IL lock (MODEL_VERSION 9) ships before the stop rule, because a Q, P or D player in an IL slot blocks every move and the 2026-11-09 run proposed an add Yahoo would refuse (Tony, 2026-11-12). |
 
 ## Open questions
 
@@ -95,6 +96,7 @@ Merging PR 4 started the trial window on 2026-10-31.
 
 - [x] **2026-11-09: Q3 set and code frozen (F1).** See Decisions.
 - [ ] **One-step refresh skill ([PR 98](https://github.com/tonesjones/bball-league-assistant/pull/98)).** Waits for Tony's OK to merge. Then Tony says "update league" once. It is done when that run leaves 20 page files, a `status.json` with no `failedStep`, the report and a new `tony` line in `local/bakeoff.jsonl`. It has not been tested end to end.
+- [ ] **IL lock (F2).** The planner holds and names the player when someone in an IL slot has a status other than O, INJ or NA. Done when `npm test` passes, including the IL lock test, and the report for the 2026-11-09 capture says HOLD and names the D player.
 - [ ] **2026-11-14: apply the stop rule** with the Q3 threshold. After that, run the post-trial design review and the Claude-only docs cleanup.
 - [ ] **`tasks/23-codex-capture.md` (D2), not written yet.** Check the allowed URLs on saved
   captures, so a Codex capture meets the same read-only rule as the Claude one. The Claude capture

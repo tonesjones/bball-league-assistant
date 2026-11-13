@@ -1,7 +1,7 @@
 import { normalizeName } from './names.mjs';
 import { fits } from './needs.mjs';
 
-const IL_STATUS = ['O', 'INJ', 'NA'];
+export const IL_STATUS = ['O', 'INJ', 'NA'];
 const INJURED = ['IL', 'IL+'];
 const names = (list, key) => {
   if (!Array.isArray(list) || !list.every((n) => typeof n === 'string' && n)) throw new Error(`preferences.${key} must be an array of names`);

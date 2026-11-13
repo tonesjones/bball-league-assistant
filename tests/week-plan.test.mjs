@@ -327,6 +327,24 @@ test('Hold: no plan clears its bar', () => {
   }
 });
 
+test('IL lock: a Q player in an IL slot forces a hold that names him', () => {
+  const f = fixture({ open: 1, end: '2026-10-21' });
+  f.snapshot.settings.rosterPositions.push({ slot: 'IL', count: 1 });
+  f.schedule.games = [];
+  for (const date of ['2026-10-20', '2026-10-21']) game(f, date, 'CCC', 'BBB');
+  assert.equal(run(f).action, 'add');
+  addPlayer(f, 'roster', 'Robin Stand-in', 'EEE', { slot: 'IL', status: 'Q' });
+  const r = run(f);
+  assert.equal(r.action, 'hold');
+  assert.equal(r.step, null);
+  assert.deepEqual(r.decision, { action: 'hold', pair: null });
+  assert.deepEqual(r.ilLock, [{ name: 'Robin Stand-in', status: 'Q' }]);
+  f.snapshot.team.roster.at(-1).status = 'O';
+  const ok = run(f);
+  assert.equal(ok.action, 'add');
+  assert.deepEqual(ok.ilLock, []);
+});
+
 test('Two steps: one stream slot and 2 adds chain Monday-Tuesday into Thursday-Friday', () => {
   const f = streamFixture();
   const r = run(f);
