@@ -48,7 +48,7 @@ Made by Tony on 2026-10-31 unless dated otherwise. The design has the rejected o
 | Q1 | The tool searches and proposes. It does not check Tony's own moves. |
 | Q2 | Engine against Tony through a two-way shadow log. No three-way bakeoff, no chatbot arm. |
 | D1 | The planner searches week plans with a beam search and acts on step one. |
-| D2 | Codex runs the Yahoo capture, and Claude stays a maintained backup host (revised 2026-10-31). |
+| D2 | Claude runs the Yahoo capture through the `yahoo-reader` path. Codex was the primary host from 2026-10-31 until Tony cancelled it (revised 2026-11-14). |
 | I1 | Always propose, and show what the proposal depends on. |
 | I2 | Keep the engine. The brief becomes a context-check prompt that hides the chosen action. |
 | A4 | The 2026-10-22 requirement (never propose a drop on one strong game) is relaxed by I1. |
@@ -95,13 +95,12 @@ Merging PR 4 started the trial window on 2026-10-31.
 ## Next tasks
 
 - [x] **2026-11-09: Q3 set and code frozen (F1).** See Decisions.
-- [ ] **One-step refresh skill ([PR 98](https://github.com/tonesjones/bball-league-assistant/pull/98)).** Waits for Tony's OK to merge. Then Tony says "update league" once. It is done when that run leaves 20 page files, a `status.json` with no `failedStep`, the report and a new `tony` line in `local/bakeoff.jsonl`. It has not been tested end to end.
-- [ ] **IL lock (F2).** The planner holds and names the player when someone in an IL slot has a status other than O, INJ or NA. Done when `npm test` passes, including the IL lock test, and the report for the 2026-11-09 capture says HOLD and names the D player.
+- [x] **One-step refresh skill ([PR 98](https://github.com/tonesjones/bball-league-assistant/pull/98)), merged.** Then Tony says "update league" once. It is done when that run leaves 20 page files, a `status.json` with no `failedStep`, the report and a new `tony` line in `local/bakeoff.jsonl`. It has not been tested end to end.
+- [x] **IL lock (F2, #99, merged).** The planner holds and names the player when someone in an IL slot has a status other than O, INJ or NA. Done when `npm test` passes, including the IL lock test, and the report for the 2026-11-09 capture says HOLD and names the D player.
 - [ ] **2026-11-14: apply the stop rule** with the Q3 threshold. After that, run the post-trial design review and the Claude-only docs cleanup.
-- [ ] **`tasks/23-codex-capture.md` (D2), not written yet.** Check the allowed URLs on saved
-  captures, so a Codex capture meets the same read-only rule as the Claude one. The Claude capture
-  path (`yahoo-reader`, `.claude/settings.json` and the URL hook) stays as a maintained backup. It
-  weakens no enforcement without Tony's OK in its PR.
+- **`tasks/23-codex-capture.md` is dropped (2026-11-14).** Codex is cancelled, so there is no Codex
+  capture to check. The Claude capture path (`yahoo-reader`, `.claude/settings.json` and the URL
+  hook) is the only one. It weakens no enforcement without Tony's OK in its PR.
 - [x] **[`tasks/24-role-change-screen.md`](tasks/24-role-change-screen.md).** A watch list in the
   advice report of players whose minutes or starting role jumped in the last night of games,
   screened across every box score rather than the 100 captured free agents. Information only:
@@ -169,6 +168,5 @@ amounts, a web app, scheduled runs, and chained plans past this week.
 - **Read only, no Yahoo API.** Access needs an application, an email exchange and an NDA, and Tony
   decided not to pursue it. League data comes from Yahoo pages in Tony's signed-in browser, saved
   unchanged to `local/raw/`. Node parsers build the snapshot, and code computes every number.
-- **Codex is optional for building.** Codex (`/codex-delegate`) can write parsers and engine code.
-  If it is unavailable, Sonnet and Haiku do the same work. Under D2, Codex is the primary capture
-  host and Claude's `yahoo-reader` agent is the maintained backup.
+- **Claude builds and captures.** Codex was cancelled in November 2026. Sonnet and Haiku do the
+  build work, and Claude's `yahoo-reader` agent runs the capture (D2).
