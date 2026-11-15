@@ -151,6 +151,10 @@ Pacific, so advice has to arrive after the night's games and before midnight Pac
   journal line per decision, noting anything it got wrong. *Done when:* on 2026-11-21 Tony decides
   to keep, change or drop it, and each recorded error is either fixed in the playbook or listed
   below as a calculator to build.
+- [ ] **One-phrase nightly check.** The `update-league` skill runs the playbook: it reads Yahoo
+  through Tony's Chrome, computes the counts with the repo scripts, writes the advice to
+  `local/playbook-tests/` and appends the journal line to `local/journal.md`. *Done when:* Tony
+  says "update league" once and gets the advice file and a journal line without a rescue.
 - [ ] **Facts sheet (`npm run sheet`), only if the test shows counting errors.** One file of
   code-computed numbers and no recommendation: usable starts on open days for each roster player
   and candidate, the matchup by category with FG% and FT% from makes and attempts, adds and FAAB
