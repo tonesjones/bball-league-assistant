@@ -132,14 +132,21 @@ shows the need for it.
 League timing that shapes this: every add is a waiver claim that processes a little after 1 a.m.
 Pacific, so advice has to arrive after the night's games and before midnight Pacific.
 
-- [ ] **The playbook (`docs/league-playbook.md`).** A prompt document Claude follows, in the
+- [x] **The playbook (`docs/league-playbook.md`), merged in #101.** A prompt document Claude follows, in the
   browser extension or in a Claude Code session. *Done when:* it has the league facts, timing
   rules, decision procedure, Tony's judgment rules, guardrails, arithmetic rules, FAAB guidance,
   output format and journal line, and it names no league ID, fantasy team, manager or rostered
   player.
-- [ ] **First test, on the 2026-11-14 capture.** A fresh agent gets only the playbook and that
-  night's numbers. *Done when:* its output follows the playbook's format, every number in it
-  matches the capture, and Tony has rated the suggestions.
+- [x] **First test, 2026-11-14.** A fresh agent followed the playbook on that night's live pages,
+  read through Tony's Chrome because the app's browser pane was signed out. Its output followed
+  the format. The main session recomputed the totals and percentages and matched the roster and
+  schedule; the per-player lines were not re-checked. Tony rejected the first suggestion (a
+  long-term swap that ignored the last day's in-play categories). A second run, limited to
+  Sunday's in-play categories, said hold. The test found 14 gaps, fixed in playbook version 2:
+  last-day ranking, subtracting the displaced player's line, per-player projections for both
+  teams, protecting a narrow lead, what the settings page lacks, the waiver wording, pages that
+  return only a header, and defaults for the pacing cap and a missing protected list. Results
+  are in `local/playbook-tests/`.
 - [ ] **One-week check.** Tony uses the playbook for each decision until 2026-11-21 and saves one
   journal line per decision, noting anything it got wrong. *Done when:* on 2026-11-21 Tony decides
   to keep, change or drop it, and each recorded error is either fixed in the playbook or listed
