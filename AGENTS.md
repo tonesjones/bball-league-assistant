@@ -4,7 +4,7 @@ Rules for any coding agent working in this repo. Read this before every task.
 
 ## What this is
 
-An in-season assistant for one Yahoo Public Prize fantasy basketball league. It tells Tony which move wins the league and why. It never makes a move. Read [`PLAN.md`](PLAN.md) for the north star and the current phase.
+An in-season assistant for one Yahoo Public Prize fantasy basketball league. It tells Tony which move wins the league and why. It never makes a move. Read [`PLAN.md`](PLAN.md) for the current status and plan.
 
 League facts:
 
@@ -18,7 +18,7 @@ League facts:
 ## Hard rules
 
 1. **Read only.** No Yahoo API. League data comes from Yahoo pages read in Tony's signed-in browser (see `tasks/02-yahoo-league-state.md`). Open pages by URL and read them; nothing may submit or change anything in Yahoo: no transaction, lineup change, claim or trade. Never sign in to Yahoo or enter credentials; if a sign-in page appears, stop and tell Tony. `.claude/settings.json` enforces this: browser click, type, form and script tools are denied, and a hook blocks any Yahoo URL outside the read-only list in `src/sources/yahoo-urls.mjs`. Don't weaken either without Tony's OK in the PR. See `docs/update-league.md`, "What is enforced".
-2. **An LLM collects, code computes.** An agent may open Yahoo pages and save their text unchanged. Every number comes from code: no LLM parses, summarizes or edits league data or computes advice. An optional summary step may be added later; nothing may depend on it.
+2. **Code computes, Claude decides.** An agent may open Yahoo pages and save their text unchanged; it never edits league data. Claude gives the advice by following [`docs/league-playbook.md`](docs/league-playbook.md). A count or total that a decision leans on (games on open days, category totals, FG% and FT% from makes and attempts) comes from code when a facts sheet exists. Without one, the advice shows the raw numbers it read. Tony makes every move (decision P1 in `PLAN.md`).
 3. **This repo is public.** Commit no secrets, tokens, league IDs, team names, manager names or Yahoo responses. Secrets go in `.env`. Recorded Yahoo fixtures and run outputs go in `local/`. Both are git-ignored. Tests that need Yahoo data use small synthetic fixtures in `tests/fixtures/`.
 4. **Be polite to data sources.** Cache responses, poll on a schedule, back off on 429 and 5xx. No scraping of paywalled pages. Record each source's URL and terms in `docs/sources.md` when you add it.
 5. **Don't hand-edit `data/priors/`.** Regenerate it with `npm run import:draftlab`.

@@ -6,6 +6,13 @@ reasoning, the planner spec and each PR's file list. This file holds the goals, 
 build checklist and what is next. The plan before 2026-10-31 is in
 [`tasks/archive/PLAN-2026-10-30.md`](tasks/archive/PLAN-2026-10-30.md).
 
+## Status (2026-11-14)
+
+The trial failed the stop rule, and Tony applied it. The engine described below is retired from
+league checks; its code stays in the repo. The current work is the league playbook: code computes
+counts, Claude decides, and Tony makes every move. See "After the trial: the league playbook". The
+sections up to "Parked" are kept as the record of the trial.
+
 ## What the tool is, and the problem
 
 Tony manages one team in a 12-team Yahoo head-to-head league scored on 9 categories, with daily
@@ -39,6 +46,11 @@ review.
 **Trial window.** 2026-10-31 to 2026-11-14. It started when PR 4 (the shadow log, #77) merged.
 Apply the stop rule on 2026-11-14. The 2026-10-30 usability trial ended on 2026-10-31 with no entries (decision Q4).
 
+**Result (2026-11-14): failed.** The shadow log holds 6 distinct decisions. Tony tagged 3
+`no-effect` and 3 `wasted-time`, and none `changed-decision` or `caught-mistake`, so G4 fails
+(Q3 needs 2). Three checks needed a rescue, two of them in the first week, so G5 fails. Tony
+stopped asking the engine for league checks (decision S1).
+
 ## Decisions
 
 Made by Tony on 2026-10-31 unless dated otherwise. The design has the rejected options and known weaknesses.
@@ -56,11 +68,13 @@ Made by Tony on 2026-10-31 unless dated otherwise. The design has the rejected o
 | Q4 | End the 2026-10-30 trial now. A new two-week window starts when PR 4 merges. |
 | Q3 | G4 threshold: keep the tool if at least 2 of the trial's decisions are tagged `changed-decision` or `caught-mistake` (Tony, 2026-11-09). |
 | F1 | Code freeze until the stop rule is applied on 2026-11-14, except a fix for a refresh that fails outright. Role-change players do not enter the planner (Tony, 2026-11-09). |
+| S1 | The stop rule is applied: the trial failed G4 and G5, the engine is retired from league checks, and the code freeze (F1) ends (Tony, 2026-11-14). |
+| P1 | Code computes, Claude decides. A league playbook (`docs/league-playbook.md`) tells Claude how to advise; code supplies counts; Tony makes every move. This is the Q6 fallback, and it replaces Q1, D1 and I2 (Tony, 2026-11-14). |
 | F2 | Exception to F1: the IL lock (MODEL_VERSION 9) ships before the stop rule, because a Q, P or D player in an IL slot blocks every move and the 2026-11-09 run proposed an add Yahoo would refuse (Tony, 2026-11-12). |
 
 ## Open questions
 
-- **Q6. The I2 fallback trigger.** For example: after 5 decisions, Tony overrode the engine on
+- **Q6 (closed by P1 on 2026-11-14). The I2 fallback trigger.** For example: after 5 decisions, Tony overrode the engine on
   context grounds in at least 3. If I2 fails, the fallback is "code computes, ChatGPT decides". It
   changes Q1, D1, the planner and `AGENTS.md` hard rule 2, so it needs a new design.
 
@@ -97,7 +111,7 @@ Merging PR 4 started the trial window on 2026-10-31.
 - [x] **2026-11-09: Q3 set and code frozen (F1).** See Decisions.
 - [x] **One-step refresh skill ([PR 98](https://github.com/tonesjones/bball-league-assistant/pull/98)), merged.** Then Tony says "update league" once. It is done when that run leaves 20 page files, a `status.json` with no `failedStep`, the report and a new `tony` line in `local/bakeoff.jsonl`. It has not been tested end to end.
 - [x] **IL lock (F2, #99, merged).** The planner holds and names the player when someone in an IL slot has a status other than O, INJ or NA. Done when `npm test` passes, including the IL lock test, and the report for the 2026-11-09 capture says HOLD and names the D player.
-- [ ] **2026-11-14: apply the stop rule** with the Q3 threshold. After that, run the post-trial design review and the Claude-only docs cleanup.
+- [x] **2026-11-14: stop rule applied (S1).** The trial failed. The post-trial plan is "After the trial: the league playbook".
 - **`tasks/23-codex-capture.md` is dropped (2026-11-14).** Codex is cancelled, so there is no Codex
   capture to check. The Claude capture path (`yahoo-reader`, `.claude/settings.json` and the URL
   hook) is the only one. It weakens no enforcement without Tony's OK in its PR.
@@ -107,9 +121,53 @@ Merging PR 4 started the trial window on 2026-10-31.
   no change to the planner or scores. Requested 2026-11-06 after the free-agent ranking missed
   both players Tony picked.
 
+## After the trial: the league playbook
+
+This section is the design review the stop rule asks for. Tony's finding from the trial: Claude in
+a browser, reading the live Yahoo pages, gave better advice with less upkeep than the engine. What
+a chatbot still gets wrong is the arithmetic, and it only answers when asked. So the playbook holds
+Tony's judgment rules, code is kept only as a calculator, and nothing is built until a real error
+shows the need for it.
+
+League timing that shapes this: every add is a waiver claim that processes a little after 1 a.m.
+Pacific, so advice has to arrive after the night's games and before midnight Pacific.
+
+- [ ] **The playbook (`docs/league-playbook.md`).** A prompt document Claude follows, in the
+  browser extension or in a Claude Code session. *Done when:* it has the league facts, timing
+  rules, decision procedure, Tony's judgment rules, guardrails, arithmetic rules, FAAB guidance,
+  output format and journal line, and it names no league ID, fantasy team, manager or rostered
+  player.
+- [ ] **First test, on the 2026-11-14 capture.** A fresh agent gets only the playbook and that
+  night's numbers. *Done when:* its output follows the playbook's format, every number in it
+  matches the capture, and Tony has rated the suggestions.
+- [ ] **One-week check.** Tony uses the playbook for each decision until 2026-11-21 and saves one
+  journal line per decision, noting anything it got wrong. *Done when:* on 2026-11-21 Tony decides
+  to keep, change or drop it, and each recorded error is either fixed in the playbook or listed
+  below as a calculator to build.
+- [ ] **Facts sheet (`npm run sheet`), only if the test shows counting errors.** One file of
+  code-computed numbers and no recommendation: usable starts on open days for each roster player
+  and candidate, the matchup by category with FG% and FT% from makes and attempts, adds and FAAB
+  left, and the role-change watch list. *Done when:* it prints from a capture, its tests pass, and
+  the playbook's output cites it.
+- [ ] **Nightly update.** A run that starts when the night's games are final, with a cutoff
+  before midnight Pacific, and reaches Tony's phone. Starts with a short design note that settles
+  where it runs (Tony's PC is usually on at 10 p.m. Pacific, with exceptions), how it reads Yahoo
+  and how it is delivered. *Done when:* Tony receives an update on three nights in a row without a
+  rescue.
+
+Open decisions:
+
+- Whether MetaMuse relays the nightly update, and how it can receive one.
+- Whether Yahoo's Fantasy API now allows a personal read-only token. It is the only clean way for
+  a cloud run to read the league; see "Ground rules" for why it was ruled out.
+- What to do with `docs/designs/league-move-checker.md` and the `docs/codex-*.md` files, which
+  describe the retired flow.
+
 ## Parked
 
-None of these is needed for the trial.
+These were parked during the trial. Under P1 the engine items (recent minutes, week-start totals,
+cautious headline, role-change players in the planner) are lessons for the playbook, not work to
+build.
 
 - Rule check over real decisions: a script that reads every record in `local/decisions/` and its
   snapshot, and fails if a saved recommendation breaks a guardrail. Prints decision IDs and rule
