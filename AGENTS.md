@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Rules for any coding agent (Codex, Claude) working in this repo. Read this before every task.
+Rules for any coding agent working in this repo. Read this before every task.
 
 ## What this is
 
@@ -11,6 +11,8 @@ League facts:
 - Yahoo Public Prize, head-to-head, 9 categories: PTS, REB, AST, STL, BLK, 3PM, FG%, FT%, TO (fewer TO wins).
 - 12 teams, 16-man roster including IL, daily lineups.
 - 4 adds per week. FAAB waivers, $100 for the whole season.
+- Every add is a waiver claim. There is no instant free-agent add. A claim placed before the deadline (typically before midnight Pacific) processes a little after 1 a.m. Pacific, so the player's first game is the next day's.
+- An add counts against the week it processes in. A claim placed on Sunday night processes on Monday and is the first of next week's 4, even when this week's 4 are used.
 - Read everything else (roster slots, IL count, games cap, playoff weeks, H2H each-category vs most-categories) from Yahoo's league settings. Never hard-code it.
 
 ## Hard rules
@@ -27,19 +29,19 @@ Carried over from Draft Lab's season manager. Treat them as tests, not suggestio
 
 - Never suggest a drop without a named pickup who is better by the engine's own measure.
 - Never suggest dropping a player Tony marks as protected (`local/protected.json`, git-ignored because it holds real names).
-- Never suggest picking up a player who is out or has no return timeline.
+- Never suggest picking up a player who is out or has no return timeline, except as a stash when an IL slot is open. Label it a stash and count none of his games.
 - Every recommendation shows its numbers, the as-of time of its data, and what it depends on (the planner report).
-- Recommend one move per refresh, or hold. Other moves were scored against the roster before that move, so rerun after it.
+- Claims placed on one night process together, so a recommendation may list several claims in priority order, or hold. Score each claim against the roster as it stands after the claims above it. A claim that was scored against the current roster only is marked as not rescored.
 - When an input a category depends on is unknown (for example this week's banked shooting volume), mark that category unknown and leave it out of the score. Never project it as zero.
 - Refuse a stale snapshot unless Tony overrides it, and say how old it is.
-- FAAB: never bid more than the player's dollar value or the season pacing cap; never bid on a player available as a free agent.
+- FAAB: every add is a claim, so every add has a bid, and another manager can outbid it. When a recommendation names a bid, it is never more than the player's dollar value or the season pacing cap, and it names a fallback claim in case the bid loses.
 
 ## How to work
 
 - Node 20+, ES modules, no runtime dependencies unless a task says otherwise. Tests use `node:test`.
 - One PR from the active design's work order at a time, in the order in `PLAN.md`, on its own branch off `main`, as one pull request.
 - One session per working directory. A session that writes code works in its own git worktree (`git worktree add ../bball-wt-<task> -b <branch> origin/main`) and leaves the main folder on `main`. Never switch branches in a folder another session may be using. A refresh edits nothing outside `local/` (see `docs/codex-refresh.md`).
-- Write each task so Sonnet or Haiku can do it. Codex is optional and may not always be available.
+- Write each task so Sonnet or Haiku can do it. Codex is no longer available (cancelled November 2026).
 - A task is done when its acceptance tests pass with `npm test` and the PR's "Done when" list in the active design is checked.
 - Keep pure logic (projections, simulator, planner) in `src/engine/`, free of I/O. I/O lives in `src/sources/` and `scripts/`.
 - Seed every random number generator; the same inputs must give the same output.
