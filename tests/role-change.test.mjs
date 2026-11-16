@@ -79,6 +79,19 @@ test('with every roster present, a rostered player is left out and the rest are 
   assert.ok(result.players.every((p) => p.availability === 'confirmed'));
 });
 
+test('an unmatched rostered player does not skip the list: his name is excluded and he is returned', () => {
+  // Player 102 is missing from the ID map, so a rostered player with his name cannot be excluded by ID.
+  const stale = { players: idMap.players.filter((p) => p.espnId !== '102') };
+  const s = snapshot();
+  s.league.teams[1].roster.push({ name: names.get('102'), nbaTeam: 'TST' });
+  const result = roleChangeReport({ snapshot: s, ids: stale, logs: buildLogs() });
+  assert.equal(result.status, 'ok');
+  assert.deepEqual(ids(result.players), ['106']);
+  assert.deepEqual(result.unmatched, [{ name: names.get('102'), nbaTeam: 'TST' }]);
+  // Without the rostered 102 he is listed, so the exclusion came from the name rule.
+  assert.ok(ids(roleChangeReport({ snapshot: snapshot(), ids: stale, logs: buildLogs() }).players).includes('102'));
+});
+
 test('each failed check skips the list with its own reason and names no players', () => {
   const cases = [
     ['no league rosters in this capture', (s) => { delete s.league; }],
@@ -87,7 +100,6 @@ test('each failed check skips the list with its own reason and names no players'
     ['team 3 roster is empty', (s) => { s.league.teams[1].roster = []; }],
     ['league size unknown (no Max Teams setting)', (s) => { delete s.settings.raw['Max Teams']; }],
     ['team number 5 is outside 1 to 4', (s) => { s.league.teams[2].teamNumber = 5; }],
-    ['unmatched rostered players: Nobody Real (TST)', (s) => { s.league.teams[0].roster.push({ name: 'Nobody Real', nbaTeam: 'TST' }); }],
   ];
   for (const [reason, change] of cases) {
     const s = snapshot();

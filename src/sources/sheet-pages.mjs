@@ -6,6 +6,7 @@ import { parseMatchup } from './yahoo-pages/matchup.mjs';
 import { parseFreeAgents } from './yahoo-pages/free-agents.mjs';
 import { parseTransactions } from './yahoo-pages/transactions.mjs';
 import { parseRosterTree } from './yahoo-pages/roster-tree.mjs';
+import { parseTeamValues } from './yahoo-pages/team-values.mjs';
 
 const PARSERS = {
   settings: parseSettings,
@@ -14,6 +15,7 @@ const PARSERS = {
   'matchup-totals': (t) => parseMatchup(t, 'matchup-totals'),
   'matchup-next': (t) => parseMatchup(t, 'matchup-next'),
   transactions: parseTransactions,
+  'team-values': parseTeamValues,
 };
 
 export const shortReason = (err) => String(err?.message ?? err).replace(/: "[\s\S]*$/, '').replace(/^[\w/-]+: (?=line \d)/, '');
@@ -29,7 +31,7 @@ function parseOne(input, parse) {
   }
 }
 
-// texts: { settings, team, 'team-tree', matchup, 'matchup-totals', 'matchup-next', transactions, 'fa-N', 'teams/N', 'teams/N-tree' },
+// texts: { settings, team, 'team-tree', 'team-values', matchup, 'matchup-totals', 'matchup-next', transactions, 'fa-N', 'teams/N', 'teams/N-tree' },
 // each a string or { reason } when the capture logged the page as skipped.
 export function parsePages(texts) {
   const out = {};

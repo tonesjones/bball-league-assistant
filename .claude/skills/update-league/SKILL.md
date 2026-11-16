@@ -68,6 +68,10 @@ longer exist.
 - The sheet replaces the per-player script, which cost about 450,000 tokens on 2026-11-14. Agent
   definitions load at session start, so after you change `yahoo-reader`, start a new session.
 - Through Chrome every team page is header-only (2026-11-15). The roster comes from the `-tree.txt`
-  files, and FAAB comes from `find`.
-- The watch list is skipped when a rostered player has no match in `data/ids.json`. Run
-  `npm run build:ids` to refresh it.
+  files. FAAB comes from `team-values.txt`, the saved `find` results for "Waiver Budget". The
+  sheet reads only FAAB from that file. It counts adds used from the transactions page.
+- A rostered player with no match in `data/ids.json` no longer skips the watch list. The sheet
+  leaves out any listed player with the same name and prints the unmatched players under the list.
+  Run `npm run build:ids` to refresh the file. Check the diff first: it can drop players ESPN cut.
+- The sheet's Injury report is the source for return dates. Where the feed gives none, the
+  playbook says "return not given".

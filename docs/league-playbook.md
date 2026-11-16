@@ -4,10 +4,12 @@ You are advising Tony on waiver claims in his Yahoo head-to-head fantasy basketb
 this document step by step. It is all the context you get. Code may give you a facts sheet of
 computed numbers. You decide the move. Tony makes every move by hand.
 
-Playbook version 3 (2026-11-15). Version 1 was tested on live pages on 2026-11-14, and the
+Playbook version 4 (2026-11-15). Version 1 was tested on live pages on 2026-11-14, and the
 archived plan (`tasks/archive/PLAN-2026-11-14.md`) lists what the test changed. Version 3 starts
 from the facts sheet (`npm run sheet`), adds a three-line headline to the output and fills the
-journal's `did` field from the transactions page.
+journal's `did` field from the transactions page. Version 4 adds the sheet's Injury report to the
+section table, a default for classifying a week with no game played yet, and a rule for quoting
+an injured player's return date.
 
 ## Purpose and the read-only rule
 
@@ -67,6 +69,7 @@ decide the move. Each section feeds one or more steps of the decision procedure:
 | Open-day grid and Roster lines (last-5 lines for both teams) | 4 and 5 |
 | Candidates: usable starts, last-5 line, minutes. Role-change watch list | 6 |
 | Transactions: Tony's own adds and drops with dates, winning bids | 2, 8 and the journal |
+| Injury report: ESPN status, report date, return date and comment for Tony's, the opponent's and the candidates' players | 6 and 7 |
 
 When a section prints `UNAVAILABLE: <file> (<reason>)`, read that page. Open the saved capture
 file first, then the live page. Write out the raw numbers as in the without-sheet path below.
@@ -145,6 +148,17 @@ Work through these steps in order. Write the result of each step in your answer.
    Before any game of the week is played, banked counting totals are zero, not unknown. When an
    input is truly missing (for example, the page did not show shooting volume), mark that category
    unknown and leave it out. Never treat an unknown as zero.
+   For a week with no game played yet (banked totals zero), use this default. Tony has not
+   confirmed it. Classify from the sheet's projected finals. A counting category (and TO, with
+   the direction reversed) is Safe or Lost when the gap is more than 15% of the larger projected
+   final, and in play otherwise. FG% and FT% are Safe or Lost when the gap is more than 0.030, and
+   in play otherwise. When the projection and the cautious figure give different classes, the
+   category is in play.
+   The sheet's projection counts a player listed O or INJ as out for every remaining day. When
+   the Injury report gives him a return date inside the week, the projection understates his
+   team. Say so, and give a second figure that adds his last-5 line for his games from that date
+   on. ESPN's return date is an estimate and is often just the team's next game, so treat it as
+   the earliest he can play.
 5. Build the open-day grid. For each remaining day of the processing week, list the date, Tony's
    players with a game, the lineup slots they fill, and the slots left open. An open slot is a
    start a pickup can use.
@@ -155,6 +169,10 @@ Work through these steps in order. Write the result of each step in your answer.
    first pages of the ranking: a one-day specialist can sit low on the list.
 7. List drop candidates. First check whether a drop is needed at all: if a rostered player is
    out (O or INJ) and an IL slot is open, moving him to IL frees a roster spot at no cost. Start with the weakest players by current-season production and role.
+   Take an injured player's return timeline from the sheet's Injury report and quote its date and
+   comment. When the feed gives no return date, write "return not given" and do not guess. When a
+   move depends on that player being out long term, the headline is HOLD, the move appears as a
+   lean, and `Why:` states the question for Tony.
    Leave out every protected player (see Guardrails). A rostered player with no game on the
    remaining days, or who is out, costs nothing this week as a drop; say what he costs after it. Mark any drop candidate whose current
    season beats his history as suspect.
@@ -207,6 +225,10 @@ categories.
   game is recent: say both facts and let Tony judge.
 - Check who is out on the player's team before trusting a minutes jump. If the jump comes from an
   injured starter who returns soon, the minutes will not last. Say whom the jump depends on.
+- Take an injured player's return timeline from the sheet's Injury report. Quote its date and
+  comment. When the feed gives no return date, say "return not given" and do not guess. When a
+  move depends on that player being out long term, the headline is HOLD, the move is a lean, and
+  `Why:` states the question for Tony.
 - The same check picks the drop. A player whose minutes have fallen since a teammate returned
   is a better drop than one whose role is steady, whatever their season lines say.
 - Weigh the opponent. If the opponent is strong in a category (for example an elite center makes

@@ -1,0 +1,209 @@
+{
+  "timestamp": "2026-11-11T20:15:00Z",
+  "status": "success",
+  "season": {
+    "year": 2027,
+    "type": 2
+  },
+  "injuries": [
+    {
+      "id": "1",
+      "displayName": "Alpha Team",
+      "injuries": [
+        {
+          "id": "91",
+          "longComment": "Long text not used.",
+          "shortComment": "Able (ankle) is questionable for Thursday.",
+          "status": "Day-To-Day",
+          "date": "2026-11-10T21:00Z",
+          "athlete": {
+            "firstName": "Ann",
+            "lastName": "Able",
+            "displayName": "Ann Able",
+            "links": [
+              {
+                "rel": [
+                  "stats"
+                ],
+                "href": "https://example.test/nba/player/stats/_/id/1/x"
+              },
+              {
+                "rel": [
+                  "playercard"
+                ],
+                "href": "https://example.test/nba/player/_/id/1/x"
+              }
+            ],
+            "team": {
+              "id": "1",
+              "abbreviation": "AAA"
+            }
+          },
+          "source": {
+            "id": "1",
+            "description": "ESPN"
+          },
+          "type": {
+            "id": "1",
+            "name": "INJURY_STATUS_OUT",
+            "description": "out",
+            "abbreviation": "O"
+          },
+          "details": {
+            "fantasyStatus": {
+              "description": "OUT",
+              "abbreviation": "OUT"
+            },
+            "type": "Knee",
+            "returnDate": "2026-11-12"
+          }
+        },
+        {
+          "id": "92",
+          "longComment": "Long text not used.",
+          "shortComment": "Baker (knee) is out indefinitely.",
+          "status": "Out",
+          "date": "2026-11-09T18:30Z",
+          "athlete": {
+            "firstName": "Bo",
+            "lastName": "Baker",
+            "displayName": "Bo Baker",
+            "links": [
+              {
+                "rel": [
+                  "stats"
+                ],
+                "href": "https://example.test/nba/player/stats/_/id/2/x"
+              },
+              {
+                "rel": [
+                  "playercard"
+                ],
+                "href": "https://example.test/nba/player/_/id/2/x"
+              }
+            ],
+            "team": {
+              "id": "1",
+              "abbreviation": "BBB"
+            }
+          },
+          "source": {
+            "id": "1",
+            "description": "ESPN"
+          },
+          "type": {
+            "id": "1",
+            "name": "INJURY_STATUS_OUT",
+            "description": "out",
+            "abbreviation": "O"
+          },
+          "details": {
+            "type": "Knee"
+          }
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "displayName": "Gold Team",
+      "injuries": [
+        {
+          "id": "97",
+          "longComment": "Long text not used.",
+          "shortComment": "Hal Hill (knee) is out for Saturday | and the feed adds a long note that runs past the 160 character limit so that the sheet has to cut it, with more words after the cut point to make sure.",
+          "status": "Out",
+          "date": "2026-11-11T12:00Z",
+          "athlete": {
+            "firstName": "Hal",
+            "lastName": "Hill",
+            "displayName": "Hal Hill",
+            "links": [
+              {
+                "rel": [
+                  "stats"
+                ],
+                "href": "https://example.test/nba/player/stats/_/id/7/x"
+              },
+              {
+                "rel": [
+                  "playercard"
+                ],
+                "href": "https://example.test/nba/player/_/id/7/x"
+              }
+            ],
+            "team": {
+              "id": "1",
+              "abbreviation": "HHH"
+            }
+          },
+          "source": {
+            "id": "1",
+            "description": "ESPN"
+          },
+          "type": {
+            "id": "1",
+            "name": "INJURY_STATUS_OUT",
+            "description": "out",
+            "abbreviation": "O"
+          },
+          "details": {
+            "fantasyStatus": {
+              "description": "OUT",
+              "abbreviation": "OUT"
+            },
+            "type": "Knee",
+            "returnDate": "2026-11-14"
+          }
+        },
+        {
+          "id": "999",
+          "longComment": "Long text not used.",
+          "shortComment": "Zero (foot) is out.",
+          "status": "Out",
+          "date": "2026-11-08T12:00Z",
+          "athlete": {
+            "firstName": "Zed",
+            "lastName": "Zero",
+            "displayName": "Zed Zero",
+            "links": [
+              {
+                "rel": [
+                  "stats"
+                ],
+                "href": "https://example.test/nba/player/stats/_/id/99/x"
+              },
+              {
+                "rel": [
+                  "playercard"
+                ],
+                "href": "https://example.test/nba/player/_/id/99/x"
+              }
+            ],
+            "team": {
+              "id": "1",
+              "abbreviation": "GS"
+            }
+          },
+          "source": {
+            "id": "1",
+            "description": "ESPN"
+          },
+          "type": {
+            "id": "1",
+            "name": "INJURY_STATUS_OUT",
+            "description": "out",
+            "abbreviation": "O"
+          },
+          "details": {
+            "fantasyStatus": {
+              "description": "OUT",
+              "abbreviation": "OUT"
+            },
+            "type": "Knee",
+            "returnDate": "2026-12-01"
+          }
+        }
+      ]
+    }
+  ]
+}
