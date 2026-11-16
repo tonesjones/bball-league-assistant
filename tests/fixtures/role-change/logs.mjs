@@ -10,7 +10,7 @@ export const day = (n) => `2026-11-${String(n).padStart(2, '0')}`;
 
 export function row(espnId, name, date, min, { starter = false, stats = AVERAGE, didNotPlay = false } = {}) {
   const line = didNotPlay ? Object.fromEntries(STAT_KEYS.map((k) => [k, 0])) : stats;
-  return { espnId: String(espnId), name, team: 'TST', date, espnEventId: `${date}-${espnId}`,
+  return { espnId: String(espnId), name, team: 'TST', date, espnEventId: `${date}-TST`,
     min: didNotPlay ? 0 : min, starter, didNotPlay, reason: didNotPlay ? 'REST' : null, ...line };
 }
 

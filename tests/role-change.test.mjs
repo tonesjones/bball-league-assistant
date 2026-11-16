@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { roleChanges, roleChangeReport } from '../src/engine/role-change.mjs';
-import { DATE, BIG, POOR, bencher, buildLogs, player, row } from './fixtures/role-change/logs.mjs';
+import { absences, roleChanges, roleChangeReport } from '../src/engine/role-change.mjs';
+import { DATE, BIG, POOR, bencher, buildLogs, day, player, row } from './fixtures/role-change/logs.mjs';
 
 const run = (logs, extra = {}) => roleChanges({ logs, date: DATE, exclude: new Set(), available: new Set(), ...extra });
 const ids = (list) => list.map((p) => p.espnId);
@@ -9,7 +9,10 @@ const ids = (list) => list.map((p) => p.espnId);
 test('keeps the shapes the spec names and leaves out the rest', () => {
   const list = run(buildLogs(), { exclude: new Set(['104']), available: new Set(['106']) });
   const by = new Map(list.map((p) => [p.espnId, p]));
-  assert.deepEqual([...by.keys()].sort(), ['101', '102', '106']);
+  assert.deepEqual([...by.keys()].sort(), ['101', '102', '105', '106']);
+  assert.deepEqual(by.get('105').flags, ['returning']);
+  assert.equal(by.get('105').latestAbsence, 6);
+  assert.equal(by.get('105').gamesBack, 1);
   assert.deepEqual(by.get('101').flags, ['minutes', 'starter']);
   assert.deepEqual(by.get('102').flags, ['minutes']);
   assert.equal(by.get('101').recentStarts, 3);
@@ -54,6 +57,36 @@ test('a DNP row on the date does not count as playing', () => {
   assert.ok(ids(run(buildLogs())).includes('102'));
 });
 
+test('a player back from a long absence is flagged returning, and a short one or a benching is not', () => {
+  const logs = buildLogs();
+  // Back for one game after missing days 3 to 8: six team games.
+  logs.push(...player(130, 'Mo Mike', [[1, 20], [2, 20]], 18));
+  // Missed only days 6 to 8: three team games.
+  logs.push(...player(131, 'Nia Nov', [[1, 20], [2, 20], [3, 20], [4, 20], [5, 20]], 18));
+  // Sat days 3 to 8 by coach's decision: not an absence.
+  logs.push(...player(132, 'Oz Oscar', [[1, 20], [2, 20]], 18),
+    ...[3, 4, 5, 6, 7, 8].map((d) => ({ ...row(132, 'Oz Oscar', day(d), 0, { didNotPlay: true }), reason: "COACH'S DECISION" })));
+  const by = new Map(run(logs).map((p) => [p.espnId, p]));
+  assert.deepEqual(by.get('130').flags, ['returning']);
+  assert.equal(by.get('130').earlierMpg, 20);
+  assert.ok(!by.has('131'));
+  assert.ok(!by.has('132'));
+  const away = absences(logs, DATE);
+  assert.deepEqual(away.get('130'), { team: 'TST', teamGames: 9, missed: 6, latestAbsence: 6, gamesBack: 1 });
+  assert.deepEqual(away.get('132'), { team: 'TST', teamGames: 9, missed: 0, latestAbsence: 0, gamesBack: 9 });
+});
+
+test('the window covers the last three nights through the date', () => {
+  const logs = buildLogs();
+  // A minutes jump two nights before the date counts; one four nights before does not.
+  logs.push(...player(140, 'Pat Papa', bencher, 30).map((r) => (r.date === DATE ? { ...r, date: day(9) } : r)));
+  logs.push(...player(141, 'Quin Quebec', bencher.slice(0, 5), 30).map((r) => (r.date === DATE ? { ...r, date: day(6) } : r)));
+  const by = new Map(run(logs).map((p) => [p.espnId, p]));
+  assert.deepEqual(by.get('140').flags, ['minutes']);
+  assert.equal(by.get('140').lastDate, day(9));
+  assert.ok(!by.has('141'));
+});
+
 test('the same inputs give byte-identical output', () => {
   const args = { exclude: new Set(['104']), available: new Set(['106']) };
   assert.equal(JSON.stringify(run(buildLogs(), args)), JSON.stringify(run(buildLogs(), args)));
@@ -75,7 +108,7 @@ test('with every roster present, a rostered player is left out and the rest are 
   const result = screen(snapshot());
   assert.equal(result.status, 'ok');
   assert.equal(result.date, DATE);
-  assert.deepEqual(ids(result.players).sort(), ['102', '106']);
+  assert.deepEqual(ids(result.players).sort(), ['102', '105', '106']);
   assert.ok(result.players.every((p) => p.availability === 'confirmed'));
 });
 
@@ -86,7 +119,7 @@ test('an unmatched rostered player does not skip the list: his name is excluded 
   s.league.teams[1].roster.push({ name: names.get('102'), nbaTeam: 'TST' });
   const result = roleChangeReport({ snapshot: s, ids: stale, logs: buildLogs() });
   assert.equal(result.status, 'ok');
-  assert.deepEqual(ids(result.players), ['106']);
+  assert.deepEqual(ids(result.players).sort(), ['105', '106']);
   assert.deepEqual(result.unmatched, [{ name: names.get('102'), nbaTeam: 'TST' }]);
   // Without the rostered 102 he is listed, so the exclusion came from the name rule.
   assert.ok(ids(roleChangeReport({ snapshot: snapshot(), ids: stale, logs: buildLogs() }).players).includes('102'));

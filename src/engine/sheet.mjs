@@ -5,9 +5,9 @@ import { assignLineup, openRosterSpots } from './needs.mjs';
 import { findPlayer, normalizeName } from './names.mjs';
 import { trimComment } from '../sources/espn-injuries.mjs';
 import { estimateVolume } from './shooting-volume.mjs';
-import { roleChangeReport } from './role-change.mjs';
+import { absences, roleChangeReport } from './role-change.mjs';
 
-export const SHEET_VERSION = 2;
+export const SHEET_VERSION = 3;
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -73,7 +73,7 @@ function makeContext({ ids, logs, schedule, captureDate }) {
     return { ...p, espnId: id == null ? null : String(id), line: lastLine(rows),
       seasonMpg: rows.length ? rows.reduce((s, r) => s + r.min, 0) / rows.length : null };
   };
-  return { enrich, teamsByDate };
+  return { enrich, teamsByDate, byId };
 }
 
 // One day's lineup by the existing slot assignment. Recent minutes set the order; no log counts as 24.
@@ -105,8 +105,17 @@ const lineCells = (p) => {
 const LINE_HEAD = ['MIN', 'PTS', 'REB', 'AST', 'STL', 'BLK', '3PM', 'FGM/FGA', 'FTM/FTA', 'TO', 'G if <5'];
 const mpg = (p) => (p.seasonMpg == null ? 'no log' : p.seasonMpg.toFixed(1));
 
-export function buildSheet({ folder, captureDate, captureTime, pages, ids, schedule, logs, coverage = null, scoreboard = null, injuries = null, warnings = [] }) {
+export function buildSheet({ folder, captureDate, captureTime, pages, ids, schedule, logs, priors = [], coverage = null, scoreboard = null, injuries = null, warnings = [] }) {
   const ctx = makeContext({ ids, logs, schedule, captureDate });
+  const away = absences(logs, captureDate);
+  const priorMpg = new Map(priors.filter((p) => p.mpg != null).map((p) => [normalizeName(p.name), p.mpg]));
+  const lastSeason = (name) => { const m = priorMpg.get(normalizeName(name)); return m == null ? '' : m.toFixed(1); };
+  const absenceCell = (id) => {
+    const a = id == null ? null : away.get(String(id));
+    if (!a) return 'unknown';
+    if (!a.missed) return `none of ${a.teamGames}`;
+    return `${a.missed} of ${a.teamGames}; latest ${a.latestAbsence} missed, ${a.gamesBack} back`;
+  };
   const claimDate = addDays(captureDate, 1);
   const monday = addDays(claimDate, -((new Date(`${claimDate}T00:00:00Z`).getUTCDay() + 6) % 7));
   const sunday = addDays(monday, 6);
@@ -351,18 +360,21 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
           usable = `${dates.length}: ${dateList(dates)}`;
         }
         rows.push([page.file.replace('.txt', ''), p.name, p.nbaTeam, p.status ?? '', p.positions.join(','), raw.waiverClears ? `W (${raw.waiverClears})` : '',
-          `${games.length}: ${dateList(games)}`, usable, p.line ? p.line.min.toFixed(1) : 'no log', mpg(p), ...lineCells(p).slice(1)]);
+          `${games.length}: ${dateList(games)}`, usable, p.line ? p.line.min.toFixed(1) : 'no log', mpg(p), lastSeason(p.name), absenceCell(p.espnId), ...lineCells(p).slice(1)]);
       }
     }
     if (rows.length) {
       L.push(...table(['Page', 'Player', 'Team', 'Status', 'Pos', 'Waiver', `Games ${claimDate.slice(5)} to ${sunday.slice(5)}`, 'Usable starts', 'L5 MIN', 'Season MPG',
-        ...LINE_HEAD.slice(1)], rows));
-      L.push('', '- Usable start: a game on a day when adding him to Tony\'s lineup (O, INJ, SUSP and NA left out) fills one more slot. A date before his waiver date does not count.');
+        'Last season MPG', 'Missed', ...LINE_HEAD.slice(1)], rows));
+      L.push('', '- Usable start: a game on a day when adding him to Tony\'s lineup (O, INJ, SUSP and NA left out) fills one more slot. A date before his waiver date does not count.',
+        '- Last season MPG: from data/priors; blank when the priors have none.',
+        "- Missed: of his current team's logged games, those he missed (no box-score row, or a DNP other than a coach's decision), then his latest absence and the team games since. A player new to his team counts its earlier games as missed.");
     }
     section('6. Candidates', L);
   }
 
   // 7. Role-change watch list
+  let watch = [];
   {
     const L = [];
     const badTeams = P.teams.filter((t) => !t.ok);
@@ -379,15 +391,24 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
         ? [`- ${rc.unmatched.length} rostered player${rc.unmatched.length === 1 ? '' : 's'} had no ID match: ${rc.unmatched.map((u) => `${u.name} (${u.nbaTeam})`).join(', ')}. A listed player with a similar name may be rostered.`]
         : [];
       if (rc.status === 'skipped') L.push(`Skipped: ${rc.reason}`);
-      else if (!rc.players.length) L.push(`Night of ${rc.date}: none`, '', ...unmatchedLine);
       else {
-        const n = (v) => v.toFixed(1);
-        L.push(`Night of ${rc.date}. Every player listed is on no team roster.`, '');
-        L.push(...table(['Player', 'Team', 'Flags', 'MIN', 'Earlier MPG', 'Jump', 'Started (last games)', 'Earlier starts', 'PTS', 'REB', 'AST', 'STL', 'BLK', '3PM', 'FGM/FGA', 'FTM/FTA', 'TO'],
-          [...rc.players].sort((a, b) => b.jump - a.jump || Number(a.espnId) - Number(b.espnId)).map((p) => [p.name, p.team, p.flags.join(', '), n(p.minutes), n(p.earlierMpg), signed(p.jump, 1),
+        const nights = `Nights ${addDays(rc.date, -2)} to ${rc.date}`;
+        watch = rc.players;
+        if (!watch.length) L.push(`${nights}: none`, '', ...unmatchedLine);
+        else {
+          const n = (v) => (v == null ? 'none' : v.toFixed(1));
+          const jumpOf = (p) => p.jump ?? -Infinity;
+          L.push(`${nights}. Every player listed is on no team roster.`, '');
+          L.push(...table(['Player', 'Team', 'Flags', 'Last game', 'MIN', 'Earlier MPG', 'Jump', 'Last season MPG', 'Back after', 'Started (last games)', 'Earlier starts',
+            'PTS', 'REB', 'AST', 'STL', 'BLK', '3PM', 'FGM/FGA', 'FTM/FTA', 'TO'],
+          [...watch].sort((a, b) => jumpOf(b) - jumpOf(a) || Number(a.espnId) - Number(b.espnId)).map((p) => [p.name, p.team, p.flags.join(', '), p.lastDate.slice(5), n(p.minutes),
+            n(p.earlierMpg), p.jump == null ? '' : signed(p.jump, 1), lastSeason(p.name),
+            p.flags.includes('returning') ? `${p.latestAbsence} missed, ${p.gamesBack} back` : '',
             `${p.recentStarts} of ${p.recentGames}`, String(p.earlierStarts), ...['pts', 'reb', 'ast', 'stl', 'blk', 'fg3m'].map((k) => String(p.box[k])),
             `${p.box.fgm}/${p.box.fga}`, `${p.box.ftm}/${p.box.fta}`, String(p.box.to)])));
-        L.push('', ...unmatchedLine);
+          L.push('', '- Flags: minutes, a jump of 8+ over his earlier MPG to 24+ minutes in his last game; starter, 2+ starts in his last 3 games after 1 or fewer before; returning, back within 3 team games from an absence of 5+ team games. The box score is his last game.',
+            ...unmatchedLine);
+        }
       }
     }
     section('7. Role-change watch list', L);
@@ -436,6 +457,27 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
       if (rows.length) L.push(...table(['Who', 'Player', 'Team', 'ESPN status', 'Report date', 'Return date', 'Comment'], rows));
       else L.push('None of these players appear in the feed.');
       L.push('', '- Status, dates and comment are the feed\'s own text. Return date "not given" means the feed has none. A comment longer than 160 characters is cut.');
+
+      // Who is out on the NBA teams of the candidates and the watch list: the minutes they leave open.
+      const listed = new Set([...candidates, ...watch].map((p) => normalizeName(p.name)));
+      const teams = new Set([...candidates.map((p) => p.nbaTeam), ...watch.map((p) => p.team)]);
+      const absent = [];
+      for (const e of entries) {
+        if (!teams.has(e.team) || listed.has(normalizeName(e.name))) continue;
+        const games = e.espnId ? ctx.byId.get(String(e.espnId)) ?? [] : [];
+        const season = games.length ? games.reduce((t, r) => t + r.min, 0) / games.length : null;
+        const prior = priorMpg.get(normalizeName(e.name)) ?? null;
+        if ((season != null || prior != null) && Math.max(season ?? 0, prior ?? 0) < 15) continue;
+        absent.push({ e, season, prior, games: games.length, starts: games.filter((r) => r.starter === true).length });
+      }
+      absent.sort((a, b) => a.e.team.localeCompare(b.e.team) || (b.season ?? b.prior ?? 0) - (a.season ?? a.prior ?? 0) || a.e.name.localeCompare(b.e.name));
+      L.push('', "### Out on the candidates' teams", '');
+      if (absent.length) {
+        L.push(...table(['Team', 'Player', 'ESPN status', 'Return date', 'Season MPG', 'Games', 'Starts', 'Last season MPG'],
+          absent.map(({ e, season, prior, games, starts }) => [e.team, e.name, e.status ?? '', e.returnDate ?? 'not given', season == null ? 'no log' : season.toFixed(1),
+            String(games), String(starts), prior == null ? '' : prior.toFixed(1)])));
+        L.push('', '- Feed players on the NBA team of a candidate or a watch-list player, other than those players. Listed when he averages 15+ minutes this season or last, or neither is known. Season MPG counts games with minutes.');
+      } else L.push('none in the feed');
     }
     section('9. Injury report', L);
   }

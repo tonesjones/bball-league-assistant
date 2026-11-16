@@ -4,12 +4,14 @@ You are advising Tony on waiver claims in his Yahoo head-to-head fantasy basketb
 this document step by step. It is all the context you get. Code may give you a facts sheet of
 computed numbers. You decide the move. Tony makes every move by hand.
 
-Playbook version 4 (2026-11-15). Version 1 was tested on live pages on 2026-11-14, and the
+Playbook version 5 (2026-11-15). Version 1 was tested on live pages on 2026-11-14, and the
 archived plan (`tasks/archive/PLAN-2026-11-14.md`) lists what the test changed. Version 3 starts
 from the facts sheet (`npm run sheet`), adds a three-line headline to the output and fills the
 journal's `did` field from the transactions page. Version 4 adds the sheet's Injury report to the
 section table, a default for classifying a week with no game played yet, and a rule for quoting
-an injured player's return date.
+an injured player's return date. Version 5 reads the sheet's new opportunity data (returning
+players, missed games, last season's minutes, teammates out) and requires the long-term claim to
+beat the best opportunity candidates by name.
 
 ## Purpose and the read-only rule
 
@@ -67,9 +69,9 @@ decide the move. Each section feeds one or more steps of the decision procedure:
 | Budget and slots: adds used and left, FAAB, open spots, IL check | 2 and 3 |
 | Matchup by category: banked, projected remaining, projected final, gap, cautious figure | 4 |
 | Open-day grid and Roster lines (last-5 lines for both teams) | 4 and 5 |
-| Candidates: usable starts, last-5 line, minutes. Role-change watch list | 6 |
+| Candidates: usable starts, last-5 line, minutes, last season's minutes, missed games. Role-change watch list over the last three nights, with returning players | 6 |
 | Transactions: Tony's own adds and drops with dates, winning bids | 2, 8 and the journal |
-| Injury report: ESPN status, report date, return date and comment for Tony's, the opponent's and the candidates' players | 6 and 7 |
+| Injury report: ESPN status, report date, return date and comment for Tony's, the opponent's and the candidates' players. Out on the candidates' teams: injured teammates, their minutes and return dates | 6 and 7 |
 
 When a section prints `UNAVAILABLE: <file> (<reason>)`, read that page. Open the saved capture
 file first, then the live page. Write out the raw numbers as in the without-sheet path below.
@@ -167,6 +169,11 @@ Work through these steps in order. Write the result of each step in your answer.
    the processing week, and which of those games fall on a day with an open slot he can fill. A
    candidate is claimable tonight only if his waiver date is tomorrow or earlier. Look past the
    first pages of the ranking: a one-day specialist can sit low on the list.
+   Then list the opportunity candidates: every claimable player on the watch list (minutes,
+   starter or returning) and every candidate with a long latest absence or a starter out on his
+   team. For each, name whom his minutes depend on from "Out on the candidates' teams", with that
+   player's return date. A player back from injury is judged by last season's minutes and line,
+   not by his few games this season.
 7. List drop candidates. First check whether a drop is needed at all: if a rostered player is
    out (O or INJ) and an IL slot is open, moving him to IL frees a roster spot at no cost. Start with the weakest players by current-season production and role.
    Take an injured player's return timeline from the sheet's Injury report and quote its date and
@@ -235,6 +242,10 @@ categories.
   REB and BLK hard to win), an add for that category is pointless. Prefer categories still in play.
 - A pickup must have value beyond a one-week stream before it costs a real player. A pure stream
   is for a roster spot that is already expendable.
+- A player who has sat on waivers all season at steady, low minutes is available for a reason. He
+  is not a long-term add unless his minutes or role just changed. Before advising a long-term
+  claim, name the two or three best opportunity candidates from step 6 and say why each loses to
+  it. If one of them beats it, advise him instead.
 - Never drop a core player for one week's category gain. Season value comes first. Chasing the
   closest category this week by dropping good players loses the season.
 - When a pickup would start in place of a player with better historical numbers, still count the

@@ -58,8 +58,8 @@ const rowOf = (text, name) => text.split('\n').find((l) => l.startsWith(`| ${nam
 
 test('the header gives the version, the claim date and the processing week', () => {
   const h = section(sheet().markdown, 1);
-  assert.equal(SHEET_VERSION, 2);
-  assert.match(h, /Sheet version: 2/);
+  assert.equal(SHEET_VERSION, 3);
+  assert.match(h, /Sheet version: 3/);
   assert.match(h, /Capture as of: 2026-11-11 23:00 \(Wed\)/);
   assert.match(h, /Games on 2026-11-11: 3 final, 0 not final/);
   assert.match(h, /First date a claim placed tonight can play: 2026-11-12 \(Thu\)/);
@@ -111,6 +111,19 @@ test('the open-day grid and usable starts by open slot and waiver date', () => {
   assert.match(rowOf(c.replace(/^\| fa-1 /gm, ''), 'Hal Hill'), /\| W \(Nov 12\) \| 2: Fri 11-13, Sat 11-14 \| 1: Fri 11-13 \| 22\.0 \| 22\.0 \|/);
   // Ivy: Fri is before her waiver date, Sat is full.
   assert.match(rowOf(c.replace(/^\| fa-1 /gm, ''), 'Ivy Ink'), /\| W \(Nov 14\) \| 2: Fri 11-13, Sat 11-14 \| 0: none \| no log \|/);
+});
+
+test('candidates show last season\'s minutes and missed games; section 9 lists who is out on their teams', () => {
+  // Bo and Ivy play for BBB. Ivy missed the 11-06 game and played 11-08.
+  const teamLogs = [...logs().map((r) => (r.espnId === '2' ? { ...r, team: 'BBB' } : r)), { ...row('8', d(8), 26), espnEventId: `${d(8)}-2`, team: 'BBB' }];
+  const md = sheet({}, { logs: teamLogs, priors: [{ name: 'Ivy Ink', mpg: 25.5 }, { name: 'Hal Hill', mpg: null }] }).markdown;
+  const c = section(md, 6).replace(/^\| fa-1 /gm, '');
+  assert.match(rowOf(c, 'Ivy Ink'), /\| 26\.0 \| 26\.0 \| 25\.5 \| 1 of 2; latest 1 missed, 1 back \|/);
+  assert.match(rowOf(c, 'Hal Hill'), /\| 22\.0 \| 22\.0 \|  \| unknown \|/);
+  const out = section(md, 9).split("### Out on the candidates' teams")[1];
+  // Bo is out on Ivy's team; Hal is a candidate himself, and Zed's team has no candidate.
+  assert.match(out, /\| BBB \| Bo Baker \| Out \| not given \| 22\.0 \| 2 \| 0 \|  \|/);
+  assert.doesNotMatch(out, /Hal Hill|Zed Zero/);
 });
 
 test('transactions list Tony\'s moves and other managers\' winning bids', () => {
