@@ -46,6 +46,7 @@ async function main(args) {
 
   const schedule = readJson('data/schedule-2026-27.json');
   const ids = readJson('data/ids.json');
+  const priors = readJson('data/priors/players.json');
   const season = schedule.season ?? '2026-27';
   const logRoot = join('local', 'gamelogs');
   const warnings = [];
@@ -71,7 +72,7 @@ async function main(args) {
   const injuries = await loadInjuries({ noFetch });
 
   const { markdown, status } = buildSheet({ folder, captureDate, captureTime: `${hh}:${mm}`, pages: parsePages(readPages(dir)),
-    ids, schedule, logs, coverage, scoreboard, injuries, warnings });
+    ids, schedule, logs, priors, coverage, scoreboard, injuries, warnings });
   const out = join('local', 'sheets', `${folder}.md`);
   mkdirSync(join('local', 'sheets'), { recursive: true });
   writeFileSync(out, markdown);

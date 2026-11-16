@@ -1,8 +1,8 @@
 import { seasonValues } from './season-value.mjs';
 import { findPlayer, normalizeName } from './names.mjs';
-import { easternDate } from './weeks.mjs';
+import { addDays, easternDate } from './weeks.mjs';
 
-const DEFAULTS = { minJump: 8, minMinutes: 24, minPriorGames: 3, limit: 15 };
+const DEFAULTS = { minJump: 8, minMinutes: 24, minPriorGames: 3, minMissed: 5, maxGamesBack: 3, nights: 3, limit: 15 };
 const COUNTING = ['pts', 'reb', 'ast', 'stl', 'blk', 'fg3m', 'to', 'fgm', 'fga', 'ftm', 'fta'];
 const RECENT = 3;
 
@@ -11,11 +11,48 @@ const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 const byDate = (a, b) => a.date.localeCompare(b.date) || String(a.espnEventId).localeCompare(String(b.espnEventId));
 const average = (rows) => ({ g: rows.length, ...Object.fromEntries(COUNTING.map((k) => [k, mean(rows.map((r) => r[k]))])) });
 
-// Players whose role grew on `date`: a minutes jump or a new starting spot. Information only: the
-// result pairs no drop and feeds nothing into the planner. Rows after `date` are ignored, so a past
-// night gives the answer it gave on the night.
+// Per player, through `date`, against his current team's logged games: games missed (no box-score
+// row, or a DNP for a reason other than a coach's decision), the length of his latest absence and
+// the team games since it. A player new to his team counts the team's earlier games as missed.
+export function absences(logs, date) {
+  const events = new Map();
+  const seen = new Map();
+  for (const r of logs) {
+    if (r.date > date || !r.team) continue;
+    if (!events.has(r.team)) events.set(r.team, new Map());
+    events.get(r.team).set(String(r.espnEventId), r.date);
+    const id = String(r.espnId);
+    if (!seen.has(id)) seen.set(id, []);
+    seen.get(id).push(r);
+  }
+  const out = new Map();
+  for (const [id, rows] of seen) {
+    rows.sort(byDate);
+    const team = rows.at(-1).team;
+    const mine = new Map(rows.filter((r) => r.team === team).map((r) => [String(r.espnEventId), r]));
+    const games = [...events.get(team)].sort(([ea, da], [eb, db]) => da.localeCompare(db) || ea.localeCompare(eb));
+    let missed = 0, latest = 0, back = 0;
+    for (const [event] of games) {
+      const r = mine.get(event);
+      if (!r || (r.didNotPlay && r.reason !== "COACH'S DECISION")) {
+        missed++;
+        if (back) { latest = 0; back = 0; }
+        latest++;
+      } else back++;
+    }
+    out.set(id, { team, teamGames: games.length, missed, latestAbsence: latest, gamesBack: back });
+  }
+  return out;
+}
+
+// Players whose role grew in the `nights` nights through `date`: a minutes jump or a new starting
+// spot in their latest game, or a return from an absence of `minMissed` or more team games.
+// Information only: the result pairs no drop. Rows after `date` are ignored, so a past night gives
+// the answer it gave on the night.
 export function roleChanges({ logs, date, exclude = new Set(), excludeNames = new Set(), available = new Set(), options = {} }) {
-  const { minJump, minMinutes, minPriorGames, limit } = { ...DEFAULTS, ...options };
+  const { minJump, minMinutes, minPriorGames, minMissed, maxGamesBack, nights, limit } = { ...DEFAULTS, ...options };
+  const from = addDays(date, 1 - nights);
+  const away = absences(logs, date);
   const played = new Map();
   for (const row of logs) {
     if (row.didNotPlay || row.date > date) continue;
@@ -30,18 +67,22 @@ export function roleChanges({ logs, date, exclude = new Set(), excludeNames = ne
     if (rows.length < 3 || !rows.every(complete)) continue;
     pool.push({ name: `season:${id}`, perGame: average(rows) });
     const last = rows[rows.length - 1];
-    const earlier = rows.filter((r) => r.date < date);
-    if (last.date !== date || exclude.has(id) || excludeNames.has(normalizeName(last.name)) || earlier.length < minPriorGames) continue;
+    const earlier = rows.filter((r) => r.date < last.date);
+    if (last.date < from || exclude.has(id) || excludeNames.has(normalizeName(last.name))) continue;
     const recent = rows.slice(-RECENT);
-    const earlierMpg = mean(earlier.map((r) => r.min));
-    const jump = last.min - earlierMpg;
+    const earlierMpg = earlier.length ? mean(earlier.map((r) => r.min)) : null;
+    const jump = earlierMpg == null ? null : last.min - earlierMpg;
     const recentStarts = recent.filter((r) => r.starter === true).length;
     const earlierStarts = earlier.filter((r) => !recent.includes(r) && r.starter === true).length;
+    const absence = away.get(id);
     const flags = [];
-    if (jump >= minJump && last.min >= minMinutes) flags.push('minutes');
-    if (recentStarts >= 2 && earlierStarts <= 1) flags.push('starter');
+    if (earlier.length >= minPriorGames) {
+      if (jump >= minJump && last.min >= minMinutes) flags.push('minutes');
+      if (recentStarts >= 2 && earlierStarts <= 1) flags.push('starter');
+    }
+    if (absence && absence.latestAbsence >= minMissed && absence.gamesBack <= maxGamesBack) flags.push('returning');
     if (!flags.length) continue;
-    candidates.push({ id, last, flags, earlierMpg, jump, recentStarts, recentGames: recent.length, earlierStarts });
+    candidates.push({ id, last, flags, earlierMpg, jump, recentStarts, recentGames: recent.length, earlierStarts, absence });
   }
   if (!candidates.length) return [];
 
@@ -49,12 +90,13 @@ export function roleChanges({ logs, date, exclude = new Set(), excludeNames = ne
   const values = seasonValues([...pool, ...games], { poolSize: pool.length, poolFilter: (p) => p.name.startsWith('season:') });
   return candidates.map((c) => ({
     espnId: c.id, name: c.last.name, team: c.last.team, flags: c.flags,
-    earlierMpg: c.earlierMpg, minutes: c.last.min, jump: c.jump,
+    lastDate: c.last.date, earlierMpg: c.earlierMpg, minutes: c.last.min, jump: c.jump,
     recentStarts: c.recentStarts, recentGames: c.recentGames, earlierStarts: c.earlierStarts,
+    latestAbsence: c.absence?.latestAbsence ?? 0, gamesBack: c.absence?.gamesBack ?? null,
     box: Object.fromEntries(['min', ...COUNTING].map((k) => [k, c.last[k]])),
     gameZ: values.get(`game:${c.id}`).perGameZ, seasonZ: values.get(`season:${c.id}`).perGameZ,
     availability: available.has(c.id) ? 'confirmed' : 'unconfirmed',
-  })).sort((a, b) => b.gameZ - a.gameZ || b.jump - a.jump || Number(a.espnId) - Number(b.espnId)).slice(0, limit);
+  })).sort((a, b) => b.gameZ - a.gameZ || (b.jump ?? -Infinity) - (a.jump ?? -Infinity) || Number(a.espnId) - Number(b.espnId)).slice(0, limit);
 }
 
 // The watch list needs every league roster, or an owned player could be listed as available.
