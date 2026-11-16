@@ -59,6 +59,22 @@ Rejected:
 - **balldontlie** (`api.balldontlie.io`): needs an API key (HTTP 401 without one), and the free
   tier is rate-limited.
 
+## NBA injuries
+
+- **Pick:** ESPN's public site API, one request for the whole league:
+  `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries`
+- **What it has (checked 2026-11-15):** JSON with `timestamp`, `status`, `season` and `injuries`, one
+  object per team (`displayName`, `injuries`). Each injury has `status` (Out, Day-To-Day,
+  Suspension), `date`, `shortComment`, `longComment`, `type`, `details.returnDate` and `athlete`
+  (`displayName`, `team.abbreviation`, `links`). The athlete has no `id` field. The ESPN ID is in
+  the player-card link, `/id/<id>/`. `details.returnDate` was present on every entry that day. The
+  parser treats a missing one as "not given".
+- **Terms:** undocumented and unofficial, the same personal-use terms as the schedule. Request it
+  once per sheet run, cache it in `local/cache/espn/injuries.json` for 2 hours (injuries change
+  daily), and back off on 429 and 5xx. `--no-fetch` reads the cached file and never calls ESPN.
+- **Use:** the sheet's Injury report prints the feed's own text for Tony's, the opponent's and the
+  candidates' players. The code adds no judgment.
+
 ## NBA game logs
 
 For offline projection-weight calibration, ESPN's historical endpoints are also used:

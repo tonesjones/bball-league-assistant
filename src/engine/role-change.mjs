@@ -1,5 +1,5 @@
 import { seasonValues } from './season-value.mjs';
-import { findPlayer } from './names.mjs';
+import { findPlayer, normalizeName } from './names.mjs';
 import { easternDate } from './weeks.mjs';
 
 const DEFAULTS = { minJump: 8, minMinutes: 24, minPriorGames: 3, limit: 15 };
@@ -14,7 +14,7 @@ const average = (rows) => ({ g: rows.length, ...Object.fromEntries(COUNTING.map(
 // Players whose role grew on `date`: a minutes jump or a new starting spot. Information only: the
 // result pairs no drop and feeds nothing into the planner. Rows after `date` are ignored, so a past
 // night gives the answer it gave on the night.
-export function roleChanges({ logs, date, exclude = new Set(), available = new Set(), options = {} }) {
+export function roleChanges({ logs, date, exclude = new Set(), excludeNames = new Set(), available = new Set(), options = {} }) {
   const { minJump, minMinutes, minPriorGames, limit } = { ...DEFAULTS, ...options };
   const played = new Map();
   for (const row of logs) {
@@ -31,7 +31,7 @@ export function roleChanges({ logs, date, exclude = new Set(), available = new S
     pool.push({ name: `season:${id}`, perGame: average(rows) });
     const last = rows[rows.length - 1];
     const earlier = rows.filter((r) => r.date < date);
-    if (last.date !== date || exclude.has(id) || earlier.length < minPriorGames) continue;
+    if (last.date !== date || exclude.has(id) || excludeNames.has(normalizeName(last.name)) || earlier.length < minPriorGames) continue;
     const recent = rows.slice(-RECENT);
     const earlierMpg = mean(earlier.map((r) => r.min));
     const jump = last.min - earlierMpg;
@@ -80,13 +80,15 @@ export function roleChangeReport({ snapshot, ids, logs, options = {} }) {
   const owned = [...snapshot.team.roster, ...(snapshot.matchup.opponentRoster ?? []), ...teams.flatMap((t) => t.roster)];
   const matched = owned.map((p) => ({ p, id: idOf(p) }));
   const unmatched = matched.filter((m) => !m.id);
-  if (unmatched.length) return skipped(`unmatched rostered players: ${unmatched.map((m) => `${m.p.name} (${m.p.nbaTeam})`).join(', ')}`);
+  // A rostered player with no ID match cannot be excluded by ID, so a listed player whose name
+  // equals his is excluded by name, and the caller prints the unmatched players.
+  const excludeNames = new Set(unmatched.map((m) => normalizeName(m.p.name)));
   const today = easternDate(snapshot.asOf);
   const date = logs.filter((r) => !r.didNotPlay && r.date <= today).map((r) => r.date).sort().pop();
   if (!date) return skipped('no played games in the game logs');
   // With every roster in hand, anyone not on one is available (possibly on waivers).
-  const exclude = new Set(matched.map((m) => m.id));
+  const exclude = new Set(matched.filter((m) => m.id).map((m) => m.id));
   const available = new Set(logs.map((r) => String(r.espnId)).filter((id) => !exclude.has(id)));
-  const players = roleChanges({ logs, date, exclude, available, options });
-  return { status: 'ok', date, players };
+  const players = roleChanges({ logs, date, exclude, excludeNames, available, options });
+  return { status: 'ok', date, players, unmatched: unmatched.map((m) => ({ name: m.p.name, nbaTeam: m.p.nbaTeam })) };
 }

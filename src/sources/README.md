@@ -10,6 +10,7 @@ Data loading and parsing. This directory fetches and parses ESPN data, checks Ya
 
 - `yahoo-urls.mjs:checkUrl`: returns `null` when a Yahoo URL is on the read-only allow-list, or a refusal reason. `scripts/guard-yahoo-url.mjs` uses it.
 - `sheet-pages.mjs:parsePages(texts)`: parses each captured page on its own. Returns `{ok: true, value}` or `{ok: false, reason}` per page, plus lists for `fa` and `teams`. When a team page has a `-tree` file, it falls back to `yahoo-pages/roster-tree.mjs`.
+- `yahoo-pages/team-values.mjs:parseTeamValues`: reads the FAAB balance from the first `Waiver Budget: $N` match in `team-values.txt`. It reads nothing else from that file.
 - `sheet-pages.mjs:shortReason`: shortens an error message and drops any quoted page text.
 - `league-state.mjs:validate`: checks a snapshot's shape, throws one "invalid snapshot" error listing every problem, and returns the snapshot.
 - `id-map.mjs:matchSnapshot`: matches snapshot roster, opponent and free-agent names to the ID map. Returns `{matched, unmatched}`.
@@ -21,6 +22,8 @@ Data loading and parsing. This directory fetches and parses ESPN data, checks Ya
 - `espn.mjs:TEAM_CODES`, `standardCode`: map ESPN team codes (`GS`, `SA`, `NY`, `NO`, `UTAH`, `WSH`) to standard ones.
 - `espn-parse.mjs:parseTeams`, `parseSchedule`, `parseRoster`: ESPN teams, schedule (Eastern calendar days) and rosters.
 - `espn-boxscore.mjs:parseScoreboard`, `parseBoxScore`: event IDs and statuses, and per-player box-score rows.
+- `espn-injuries.mjs:parseInjuries`, `trimComment`: the injuries feed as `{fetchedAt, entries}` (ESPN ID from the player-card link, team, status, report date, return date or `null`, short comment), and a comment cut to 160 characters. Pure.
+- `espn-injuries-load.mjs:loadInjuries`: fetches the feed with a 2-hour cache, or reads only the cached file with `noFetch`. Returns `{ok, value}` or `{ok: false, reason}` and never throws.
 - `gamelogs.mjs:refreshGameLogs`: fetches box scores for a date range into `local/gamelogs/<season>/` and writes `_coverage.json`.
 - `gamelogs.mjs:loadProjectionLogs`: loads and verifies the per-day game logs for a projection window.
 - `gamelogs.mjs:loadGameLogs`: concatenates per-day log rows in a date range.
@@ -40,6 +43,7 @@ Data loading and parsing. This directory fetches and parses ESPN data, checks Ya
 
 - `espn.mjs:getJson`: network GET to the URL the caller passes (every caller passes an ESPN URL under `BASE`), and reads and writes the caller's cache file.
 - `gamelogs.mjs`: reads `local/gamelogs/<season>/_coverage.json` and `<date>.json`. `refreshGameLogs` also writes them and the ESPN cache.
+- `espn-injuries-load.mjs`: reads and writes `local/cache/espn/injuries.json` and calls the injuries endpoint through `getJson`.
 - The other files are pure. `espn.mjs` keeps the time of the last request in module state.
 
 ## Verification

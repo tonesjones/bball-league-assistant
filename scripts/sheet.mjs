@@ -8,9 +8,10 @@ import { parsePages, shortReason } from '../src/sources/sheet-pages.mjs';
 import { parseScoreboard } from '../src/sources/espn-boxscore.mjs';
 import { loadGameLogs, refreshGameLogs } from '../src/sources/gamelogs.mjs';
 import { addDays } from '../src/engine/weeks.mjs';
+import { loadInjuries } from '../src/sources/espn-injuries-load.mjs';
 
 const FOLDER = /^(\d{4}-\d\d-\d\d)-(\d\d)(\d\d)$/;
-const PAGE = /^(settings|team|team-tree|matchup|matchup-totals|matchup-next|transactions|fa-\d+)\.txt$/;
+const PAGE = /^(settings|team|team-tree|team-values|matchup|matchup-totals|matchup-next|transactions|fa-\d+)\.txt$/;
 const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
 
 // Pages the capture log marks as skipped or sign-in count as missing, with that reason.
@@ -67,8 +68,10 @@ async function main(args) {
     scoreboard = { final, notFinal: events.length - final };
   }
 
+  const injuries = await loadInjuries({ noFetch });
+
   const { markdown, status } = buildSheet({ folder, captureDate, captureTime: `${hh}:${mm}`, pages: parsePages(readPages(dir)),
-    ids, schedule, logs, coverage, scoreboard, warnings });
+    ids, schedule, logs, coverage, scoreboard, injuries, warnings });
   const out = join('local', 'sheets', `${folder}.md`);
   mkdirSync(join('local', 'sheets'), { recursive: true });
   writeFileSync(out, markdown);

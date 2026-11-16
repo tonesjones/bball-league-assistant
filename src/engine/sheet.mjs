@@ -2,11 +2,12 @@
 // no recommendation, no value ranking, no category labels. Pure: parsed pages and logs in, markdown out.
 import { addDays, isoDay } from './weeks.mjs';
 import { assignLineup, openRosterSpots } from './needs.mjs';
-import { findPlayer } from './names.mjs';
+import { findPlayer, normalizeName } from './names.mjs';
+import { trimComment } from '../sources/espn-injuries.mjs';
 import { estimateVolume } from './shooting-volume.mjs';
 import { roleChangeReport } from './role-change.mjs';
 
-export const SHEET_VERSION = 1;
+export const SHEET_VERSION = 2;
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -104,7 +105,7 @@ const lineCells = (p) => {
 const LINE_HEAD = ['MIN', 'PTS', 'REB', 'AST', 'STL', 'BLK', '3PM', 'FGM/FGA', 'FTM/FTA', 'TO', 'G if <5'];
 const mpg = (p) => (p.seasonMpg == null ? 'no log' : p.seasonMpg.toFixed(1));
 
-export function buildSheet({ folder, captureDate, captureTime, pages, ids, schedule, logs, coverage = null, scoreboard = null, warnings = [] }) {
+export function buildSheet({ folder, captureDate, captureTime, pages, ids, schedule, logs, coverage = null, scoreboard = null, injuries = null, warnings = [] }) {
   const ctx = makeContext({ ids, logs, schedule, captureDate });
   const claimDate = addDays(captureDate, 1);
   const monday = addDays(claimDate, -((new Date(`${claimDate}T00:00:00Z`).getUTCDay() + 6) % 7));
@@ -190,7 +191,10 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
     } else {
       L.push(`- Adds used this week: ${unavailable('team.txt', P.team.reason)}; ${unavailable('transactions.txt', P.transactions.reason)}`);
     }
-    L.push(team ? `- FAAB left: $${team.faabBalance}` : `- FAAB left: ${unavailable('team.txt', P.team.reason)}`);
+    const values = P['team-values'] ?? { ok: false, reason: 'missing' };
+    if (team) L.push(`- FAAB left: $${team.faabBalance} (team.txt)`);
+    else if (values.ok) L.push(`- FAAB left: $${values.value.faabBalance} (team-values.txt)`);
+    else L.push(`- FAAB left: ${unavailable('team.txt', P.team.reason)}; ${unavailable('team-values.txt', values.reason)}`);
     if (tony && settings) {
       const ilSlots = settings.rosterPositions.filter((p) => isIL(p.slot)).reduce((n, p) => n + p.count, 0);
       const inIL = tony.filter((p) => isIL(p.slot));
@@ -274,6 +278,7 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
         L.push('');
       }
       L.push('- TO: fewer wins, so a negative gap favors Tony.');
+      L.push('- A player listed O, INJ, SUSP or NA counts as out for every remaining day, whatever return date section 9 shows for him.');
       L.push('- Remaining = each player\'s last-5 line for each remaining day he gets a lineup slot (lineup filled by recent minutes).');
       for (const n of volumeNote) L.push(`- ${n}`);
     }
@@ -316,17 +321,19 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
     if (tony) L.push(`Roster from ${rosterSource}.`, '', ...rosterTable(tony)); else L.push(rosterMissing);
     L.push('', `### Opponent${opp ? ` (${opp.name})` : ''}`, '');
     if (opp) L.push(`Roster from ${opp.source}.`, '', ...rosterTable(opp.roster)); else L.push(oppMissing);
-    L.push('', '- Last-5 line: mean of the player\'s last 5 games with minutes > 0 through the capture date. Season MPG uses the same games.');
+    L.push('', '- Last-5 line: mean of the player\'s last 5 games with minutes > 0 through the capture date. Season MPG is the mean over all his games with minutes this season through the capture date.');
     section('5. Roster lines', L);
   }
 
   // 6. Candidates
+  let candidates = [];
   {
     const L = [];
     if (!P.fa.length) L.push(unavailable('fa-*.txt', 'missing'));
     if (!grid && P.fa.length) L.push(`Usable starts: ${settings ? rosterMissing : unavailable('settings.txt', P.settings.reason)}`);
     const seen = new Set();
     const rows = [];
+    candidates = [];
     for (const page of P.fa) {
       if (!page.ok) { L.push(unavailable(page.file, page.reason)); continue; }
       for (const raw of page.value) {
@@ -334,6 +341,7 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
         if (seen.has(key)) continue;
         seen.add(key);
         const p = ctx.enrich({ ...raw, slot: 'BN' });
+        candidates.push(p);
         const games = days.filter((d) => ctx.teamsByDate.get(d)?.has(p.nbaTeam));
         const waiver = raw.waiverClears ? monthDayIso(raw.waiverClears, captureDate) : null;
         let usable = 'unknown';
@@ -367,8 +375,11 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
         ...(teams.length ? { league: { teams } } : {}) };
       const capped = logs.filter((r) => r.date <= captureDate);
       const rc = roleChangeReport({ snapshot, ids, logs: capped, options: { limit: Infinity } });
+      const unmatchedLine = rc.unmatched?.length
+        ? [`- ${rc.unmatched.length} rostered player${rc.unmatched.length === 1 ? '' : 's'} had no ID match: ${rc.unmatched.map((u) => `${u.name} (${u.nbaTeam})`).join(', ')}. A listed player with a similar name may be rostered.`]
+        : [];
       if (rc.status === 'skipped') L.push(`Skipped: ${rc.reason}`);
-      else if (!rc.players.length) L.push(`Night of ${rc.date}: none`);
+      else if (!rc.players.length) L.push(`Night of ${rc.date}: none`, '', ...unmatchedLine);
       else {
         const n = (v) => v.toFixed(1);
         L.push(`Night of ${rc.date}. Every player listed is on no team roster.`, '');
@@ -376,6 +387,7 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
           [...rc.players].sort((a, b) => b.jump - a.jump || Number(a.espnId) - Number(b.espnId)).map((p) => [p.name, p.team, p.flags.join(', '), n(p.minutes), n(p.earlierMpg), signed(p.jump, 1),
             `${p.recentStarts} of ${p.recentGames}`, String(p.earlierStarts), ...['pts', 'reb', 'ast', 'stl', 'blk', 'fg3m'].map((k) => String(p.box[k])),
             `${p.box.fgm}/${p.box.fga}`, `${p.box.ftm}/${p.box.fta}`, String(p.box.to)])));
+        L.push('', ...unmatchedLine);
       }
     }
     section('7. Role-change watch list', L);
@@ -402,6 +414,30 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
       L.push('', `- The page lists ${tx.length} transactions${oldest ? `, oldest ${oldest}` : ''}.`);
     }
     section('8. Transactions', L);
+  }
+
+  // 9. Injury report: ESPN's feed text for Tony's, the opponent's and the candidates' players.
+  {
+    const L = [];
+    if (!injuries?.ok) L.push(unavailable('ESPN injuries feed', injuries?.reason ?? 'not loaded'));
+    else {
+      const { fetchedAt, entries } = injuries.value;
+      const cell = (text) => String(text ?? '').replace(/\|/g, '/');
+      const rows = [];
+      for (const [who, list] of [['Tony', tony ?? []], ['Opponent', opp?.roster ?? []], ['Candidate', candidates]]) {
+        for (const p of list) {
+          const key = normalizeName(p.name);
+          for (const e of entries.filter((x) => (p.espnId && x.espnId === p.espnId) || normalizeName(x.name) === key)) {
+            rows.push([who, p.name, e.team ?? p.nbaTeam ?? '', e.status ?? '', e.date ? e.date.slice(0, 10) : 'not given', e.returnDate ?? 'not given', cell(trimComment(e.comment))]);
+          }
+        }
+      }
+      L.push(`- Feed fetched: ${fetchedAt ?? 'unknown'} (ESPN injuries feed, cached file)`, '');
+      if (rows.length) L.push(...table(['Who', 'Player', 'Team', 'ESPN status', 'Report date', 'Return date', 'Comment'], rows));
+      else L.push('None of these players appear in the feed.');
+      L.push('', '- Status, dates and comment are the feed\'s own text. Return date "not given" means the feed has none. A comment longer than 160 characters is cut.');
+    }
+    section('9. Injury report', L);
   }
 
   return { markdown: [`# Facts sheet ${folder}`, '', ...out].join('\n').replace(/\n+$/, '\n'), status };

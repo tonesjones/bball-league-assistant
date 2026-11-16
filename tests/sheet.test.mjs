@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSheet, SHEET_VERSION, lastLine, indexLogs } from '../src/engine/sheet.mjs';
 import { parsePages } from '../src/sources/sheet-pages.mjs';
+import { parseInjuries } from '../src/sources/espn-injuries.mjs';
+import { readFileSync } from 'node:fs';
 
 // A three-slot league (PG, C, Util) with made-up players. Week 4 runs Mon 11-09 to Sun 11-15.
 const ok = (value) => ({ ok: true, value });
@@ -48,15 +50,16 @@ const logs = () => [
   // Cy, Fay, Hal: five games each.
   ...[3, 4, 5, 6, 7].flatMap((n) => [row('3', d(n), 25, { fgm: 2, fga: 10 }), row('6', d(n), 28), row('7', d(n), 22)]),
 ];
-const sheet = (over = {}, input = {}) => buildSheet({ folder: '2026-11-11-2300', captureDate: '2026-11-11', captureTime: '23:00', pages: pages(over),
+const injuries = { ok: true, value: parseInjuries(JSON.parse(readFileSync(new URL('./fixtures/espn/injuries.json', import.meta.url), 'utf8'))) };
+const sheet = (over = {}, input = {}) => buildSheet({ injuries, folder: '2026-11-11-2300', captureDate: '2026-11-11', captureTime: '23:00', pages: pages(over),
   ids, schedule, logs: logs(), coverage: { checkedAt: '2026-11-12T07:00:00.000Z', through: '2026-11-11' }, scoreboard: { final: 3, notFinal: 0 }, ...input });
 const section = (md, n) => md.split(/\n(?=## )/).find((s) => s.startsWith(`## ${n}.`));
 const rowOf = (text, name) => text.split('\n').find((l) => l.startsWith(`| ${name} |`)) ?? '';
 
 test('the header gives the version, the claim date and the processing week', () => {
   const h = section(sheet().markdown, 1);
-  assert.equal(SHEET_VERSION, 1);
-  assert.match(h, /Sheet version: 1/);
+  assert.equal(SHEET_VERSION, 2);
+  assert.match(h, /Sheet version: 2/);
   assert.match(h, /Capture as of: 2026-11-11 23:00 \(Wed\)/);
   assert.match(h, /Games on 2026-11-11: 3 final, 0 not final/);
   assert.match(h, /First date a claim placed tonight can play: 2026-11-12 \(Thu\)/);
@@ -120,7 +123,7 @@ test('transactions list Tony\'s moves and other managers\' winning bids', () => 
 test('a header-only team page: roster from the matchup page, FAAB unavailable, adds counted as a minimum', () => {
   const { markdown, status } = sheet({ team: no('line 4: the record or standing label not found') });
   const b = section(markdown, 2);
-  assert.match(b, /FAAB left: UNAVAILABLE: team\.txt \(line 4: the record or standing label not found\)/);
+  assert.match(b, /FAAB left: UNAVAILABLE: team\.txt \(line 4: the record or standing label not found\); UNAVAILABLE: team-values\.txt \(missing\)/);
   assert.match(b, /counted on transactions\.txt, 2026-11-09 on\): 1 minimum .* adds left: 3 at most, not confirmed/);
   assert.match(b, /Roster source: matchup\.txt/);
   assert.match(section(markdown, 3), /0\.421 \(32\.0\/76\.0\)/);
@@ -138,12 +141,46 @@ test('a header-only team page with a tree file: roster from team-tree.txt, FAAB 
   assert.match(section(markdown, 8), /\| add \| Jo Jay \|/);
 });
 
+test('FAAB comes from team-values.txt when the team page did not parse, with its source file', () => {
+  const parsed = parsePages({ 'team-values': 'Waiver Budget: $82\nplayer adds for this week: hidden' });
+  assert.deepEqual(parsed['team-values'].value, { faabBalance: 82 });
+  const b = section(sheet({ team: no('line 3: heading not found'), 'team-values': parsed['team-values'] }).markdown, 2);
+  assert.match(b, /FAAB left: \$82 \(team-values\.txt\)/);
+  assert.doesNotMatch(b, /UNAVAILABLE: team-values/);
+});
+
+test('FAAB is UNAVAILABLE and names both files when team-values.txt is missing or has no match', () => {
+  const bad = parsePages({ 'team-values': 'no budget text here' })['team-values'];
+  assert.equal(bad.ok, false);
+  assert.match(section(sheet({ team: no('x'), 'team-values': bad }).markdown, 2),
+    /FAAB left: UNAVAILABLE: team\.txt \(x\); UNAVAILABLE: team-values\.txt \(no "Waiver Budget: \$N" match\)/);
+  assert.match(section(sheet({ team: no('x') }).markdown, 2), /UNAVAILABLE: team\.txt \(x\); UNAVAILABLE: team-values\.txt \(missing\)/);
+});
+
+test('the injury report lists Tony, opponent and candidate players found in the feed', () => {
+  const r = section(sheet().markdown, 9);
+  assert.match(r, /Feed fetched: 2026-11-11T20:15:00Z/);
+  assert.match(r, /\| Tony \| Ann Able \| AAA \| Day-To-Day \| 2026-11-10 \| 2026-11-12 \| Able \(ankle\) is questionable for Thursday\. \|/);
+  assert.match(r, /\| Tony \| Bo Baker \| BBB \| Out \| 2026-11-09 \| not given \|/);
+  const hal = r.split('\n').find((l) => l.startsWith('| Candidate |'));
+  assert.match(hal, /\| Hal Hill \| HHH \| Out \| 2026-11-11 \| 2026-11-14 \| .*\.\.\. \|$/);
+  assert.equal(hal.split(' | ').length, 7, 'a pipe in the comment must not add a column');
+  assert.doesNotMatch(r, /Zed Zero/);
+});
+
+test('a feed failure prints UNAVAILABLE in section 9 and leaves the other sections alone', () => {
+  const { markdown, status } = sheet({}, { injuries: { ok: false, reason: 'ESPN unreachable' } });
+  assert.match(section(markdown, 9), /UNAVAILABLE: ESPN injuries feed \(ESPN unreachable\)/);
+  assert.ok(status.includes('9. Injury report: UNAVAILABLE'));
+  assert.ok(status.includes('2. Budget and slots: ok'));
+});
+
 test('each missing page marks only the sections that need it', () => {
   const { markdown, status } = sheet({ transactions: no('missing'), fa: [] });
   assert.match(section(markdown, 8), /UNAVAILABLE: transactions\.txt \(missing\)/);
   assert.match(section(markdown, 6), /UNAVAILABLE: fa-\*\.txt \(missing\)/);
   for (const n of [1, 2, 3, 4, 5]) assert.doesNotMatch(section(markdown, n), /UNAVAILABLE/);
-  assert.deepEqual(status.map((s) => s.split(': ')[1]), ['ok', 'ok', 'ok', 'ok', 'ok', 'UNAVAILABLE', 'ok', 'UNAVAILABLE']);
+  assert.deepEqual(status.map((s) => s.split(': ')[1]), ['ok', 'ok', 'ok', 'ok', 'ok', 'UNAVAILABLE', 'ok', 'UNAVAILABLE', 'ok']);
   const noMatchup = sheet({ matchup: no('missing') }).markdown;
   assert.match(section(noMatchup, 3), /UNAVAILABLE: matchup\.txt \(missing\)/);
   assert.match(section(noMatchup, 1), /week number unknown/);

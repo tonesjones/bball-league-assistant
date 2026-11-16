@@ -78,10 +78,15 @@ When that happens:
 4. Save the result as `<name>-tree.txt`, for example `team-tree.txt`.
 5. Log the page `header-only` in `_log.txt`.
 
-The roster table lacks three values: the FAAB balance, the adds used this week and the pending
-claims. After saving `team-tree.txt`, the capture also uses `find` for "Waiver Budget", for
-"player adds for this week" and for pending claims, and saves the matched lines to
-`team-values.txt`. The sheet does not read this file yet, so it prints FAAB as UNAVAILABLE.
+The roster table lacks the FAAB balance. After saving `team-tree.txt`, the capture uses `find`
+for "Waiver Budget" and saves the matched elements to `team-values.txt`, one element per line, as
+the tool printed them. The value looks like `Waiver Budget: $82`.
+
+The sheet reads this file only when `team.txt` did not parse. It takes FAAB from the first
+`Waiver Budget: $N` match and prints the source file next to it. With no match or no file, it
+prints `UNAVAILABLE`, naming both `team.txt` and `team-values.txt`. The team page's adds line
+hides its number from page text, so the sheet counts adds used from `transactions.txt`. The
+capture does not search for adds or pending claims, and the sheet reads neither from this file.
 
 ## Pages
 
@@ -138,7 +143,9 @@ npm run sheet -- local/raw/<timestamp>
 ```
 
 The command writes `local/sheets/<timestamp>.md`. It refreshes the ESPN box scores itself, so it
-needs outbound HTTPS to `site.api.espn.com`. Add `--no-fetch` to reuse the cached box scores. The
+needs outbound HTTPS to `site.api.espn.com`. It also fetches ESPN's injuries feed for the Injury
+report section, and caches it for 2 hours. Add `--no-fetch` to reuse the cached box scores and
+the cached injuries file. The
 sheet holds numbers only, with no recommendation. A section it can't compute prints
 `UNAVAILABLE: <file> (<reason>)`. The [playbook](league-playbook.md) says how each section feeds
 the advice.

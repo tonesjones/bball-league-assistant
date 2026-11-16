@@ -33,8 +33,14 @@ a three-line headline plus the full advice file. The one-week check runs until 2
   `did` from the transactions page.
 - [x] **Retired engine removed, this pull request.** *Done when:* `npm test` passes and no doc
   outside `tasks/archive/` and decision history names a removed command.
-- [ ] **The sheet reads `team-values.txt` (FAAB, adds used, pending claims).** *Done when:* the
-  Budget section prints FAAB from a Chrome capture.
+- [x] **The sheet reads `team-values.txt` (FAAB only), this pull request.** *Done when:* the
+  Budget section prints FAAB from a Chrome capture and names its source file.
+- [x] **Watch list survives an unmatched rostered player, this pull request.** *Done when:* a
+  rostered player with no ID match leaves the list in place, and the sheet prints one line naming
+  the unmatched players.
+- [x] **Injury report (sheet section 9), this pull request.** *Done when:* the sheet prints status,
+  report date, return date and comment from ESPN's injuries feed for Tony's, the opponent's and
+  the candidates' players, and prints UNAVAILABLE when the feed fails.
 - [ ] **One-week check.** Tony uses the playbook for each decision until 2026-11-21 and saves one
   journal line per decision, noting anything it got wrong. *Done when:* on 2026-11-21 Tony decides
   to keep, change or drop it, and each recorded error is either fixed in the playbook or listed
@@ -58,8 +64,6 @@ a three-line headline plus the full advice file. The one-week check runs until 2
 
 - Opponent category profile from past weeks. Tony judges adds by what the opponent is strong at.
   It needs a new read-only page in `src/sources/yahoo-urls.mjs`.
-- Team injury context. ESPN's injury feed lists who is out at a candidate's position, to judge
-  whether a minutes jump will last.
 - `npm run check:raw <dir>`: run each page parser on a saved capture and print ok or the error,
   without page text.
 

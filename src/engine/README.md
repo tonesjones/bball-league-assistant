@@ -8,7 +8,7 @@ Pure logic. It holds the facts sheet builder (`buildSheet`), the lineup and per-
 
 **Facts sheet**
 
-- `sheet.mjs:buildSheet({folder, captureDate, captureTime, pages, ids, schedule, logs, coverage, scoreboard, warnings})`: takes the parsed pages from `sources/sheet-pages.mjs:parsePages`, the ID map, the schedule and the game logs. Returns `{markdown, status}`. The markdown has eight sections: Header, Budget and slots, Matchup by category, Open-day grid, Roster lines, Candidates, Role-change watch list and Transactions. `status` is one line per section: `ok`, `partial` or `UNAVAILABLE`.
+- `sheet.mjs:buildSheet({folder, captureDate, captureTime, pages, ids, schedule, logs, coverage, scoreboard, warnings})`: takes the parsed pages from `sources/sheet-pages.mjs:parsePages`, the ID map, the schedule and the game logs. Returns `{markdown, status}`. The `injuries` input is `{ok: true, value}` from `sources/espn-injuries.mjs:parseInjuries` or `{ok: false, reason}`. The markdown has nine sections: Header, Budget and slots, Matchup by category, Open-day grid, Roster lines, Candidates, Role-change watch list, Transactions and Injury report. `status` is one line per section: `ok`, `partial` or `UNAVAILABLE`.
 - `sheet.mjs:SHEET_VERSION`, `OUT`, `DOUBTFUL`, `weekday`, `monthDayIso`, `indexLogs`, `lastLine`: the format version, the out and doubtful status codes, and helpers for dates and per-player game-log lines.
 
 **Lineup and category model**
@@ -24,7 +24,7 @@ Pure logic. It holds the facts sheet builder (`buildSheet`), the lineup and per-
 
 - `season-value.mjs:seasonValues`: `Map` of name to `{value, rank, ...}` from z-scores against the top `poolSize` players.
 - `role-change.mjs:roleChanges`: players whose minutes or starting role grew on a night, sorted by one-game z.
-- `role-change.mjs:roleChangeReport`: runs `roleChanges` on a snapshot after checking that every league roster is present. Returns `{status: 'ok', date, players}` or `{status: 'skipped', reason}`.
+- `role-change.mjs:roleChangeReport`: runs `roleChanges` on a snapshot after checking that every league roster is present. Returns `{status: 'ok', date, players, unmatched}` or `{status: 'skipped', reason}`. A rostered player with no ID match does not skip the list. `roleChanges` leaves out listed players by ESPN ID and by normalized name (`excludeNames`), and `unmatched` lists those rostered players for the sheet to print.
 - `shooting-volume.mjs:estimateVolume`: rebuilds this week's banked FGM/FGA/FTM/FTA from game logs. Returns `{status: 'matched' | 'unknown', ...}`.
 
 **Dates and names**
@@ -37,7 +37,8 @@ Pure logic. It holds the facts sheet builder (`buildSheet`), the lineup and per-
 
 - The sheet holds numbers only: no recommendation, no value ranking and no category labels. A missing input prints `UNAVAILABLE: <file> (<reason>)` in the section that needs it, and the other sections still build.
 - `buildSheet` reads the roster from `team.txt`, then `team-tree.txt`, then `matchup.txt`. On a Sunday it uses `matchup-next.txt` for the opponent, because a claim placed that night counts in next week.
-- `buildSheet` does not read FAAB, adds used or pending claims from any page yet. The Budget section prints FAAB as `UNAVAILABLE`.
+- `buildSheet` reads FAAB from `team.txt`, or from `team-values.txt` when `team.txt` did not parse, and prints the source file. With neither, the Budget section prints FAAB as `UNAVAILABLE`, naming both files. It counts adds used from the team page or the transactions page, never from `team-values.txt`.
+- The Injury report matches feed entries to Tony's roster, the opponent's roster and the candidates by ESPN ID or normalized name. It prints the feed's own text and its `timestamp`, so the same inputs give the same bytes.
 - No randomness. The same inputs give the same output.
 - `needs` marks a category `unknown` with null values when its shooting or counting totals are unknown, and never projects it as zero. TO is inverted: fewer wins.
 - `projectTeam` caps total starts at `settings.maxGamesPerWeek`.
