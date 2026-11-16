@@ -6,11 +6,20 @@ const SCORING = { 'Head-to-Head - Categories': 'h2h-each-category', 'Head-to-Hea
 export function parseSettings(text, page = 'settings') {
   rejectSignedOut(text, page);
   const L = load(text);
-  const h = indexOf(page, L, (s) => s === 'Setting\tValue', 'the "Setting<TAB>Value" table');
+  const h = indexOf(page, L, (s) => s === 'Setting\tValue' || s === 'Setting Value', 'the "Setting<TAB>Value" table');
   const raw = {};
-  for (let i = h + 1; i < L.length && L[i].s.includes('\t'); i++) {
-    const [k, ...v] = L[i].s.split('\t');
-    raw[k.trim().replace(/:$/, '')] = v.join('\t').trim();
+  if (L[h].s.includes('\t')) {
+    for (let i = h + 1; i < L.length && L[i].s.includes('\t'); i++) {
+      const [k, ...v] = L[i].s.split('\t');
+      raw[k.trim().replace(/:$/, '')] = v.join('\t').trim();
+    }
+  } else {
+    // Chrome's page text (2026-11-15) has a space where the browser pane has a tab. A row without
+    // "Key: " (such as "Max Trades for Entire Season No maximum") can't be split and is skipped.
+    for (let i = h + 1; i < L.length && !/^Yahoo Sports - NBC/.test(L[i].s); i++) {
+      const m = /^([^:]+):\s+(.*)$/.exec(L[i].s);
+      if (m) raw[m[1].trim()] = m[2].trim();
+    }
   }
   const get = (key) => {
     if (raw[key] === undefined) throw fail(page, L[h], `missing setting "${key}"`);

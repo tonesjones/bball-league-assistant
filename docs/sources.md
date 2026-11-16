@@ -6,8 +6,8 @@ Every outside source the tool reads, with its URL, terms and how we stay polite 
 
 - **What:** Tony's league pages on Yahoo Fantasy Basketball, read in a browser he is signed in to.
   No Yahoo API (see [`PLAN.md`](../PLAN.md)).
-- **Browser:** the built-in browser pane in the Claude desktop app. Tony signs in there himself;
-  the sign-in persists between sessions. Firefox can't be driven by the agent's browser tools.
+- **Browser:** Claude in Chrome, in Tony's own Chrome. Tony signs in to Yahoo himself and stays
+  signed in. It is the only browser path. Firefox can't be driven by the agent's browser tools.
 - **How:** [`update-league.md`](update-league.md). Read only, one read per page per refresh.
 - **Terms:** Yahoo Terms of Service. Personal use of Tony's own league data, read at human pace
   from his own session. Nothing is submitted or changed.
@@ -33,7 +33,6 @@ Notes from the first fetch:
 - All pages had their data in the first render; no page needed an extra wait.
 - The page-text tool omits button labels that the DOM's `innerText` shows, and turns non-breaking
   spaces into plain spaces. Parsers should normalize whitespace and not expect button text.
-  Codex captures use `innerText` (see `update-league.md`), so both forms reach the parsers.
 - Adds used this week isn't shown on the team page. Count it from the transactions page.
 
 ## NBA schedule, 2026-27
@@ -56,7 +55,7 @@ Rejected:
 
 - **NBA CDN** (`cdn.nba.com/static/json/staticData/scheduleLeagueV2.json`): the official
   schedule, but it returned HTTP 403 (Akamai "Access Denied") to a script, even with browser
-  headers. Could be read through the browser pane if ESPN breaks.
+  headers. Could be read through Claude in Chrome if ESPN breaks.
 - **balldontlie** (`api.balldontlie.io`): needs an API key (HTTP 401 without one), and the free
   tier is rate-limited.
 

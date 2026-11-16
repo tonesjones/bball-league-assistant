@@ -1,0 +1,53 @@
+table [ref_1]
+ generic "Test Squad's Players roster for 2026-11-15." [ref_2]
+  generic "Synthetic caption text." [ref_3]
+ generic "Pos" [ref_4]
+ generic [ref_10]
+  generic [ref_11]
+  textbox "[value redacted]" [ref_12] type="hidden"
+  image "Ann Able" [ref_13]
+  link "Ann Able" [ref_14] href="https://example.test/p/1"
+  link "Add Player Note for Ann Able" [ref_15] href="https://example.test/n/1"
+   generic "notes" [ref_16]
+  generic "AAA - PG,SG" [ref_17]
+  link "W, 100-90 @ BBB" [ref_18] href="https://example.test/g/1"
+  generic "@BBB" [ref_19]
+  generic "30:00" [ref_20]
+  generic "4/8" [ref_21]
+ generic [ref_30]
+  generic "Util" [ref_31]
+  generic "Util" [ref_32]
+   textbox "[value redacted]" [ref_33] type="hidden"
+  image "Bo Baker" [ref_34]
+  link "Bo Baker" [ref_35] href="https://example.test/p/2"
+  generic "Questionable" [ref_36]
+  link "Add Player Note for Bo Baker" [ref_37] href="https://example.test/n/2"
+   generic "notes" [ref_38]
+  generic "BBB - C" [ref_39]
+  generic "-/-" [ref_40]
+ generic [ref_50]
+  button "Move Cy Cole" [ref_51]
+  combobox "BN" [ref_52]
+   option "PG" [ref_53]
+   option "BN" (selected) [ref_54]
+   generic "Util" [ref_55]
+  image "Cy Cole" [ref_56]
+  link "Cy Cole" [ref_57] href="https://example.test/p/3"
+  link "Add Player Note for Cy Cole" [ref_58] href="https://example.test/n/3"
+   generic "notes" [ref_59]
+  generic "CCC - PG" [ref_60]
+ generic [ref_70]
+  button "Move Di Dunn" [ref_71]
+  combobox "IL" [ref_72]
+   option "BN" [ref_73]
+   option "IL" (selected) [ref_74]
+  image "Di Dunn" [ref_75]
+  link "Di Dunn" [ref_76] href="https://example.test/p/4"
+  generic "Out" [ref_77]
+  link "Add Player Note for Di Dunn" [ref_78] href="https://example.test/n/4"
+   generic "notes" [ref_79]
+  generic "DDD - SF" [ref_80]
+ generic [ref_90]
+  button "Add player to IL" [ref_91]
+  generic "(Empty)" [ref_92]
+ generic "Starting Lineup Totals" [ref_93]

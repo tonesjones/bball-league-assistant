@@ -6,6 +6,9 @@ decision IDs and rejection notes belong in ignored `local/` records.
 
 ## Open limitations (2026-10-23)
 
+The recommendation engine was retired on 2026-11-14 and deleted on 2026-11-15 (decisions S1 and
+N3 in `PLAN.md`). Entries that describe the engine are kept as history.
+
 | ID | Limitation and observed consequence | Current handling / next decision |
 |---|---|---|
 | L01 | Opening-week samples are too small to establish a stable role or rate. One strong game can be a breakout or noise; a low-minute game can reflect injury, foul trouble or ejection. | Show games, starts and minutes. Inspect context before interpreting a change; no universal sample threshold is calibrated. |
@@ -16,7 +19,7 @@ decision IDs and rejection notes belong in ignored `local/` records.
 | L06 | Routine capture includes your team, the current opponent and only the first 100 available players. Draft ownership can be stale. | Verify current rosters and Yahoo eligibility for requested trade research. Routine refresh does not scan every opponent's roster. |
 | L07 | Transaction history includes only events seen in saved captures. Rolled-off unseen events cannot be recovered; displayed-time deduplication is not a Yahoo transaction ID. | Preserve observed groups privately. Label first observation separately from transaction time; do not claim complete league history. |
 | L08 | Expected-category scores are approximate, not matchup or championship win probabilities. The engine has no trade evaluator or explicit season-long punt strategy model. | Keep these limits visible when comparing chatbot strategy with weekly add/drop scores. Matchup odds and season modeling remain later work. |
-| L09 | The old bakeoff counted played games rather than saved starts; actual later Yahoo totals can also include unrelated moves/lineup choices. The scored pilot has not begun. | Task 09 replays source-specific saved starts and captured banked production. Missing evidence stays unscored; old rehearsals cannot be retrospectively scored. Fixed-lineup category changes are independent counterfactuals, not an adaptive weekly plan or proof of chatbot superiority. |
+| L09 | The retired bakeoff counted played games rather than saved starts; actual later Yahoo totals can also include unrelated moves/lineup choices. The scored pilot has not begun. | Task 09 replays source-specific saved starts and captured banked production. Missing evidence stays unscored; old rehearsals cannot be retrospectively scored. Fixed-lineup category changes are independent counterfactuals, not an adaptive weekly plan or proof of chatbot superiority. |
 | L10 | Browser capture depends on a signed-in session and raw page text. Claude's tool restrictions do not automatically apply to other hosts. | Stop on sign-in or blocked access. Follow the same read-only rules in every host; preserve text unchanged and let parsers fail on unsupported pages. |
 | L11 | A games cap, if present, lacks games already used this week. | Report the unknown; the current league has no cap. |
 | L12 | Historical scratch research can read all cached log dates and overwrite its output, without recording exact input hashes. Rerunning it later can change a supposedly historical result. | Preserve original reports before rerunning. Treat missing provenance as unknown; require an as-of cutoff and input hashes before using scratch research for scored comparisons. |
@@ -34,7 +37,7 @@ game-log fetch now adds `&limit=100` to every scoreboard request. The source rea
 invalid/empty JSON with the existing exponential backoff, up to four total requests, and reports
 the URL and HTTP status on exhaustion. Only successfully parsed JSON is cached. Persistent
 source failure still stops the refresh; previous cached logs are not relabeled fresh. No
-recommendation or brief is available until the required evidence refresh succeeds.
+recommendation is available until the required evidence refresh succeeds.
 
 ## Add an entry when something new appears
 

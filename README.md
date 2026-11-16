@@ -1,12 +1,12 @@
 # bball-league-assistant
 
-A tool for one Yahoo head-to-head, 9-category fantasy basketball league. When a roster decision is pending, it searches the available players and proposes one action for the week: add today, wait for a named later day, or hold. Each proposal comes with the category counts behind it. The tool never makes a move. You make every move by hand in Yahoo.
+A nightly check for one Yahoo head-to-head, 9-category fantasy basketball league. Each night it reads Tony's Yahoo pages, builds a sheet of computed numbers, and gives advice on which waiver claims to place, or to hold. It never makes a move. Tony makes every move by hand in Yahoo.
 
-League data comes from Yahoo pages read in a browser you are already signed in to, not from the Yahoo API. An LLM agent saves the pages unchanged, and plain Node code computes every number.
+League data comes from Yahoo pages read in Chrome, where Tony is already signed in, not from the Yahoo API. An agent saves the pages unchanged, plain Node code computes every number, and Claude decides by following a written playbook.
 
 ## Status
 
-The week planner (`src/engine/week-plan.mjs`) and the shadow log are the current design. [`PLAN.md`](PLAN.md) has the goals, the stop rule and the build checklist. [`docs/designs/league-move-checker.md`](docs/designs/league-move-checker.md) has the reasoning. Rules for coding agents are in [`AGENTS.md`](AGENTS.md).
+[`PLAN.md`](PLAN.md) has the decisions, the work list and what is next. [`docs/league-playbook.md`](docs/league-playbook.md) is the prompt Claude follows. Rules for coding agents are in [`AGENTS.md`](AGENTS.md). The earlier recommendation engine was retired on 2026-11-14. [`docs/designs/league-move-checker.md`](docs/designs/league-move-checker.md) and [`tasks/archive/`](tasks/archive/) keep the record of that trial.
 
 ## Set up
 
@@ -17,98 +17,60 @@ cp .env.example .env        # add your league and team IDs
 npm test
 ```
 
+Chrome must be open and signed in to Yahoo, with the Claude in Chrome extension connected.
+
 ## Run a league check
 
-1. Capture the Yahoo pages to `local/raw/YYYY-MM-DD-HHmm`. Codex is the primary capture host: see [`docs/codex-refresh.md`](docs/codex-refresh.md). Claude is the maintained backup: in Claude Code, say "update league" and the `update-league` skill runs capture, analyze and `did` in one go. See [`docs/update-league.md`](docs/update-league.md).
-2. Run the analysis on that folder:
+In Claude Code, say "update league". The `update-league` skill (`.claude/skills/update-league/SKILL.md`) does the following:
+
+1. Checks that Chrome is signed in to Yahoo. If not, it stops and tells you.
+2. Starts the `yahoo-reader` agent, which saves the Yahoo pages unchanged to `local/raw/YYYY-MM-DD-HHmm/`. See [`docs/update-league.md`](docs/update-league.md).
+3. Builds the facts sheet:
 
    ```
-   npm run refresh:analyze -- local/raw/YYYY-MM-DD-HHmm
+   npm run sheet -- local/raw/YYYY-MM-DD-HHmm
    ```
 
-   The command builds the snapshot, fetches game logs, runs `advise` and prints a summary with the decision ID. The step logs and the full report go to `local/refreshes/YYYY-MM-DD-HHmm/`.
+   The command writes `local/sheets/YYYY-MM-DD-HHmm.md`: adds and FAAB left, the matchup by category, open lineup days, last-5 lines and candidates, with no recommendation. It refreshes ESPN box scores itself. Add `--no-fetch` to reuse the cached ones.
+4. Follows the playbook and writes the advice file `local/playbook-tests/YYYY-MM-DD.md`. The file opens with three lines: `HEADLINE`, `Move` and `Why`. Claude sends it to you.
+5. Fills the previous journal line's `did` field in `local/journal.md` from the transactions page, and asks you only for the `why`.
 
-3. Optional: write a context-check prompt for ChatGPT.
-
-   ```
-   npm run brief -- <decisionId>
-   ```
-
-   The command writes `local/briefs/<decisionId>.md`. Without an ID it uses the decision with the latest capture time (`report.asOf`), breaking ties by `createdAt`; missing or invalid capture times sort last. The brief hides the chosen action. See [`docs/chatgpt-brief.md`](docs/chatgpt-brief.md).
-
-4. Decide, then record what you did:
-
-   ```
-   npm run did
-   ```
-
-   It asks about the same latest-capture decision as `brief`: what you did (the engine's pick, a runner-up, hold, or someone else), how much the tool mattered, your minutes, and whether the check needed rescuing. Answer each with a number or Enter. To ask about an older decision, pass its ID: `npm run did -- <decisionId>`. If you already recorded the decision, it offers to replace that entry. Each new entry records a full ISO timestamp.
-
-   Scripts and Codex can skip the questions with flags:
-
-   ```
-   npm run did -- <decisionId> hold --tag T [--minutes N] [--rating 1-5] [--rescue] [--reason "..."] [--replace]
-   npm run did -- <decisionId> add "<player>" [--drop "<player>"] --on YYYY-MM-DD --tag T [same flags]
-   ```
-
-   `--tag` is required. The tags are `changed-decision`, `caught-mistake`, `no-effect` and `wasted-time`. `--minutes` records how long the decision took, `--rating` scores the engine's suggestion from 1 to 5, and `--rescue` marks a league check that needed rescuing.
-
-## Read the proposal
-
-The report names one action: add, wait or hold. A `dependsOn` line names a player when a cautious case changes the action: the pickup at his weakest minutes and rates, or the drop at his strongest. It gives his games, his season and prior minutes, and the cautious action. A pickup with no prior season always gets one. The report also shows each category's change and the as-of time of the data. [`docs/limitations.md`](docs/limitations.md) lists the known limits of the evidence and the model.
-
-`npm run advise` runs the planner on one snapshot. `refresh:analyze` calls it for you. To run it alone, pass a file from `local/snapshots/`. Without a path, it uses the newest snapshot. Add `--allow-stale` to override the snapshot age limit, or `--max-age-hours N` to change it. It also refuses captures older than a timestamped add recorded by `did`; `--allow-roster-change` overrides this and is saved in the decision's options. Older log entries without timestamps are ignored by that check. Every successful run writes an immutable record to `local/decisions/<decisionId>.json` and a copy of the advice to `local/advice/`.
-
-## Compare the engine with your choices
-
-`did` writes a `tony` entry to the shadow log, `local/bakeoff.jsonl`. After the decision window has passed, replay both sides against the box scores:
-
-```
-npm run bakeoff -- replay --to YYYY-MM-DD
-```
-
-The replay prints, for each decision you recorded, what the engine's action and your action would have gained against doing nothing, or "unscored" with the reason. Other `bakeoff` commands are `record <entries.json>` and `score --week N --from YYYY-MM-DD --to YYYY-MM-DD`.
+Run it after the night's games are final and before the claim deadline, usually midnight Pacific.
 
 ## Data commands
 
 | Command | What it does |
 |---|---|
+| `npm run sheet -- local/raw/<stamp> [--no-fetch]` | Builds the facts sheet for a capture. |
 | `npm run import:draftlab` | Imports last season's priors into `data/priors/` from a [Draft Lab](https://github.com/tonesjones/fantasy-basketball-mock-draft) checkout next to this repo. Never hand-edit that folder. |
 | `npm run fetch:schedule` | Writes the 2026-27 NBA schedule to `data/schedule-2026-27.json`. |
-| `npm run build:ids` | Writes the player ID map `data/ids.json`. |
-| `npm run match:ids` | Matches the newest snapshot's players against the ID map. |
-| `npm run fetch:gamelogs -- --season 2026-27 --snapshot <file>` | Fetches box scores through the snapshot date. `--from` and `--to` change the date range. `refresh:analyze` runs this for you. |
 
 ## Where outputs go
 
-Everything the tool reads from Yahoo or writes about your team goes in `local/`, which Git ignores: `raw/`, `snapshots/`, `refreshes/`, `advice/`, `decisions/`, `briefs/` and `bakeoff.jsonl`. Preferences that change advice, such as protected players, live in `local/protected.json` and `local/preferences.json`. Another checkout needs its own copies.
+Everything the tool reads from Yahoo or writes about your team goes in `local/`, which Git ignores: `raw/`, `sheets/`, `playbook-tests/`, `journal.md` and `regression/`. Preferences that change advice, such as the protected players in `local/protected.json`, live there too. Another checkout needs its own copies.
 
-## Subdirectories and system boundaries
+## Directories
 
-- `scripts/`: [`scripts/README.md`](scripts/README.md). The command-line entry points behind the `npm run` commands, and the Yahoo URL guard hook.
-- `src/`: [`src/README.md`](src/README.md). Library code, split into [`src/engine/`](src/engine/README.md) (pure planning and scoring, no I/O) and [`src/sources/`](src/sources/README.md) (ESPN fetching, Yahoo page parsing, validation and storage).
+- `scripts/`: command-line entry points and the Yahoo URL guard hook.
+- `src/`: library code. `src/engine/` is pure logic with no I/O. `src/sources/` fetches ESPN data and holds the Yahoo URL allowlist.
 - `tests/`: `node:test` suites with small synthetic fixtures in `tests/fixtures/`.
 - `data/`: generated inputs: `data/priors/`, `data/ids.json` and `data/schedule-2026-27.json`.
-- `docs/`, `tasks/`: how-to guides, the design in `docs/designs/`, data sources and task specs.
+- `docs/`: the playbook, the capture reference, data sources, limits, designs and the [regression set](docs/playbook-regression.md).
+- `tasks/`: the first two task specs. [`tasks/archive/`](tasks/archive/) holds retired ones.
 
 ## Global invariants
 
-- The tool reads Yahoo and never changes anything there. `.claude/settings.json` denies the browser click, type, form and script tools. On `navigate` and `preview_start` calls, `scripts/guard-yahoo-url.mjs` blocks any Yahoo URL that `src/sources/yahoo-urls.mjs:checkUrl` refuses.
-- An LLM agent only saves Yahoo page text. Code in `src/` computes every number.
+- The tool reads Yahoo and never changes anything there. `.claude/settings.json` denies the browser click, type, form and script tools. On `navigate` calls, `scripts/guard-yahoo-url.mjs` blocks any Yahoo URL that `src/sources/yahoo-urls.mjs` refuses.
+- An agent only saves Yahoo page text. Code computes every number on the facts sheet.
 - `src/engine/` does no I/O and uses no randomness, so the same inputs give the same output.
-- A change to recommendations or scores bumps `MODEL_VERSION` in `src/engine/advice-common.mjs`.
+- A change to a number on the sheet bumps `SHEET_VERSION`. A change to the playbook's rules bumps its version line.
 - Anything about your league goes in `local/`, which Git ignores. Tests use synthetic fixtures only.
-- `advise` formats and prepares output before saving a decision, removes that record if the advice write fails, and logs shadow entries only after advice succeeds. `brief` and `did` share the latest-capture default; `advise` checks for recorded roster changes unless explicitly overridden.
 
 ## Global side effects
 
 - Network: ESPN's public API (`https://site.api.espn.com`), with caching in `local/cache/espn/`, at least 500 ms between requests, and backoff on 429, 500, 502, 503 and 504.
-- Files: generated data in `data/`, and everything else in `local/`. `import-draftlab.mjs --out` can write elsewhere when run directly. Decision records and briefs are never overwritten. The shadow log `local/bakeoff.jsonl` is append-only.
+- Files: generated data in `data/`, and everything else in `local/`.
 
 ## System verification
 
-- Run: `npm test`
-
-## Retired work
-
-Specs for the earlier phases are in [`tasks/archive/`](tasks/archive/). [`tasks/`](tasks/) holds the first two task specs.
+Run `npm test`.

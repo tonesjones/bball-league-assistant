@@ -60,6 +60,14 @@ test('settings: a games cap setting is read when present', () => {
   assert.equal(parseSettings(text).maxGamesPerWeek, 42);
 });
 
+test('settings: Chrome page text with spaces for tabs gives the same settings', () => {
+  const { raw, ...tabbed } = parseSettings(page('settings'));
+  const { raw: spacedRaw, ...spaced } = parseSettings(page('settings').replace(/\t/g, ' '));
+  assert.deepEqual(spaced, tabbed);
+  assert.equal(spacedRaw['Waiver Time'], raw['Waiver Time']);
+  assert.equal(spacedRaw['Max Teams'], raw['Max Teams']);
+});
+
 test('team: name, record, budget, roster with slots and statuses', () => {
   const t = parseTeam(page('team'));
   assert.equal(t.name, 'Fixture Five');
