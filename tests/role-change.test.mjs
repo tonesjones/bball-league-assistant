@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { roleChanges } from '../src/engine/role-change.mjs';
-import { formatPlan, planSummary, roleChangeReport } from '../scripts/advise.mjs';
+import { roleChanges, roleChangeReport } from '../src/engine/role-change.mjs';
 import { DATE, BIG, POOR, bencher, buildLogs, player, row } from './fixtures/role-change/logs.mjs';
 
 const run = (logs, extra = {}) => roleChanges({ logs, date: DATE, exclude: new Set(), available: new Set(), ...extra });
@@ -60,23 +59,6 @@ test('the same inputs give byte-identical output', () => {
   assert.equal(JSON.stringify(run(buildLogs(), args)), JSON.stringify(run(buildLogs(), args)));
 });
 
-const report = (roleChangesValue) => ({
-  action: 'hold', asOf: '2026-11-10T16:00:00Z', projection: { asOf: '2026-11-10T15:00:00Z' }, dependsOn: [], categories: {},
-  startsByDay: [], addsLeft: 4, openSpots: 0, runnersUp: [], unknowns: [], roleChanges: roleChangesValue,
-});
-
-test('formatPlan prints the role-change section after runners-up, and none when empty', () => {
-  const players = run(buildLogs(), { exclude: new Set(['104']), available: new Set(['106']) });
-  const text = formatPlan(report({ status: 'ok', date: DATE, players }));
-  assert.ok(text.indexOf('Runners-up') < text.indexOf('Role changes (watch list)'));
-  assert.ok(text.indexOf('Role changes (watch list)') < text.indexOf('Unknowns'));
-  assert.match(text.replace(/\n\s+/g, ' '), /Avery Alpha \(TST\) 38 min vs 22 earlier \(\+16\), started 3 of last 3; 10p 4r 2a 1s 0b 1x3 4\/9 1\/2 2to; game z [+-]\d\.\d, season z [+-]\d\.\d; availability unconfirmed/);
-  assert.match(text, /availability confirmed/);
-  for (const line of text.split('\n')) assert.ok(line.length <= 72, line);
-  assert.match(formatPlan(report({ status: 'ok', date: DATE, players: [] })), /Role changes \(watch list\)\n {2}none\n/);
-  assert.match(planSummary(report({ status: 'ok', date: DATE, players })).join('\n'), /Role changes: 3 \(see full advice\)/);
-});
-
 // A four-team league: Tony is team 1, so the snapshot holds teams 2 to 4.
 const names = new Map(buildLogs().map((r) => [r.espnId, r.name]));
 const idMap = { players: [...names].map(([espnId, name]) => ({ name, team: 'TST', espnId })) };
@@ -112,7 +94,5 @@ test('each failed check skips the list with its own reason and names no players'
     change(s);
     const result = screen(s);
     assert.deepEqual(result, { status: 'skipped', reason }, reason);
-    assert.ok(formatPlan(report(result)).replace(/\n\s+/g, ' ').includes(`Role changes: skipped (${reason})`), reason);
-    assert.ok(planSummary(report(result)).join('\n').includes('Role changes: skipped'));
   }
 });

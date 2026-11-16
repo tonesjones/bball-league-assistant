@@ -4,14 +4,7 @@ import { parseMatchup } from './matchup.mjs';
 import { parseFreeAgents } from './free-agents.mjs';
 import { parseTransactions } from './transactions.mjs';
 import { validate } from '../league-state.mjs';
-
-// Day columns are M/D. The year is asOf's, moved by one when the dates cross New Year.
-function isoDay(md, asOf) {
-  const [m, d] = md.split('/').map(Number);
-  const ref = new Date(asOf), refMonth = ref.getUTCMonth() + 1;
-  const year = ref.getUTCFullYear() + (m < refMonth - 6 ? 1 : m > refMonth + 6 ? -1 : 0);
-  return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
+import { isoDay } from '../../engine/weeks.mjs';
 
 // pages: { settings, team, matchup, transactions, 'fa-1': text, 'fa-2': text, ..., optional 'matchup-totals',
 //           optional 'teams/<N>': text for each other team (a --trades refresh) }

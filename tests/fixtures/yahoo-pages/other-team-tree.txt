@@ -1,0 +1,17 @@
+table [ref_1]
+ generic "Rival Five's Players roster for 2026-11-15." [ref_2]
+ generic "Pos" [ref_3]
+ image "Fay Fox" [ref_4]
+ link "Fay Fox" [ref_5] href="https://example.test/p/6"
+ link "Add Player Note for Fay Fox" [ref_6] href="https://example.test/n/6"
+  generic "notes" [ref_7]
+ generic "EEE - PF,C" [ref_8]
+ link "L, 90-100 vs AAA" [ref_9] href="https://example.test/g/2"
+ generic "AAA" [ref_10]
+ image "Gus Gray" [ref_11]
+ link "Gus Gray" [ref_12] href="https://example.test/p/7"
+ generic "Out" [ref_13]
+ link "Add Player Note for Gus Gray" [ref_14] href="https://example.test/n/7"
+  generic "notes" [ref_15]
+ generic "FFF - SG" [ref_16]
+ generic "-/-" [ref_17]

@@ -1,42 +1,24 @@
-# Update league
+# Update league: capture reference
 
-Steps for the agent that runs "update league". Follow them in order. Don't interpret, summarize or
-edit what a page says: copy its text and save it.
+How the `yahoo-reader` agent captures the Yahoo pages for the nightly check. Don't interpret,
+summarize or edit what a page says: copy its text and save it.
+
+The `update-league` skill (`.claude/skills/update-league/SKILL.md`) is the entry point. It checks
+the sign-in, starts the agent with a folder name, then builds the facts sheet and follows the
+playbook.
 
 ## Before you start
 
-The `update-league` skill (`.claude/skills/update-league/SKILL.md`) is the entry point in Claude Code. It runs these steps in the main session, then analyze and `did`.
-
-A stale capture stops at the advice step: `refresh:analyze` never passes `--allow-stale`.
-
-Run on Tony's request, usually after a completed game slate. Do not install a daily schedule
-or repeatedly poll. If `local/trade-watch-status.json` exists, use it as user-reported context,
-not verified live trade status. New checkouts do not include ignored local inputs.
+Run on Tony's request, or from the nightly update (see
+[`designs/nightly-update.md`](designs/nightly-update.md)). Don't poll. If
+`local/trade-watch-status.json` exists, use it as user-reported context, not verified live trade
+status.
 
 1. Read `YAHOO_LEAGUE_ID` and `YAHOO_TEAM_ID` from `.env`. If either is empty, stop and ask Tony.
-2. Make the folder `local/raw/<YYYY-MM-DD-HHmm>/`, using the current local time. Example:
-   `local/raw/2026-10-19-2130/`. Save every page of this refresh in that one folder. The
-   `yahoo-reader` agent can't read the clock, so the session that starts it gives it the
-   folder name.
-3. Use the browser Tony is signed in to (see `docs/sources.md`, "Yahoo league pages"). Open a new
-   tab for the refresh.
-
-The `yahoo-reader` agent (`.claude/agents/yahoo-reader.md`) is a fallback only; the skill captures in
-the main session because the agent stopped early on 2026-11-06 (see the save rule below).
-
-## Codex browser startup
-
-Discover tabs with `cua.listTabs({ browser: 'iab' })` and bind the returned tab ID.
-Do not copy a long ambient URL into `getTab`: referral parameters can change or be mistyped.
-A missing tab is a handle/discovery error, not a policy denial. Refresh the tab inventory once
-and bind its actual ID; if none exists, create the refresh tab in the same browser using an
-allowed canonical URL. Stop on an actual tool denial or blocked URL; never change browser
-providers to bypass one. Follow the runtime documentation returned by the browser tools.
-
-Use `node:fs/promises` in the browser REPL when available: write the known preflight string,
-read it back, then write each `innerText()` result directly and compare the saved string.
-Never move Yahoo text through the clipboard or reconstruct it in a shell command.
-Keep page strings in the runtime and print only save status, lengths and capture paths.
+2. Save every page in the folder `local/raw/<YYYY-MM-DD-HHmm>/` that the session gave you. The
+   agent can't read the clock, so the session that starts it gives it the folder name.
+3. Use Claude in Chrome, where Tony stays signed in to Yahoo. Open one new tab for the capture,
+   use it for every page, and close it at the end with `tabs_close_mcp`. Leave Tony's tabs alone.
 
 ## What is enforced
 
@@ -47,16 +29,15 @@ anything, rather than relying on the rules below alone.
 |---|---|---|
 | Tool deny list | `.claude/settings.json`, `permissions.deny` | Clicking, typing, form filling, page scripts and batched browser actions, for every session and agent in this repo. |
 | URL allowlist | `.claude/settings.json` hook, `scripts/guard-yahoo-url.mjs` | Opening any yahoo.com page except the pages in this doc (the table below and the trade research pages), in Tony's league, over https. |
-| Agent tool list | `.claude/agents/yahoo-reader.md` | The fetch agent has only: open a tab, open a URL, read page text, read page structure, read and write files. |
-| Afterwards | Transactions page (Task 02 parser) | Flags any move on Tony's team that Tony didn't make. |
+| Agent tool list | `.claude/agents/yahoo-reader.md` | The capture agent has only `Read`, `Write` and the Claude in Chrome tools `tabs_context_mcp`, `tabs_create_mcp`, `navigate`, `get_page_text`, `find`, `read_page` and `tabs_close_mcp`. |
+| Afterwards | The facts sheet's Transactions section | Lists Tony's own adds and drops with dates, so a move Tony didn't make stands out. |
 
-Allowed browser tools: `navigate`, `get_page_text`, `read_page`, `tabs_create`. To add a page,
-add it to `src/sources/yahoo-urls.mjs` and its test, and say why in the PR.
+To add a page, add it to `src/sources/yahoo-urls.mjs` and its test, and say why in the PR.
 
 ## Rules
 
 - **Sign-in page: stop.** If a page shows a Yahoo sign-in, "Sign in", password or verification
-  screen, stop the whole refresh and tell Tony. Never type a username, password or code. Never
+  screen, stop the whole capture and tell Tony. Never type a username, password or code. Never
   click "Sign in".
 - **Read only.** Open pages by URL and read them. Nothing else: no clicks, typing, key presses,
   forms or page scripts. If a pop-up covers the page, read the text anyway; if the text is
@@ -65,39 +46,13 @@ add it to `src/sources/yahoo-urls.mjs` and its test, and say why in the PR.
   reach the page. Mark it `skipped` with the reason and go on.
 - **One read per page.** If a page fails to load, wait at least one minute before one retry. If it
   fails again, skip it, note it in `_log.txt`, and go on.
-- **No changes to text.** Save exactly what the browser's page-text read returns.
-
-### Page-text read by host
-
-| Host | Page-text read | Notes |
-|---|---|---|
-| Claude | `get_page_text`, with up to 200000 characters | The tool deny list blocks everything else. |
-| Codex in-app browser | `locator('body').innerText()` on the open tab | The one allowed read. It returns text only and changes nothing. No `evaluate`, no other locator, no `getByRole('body')` (it timed out on 2026-10-26). |
-
-The Codex read differs a little from Claude's: it keeps button labels and non-breaking spaces.
-The parsers accept both. Captures read this way on 2026-10-26 built a snapshot and ran advice.
-In Codex nothing enforces these rules, so follow them exactly. If the read fails, mark the page
-`skipped`; don't try another read method.
+- **No changes to text.** Save exactly what `get_page_text` returns.
 
 ### Saving pages
 
-The read result has to reach a file unchanged. On 2026-10-28 a Codex run read every page, then
-lost all of them passing the text through the browser clipboard to PowerShell. Rules:
-
-- **Never pass page text through the clipboard.** Write the string returned by the read
-  straight to the file.
-- **Test the save before the first Yahoo page.** Write a short known string to
-  `local/raw/<timestamp>/_write-test.txt`, read the file back, and check it matches. Delete the
-  test file after the check. If the check fails, stop before opening Yahoo and tell Tony which
-  write failed and the error.
-- **Check every page after saving.** Read the saved file back. It must exist and have the same
-  length as the string the read returned. Only then log the page `ok`. A failed save is
-  `skipped` with the reason, not `ok`.
-
-The last two rules are for Codex, whose runtime holds the read result as a string. Claude can't
-meet them: `get_page_text` returns the text to the model, and the only way to save it is to
-write that text out again with the Write tool. On 2026-11-06 the `yahoo-reader` agent stopped
-on these rules after three pages. For Claude, save pages this way instead:
+`get_page_text` returns the text to the model, and the only way to save it is to write that text
+out again with the Write tool. On 2026-11-06 an agent stopped on a length-check rule it could not
+meet. So:
 
 - Write each page with the Write tool, copying the text exactly as `get_page_text` returned it.
   Leave out the tool's own header (the `Title:`, `URL:` and `Source element:` lines and the `---`
@@ -107,10 +62,26 @@ on these rules after three pages. For Claude, save pages this way instead:
   the second by copying the first file.
 - Skip the write test and the length check. Log each saved page `ok`, and note in `_log.txt`
   that the length check wasn't possible.
-- The parse in `refresh:analyze` is the check. If `build-snapshot` fails on a page, capture
-  that page again; don't edit the saved file.
+- The sheet's parse is the check. If `npm run sheet` fails on a page, capture that page again.
+  Don't edit the saved file.
 
-A capture saved this way on 2026-11-06 parsed on the first try.
+### Header-only pages
+
+Some pages return only their header from `get_page_text`. Tony's team page did on 2026-11-14.
+When that happens:
+
+1. Save what `get_page_text` returned.
+2. Use `find` with a query that names the table, such as "roster table containing the team's
+   players".
+3. Call `read_page` with that `ref_id` and `max_chars` 30000. Never call `read_page` without a
+   `ref_id`: the whole page tree is over 120,000 characters of site navigation.
+4. Save the result as `<name>-tree.txt`, for example `team-tree.txt`.
+5. Log the page `header-only` in `_log.txt`.
+
+The roster table lacks three values: the FAAB balance, the adds used this week and the pending
+claims. After saving `team-tree.txt`, the capture also uses `find` for "Waiver Budget", for
+"player adds for this week" and for pending claims, and saves the matched lines to
+`team-values.txt`. The sheet does not read this file yet, so it prints FAAB as UNAVAILABLE.
 
 ## Pages
 
@@ -119,20 +90,21 @@ Replace `{L}` with `YAHOO_LEAGUE_ID`, `{T}` with `YAHOO_TEAM_ID`. Base URL:
 
 | # | Save as | URL | Why it's needed |
 |---|---|---|---|
-| 1 | `settings.txt` | `/{L}/settings` | Categories, roster slots, adds per week, games cap, playoff weeks. Every refresh: the snapshot builder reads it from the same folder and fails without it. |
+| 1 | `settings.txt` | `/{L}/settings` | Categories, roster slots, adds per week, games cap, playoff weeks. Capture it every time. |
 | 2 | `team.txt` | `/{L}/{T}` | Tony's roster, slots, status and FAAB balance. |
 | 3 | `matchup.txt` | `/{L}/matchup?mid1={T}` | This week's opponent, both rosters with slots, and banked category totals. Shows the current week by default. |
-| 3b | `matchup-totals.txt` | `/{L}/matchup?mid1={T}&week={W}` | Banked makes and attempts (FGM/A, FTM/A) for both teams, which `matchup.txt` lacks once games start. `{W}` is the number in the "Week N" heading of `matchup.txt`. The snapshot takes shooting volume from this page and refuses it if its week or teams differ. |
+| 3b | `matchup-totals.txt` | `/{L}/matchup?mid1={T}&week={W}` | Banked makes and attempts (FGM/A, FTM/A) for both teams, which `matchup.txt` lacks once games start. `{W}` is the number in the "Week N" heading of `matchup.txt`. |
 | 4 | `fa-1.txt` | `/{L}/players?status=A&pos=P&sort=AR&sdir=1&count=0` | Pickup candidates: available players, ranked, 25 per page. |
 | 5 | `fa-2.txt` | same, `count=25` | |
 | 6 | `fa-3.txt` | same, `count=50` | |
 | 7 | `fa-4.txt` | same, `count=75` | |
-| 8 | `transactions.txt` | `/{L}/transactions` | Adds used this week, other teams' moves, winning FAAB bids, and the check that nothing changed on Tony's team. |
-| 9 | `teams/<N>.txt` | `/{L}/{N}`, for every team number `{N}` from 1 to the league size except `{T}` | Every other roster. The role-change watch list leaves out players on any league roster, and skips itself unless it has all of them. `build-snapshot` parses these into `league.teams`. In a 12-team league that is 11 more page reads. |
+| 8 | `transactions.txt` | `/{L}/transactions` | Adds used this week, other teams' moves, winning FAAB bids, and Tony's own adds and drops with dates. |
+| 9 | `teams/<N>.txt` | `/{L}/{N}`, for every team number `{N}` from 1 to the league size except `{T}` | Every other roster. The role-change watch list leaves out players on any league roster. In a 12-team league that is 11 more page reads. |
+| 10 | `matchup-next.txt` | `/{L}/matchup?mid1={T}&week={W+1}` | Sunday nights only. Next week's opponent and schedule, because a claim placed on Sunday night counts in next week. `{W+1}` is the week number in `matchup.txt` plus 1. |
 
 The matchup page already lists the opponent's roster, but the opponent's team page is still read
-as part of row 9. If the Task 02 parser finds a field missing on the matchup page, find the
-opponent's team number with `read_page`, not a page script.
+as part of row 9. If a field is missing on the matchup page, find the opponent's team number with
+`find` and `read_page`, not a page script.
 
 For each page:
 
@@ -140,90 +112,36 @@ For each page:
 2. Wait for the page to finish loading. If the main content (roster table, player list) is
    missing, wait 3 seconds once more.
 3. Check for a sign-in screen (see Rules).
-4. Read the page text with this host's page-text read (see "Page-text read by host").
-5. Write the text to `local/raw/<timestamp>/<save as>` and check the file (see "Saving pages").
+4. Read the page text with `get_page_text`, up to 200000 characters.
+5. Write the text to `local/raw/<timestamp>/<save as>` (see "Saving pages").
+6. If the page returned only its header, follow "Header-only pages".
 
 ## After the last page
 
 Write `local/raw/<timestamp>/_log.txt` with one line per page: file name, the URL you opened,
-and `ok`, `skipped` or `sign-in`. Then tell Tony the folder path and any page that wasn't `ok`.
+and `ok`, `skipped`, `header-only` or `sign-in`. Then close the tab and tell Tony the folder path
+and any page that wasn't `ok`.
 
 ## Draft and trade pages (only when Tony asks)
 
-Not part of a routine refresh. The other teams' pages are routine (row 9). The draft pages
+Not part of a routine capture. The other teams' pages are routine (row 9). The draft pages
 `/{L}/draft` and `/{L}/draftresults` are optional, saved as `draft.txt` and `draftresults.txt`.
 They accept no query parameters. Trade proposal, draft editing, lineup and transaction pages stay
 blocked, and no trade is submitted.
 
-## Analyze the capture
+## Build the facts sheet
 
-For a complete capture, process that exact folder in one command:
-
-```
-npm run refresh:analyze -- local/raw/<timestamp>
-```
-
-The analysis command needs outbound HTTPS to `site.api.espn.com`. In Codex, run it with
-network-enabled shell execution; if the shell has restricted network access, request the normal
-`require_escalated` tool approval before running. This applies only to the public ESPN fetches,
-not Yahoo collection. If approval is denied or access is unavailable, stop and report the failure.
-Do not change DNS/proxy settings, bypass denied access, or mark cached logs fresh without checks.
-A DNS error such as `ENOTFOUND` can be caused by the run's network restrictions; it is not by
-itself proof that ESPN is down.
-
-If Tony requests another attempt after a network-only failure, the same complete capture can
-be processed again without reading Yahoo again, provided the snapshot still passes the existing
-freshness checks and Tony has made no roster changes. `advise` refuses a snapshot older than a
-timestamped add recorded by `did`, naming both times and asking Tony to capture again. Older log
-entries without `recordedAt` cannot be checked. `--allow-roster-change` is an explicit override
-saved in the decision's options; `refresh:analyze` never passes it. The rerun moves the earlier
-step logs for that timestamp into `local/refreshes/<timestamp>/attempt-<n>/`, so nothing is lost.
-Do not use `--allow-stale` or `--allow-roster-change` without Tony's explicit override. The failed vault log remains historical evidence;
-a successful retry is a separate run, not a reason to rewrite it.
-
-This runs three steps and stops at the first that fails: `snapshot` (parse the capture),
-`game-logs` (refresh ESPN logs) and `advice` (the week planner). It prints the decision ID and a
-short plan summary. The full advice, one log per step and `status.json` (each step's result, the
-failed step and the decision ID) are saved in ignored `local/refreshes/<timestamp>/`. A failed run
-can leave outputs from earlier successful steps; only a run that prints a decision ID is complete.
-Each successful rerun writes a new decision record.
-
-After a complete run, `npm run brief` writes `local/briefs/<decisionId>.md` for Tony to paste
-into ChatGPT, and prints only its path. It reads the saved decision and makes no network calls.
-The brief is a context check: it hides the chosen action. `brief` still accepts `--state`, but
-ignores it; Tony's standing decisions are not added to the brief. Before advising or reviewing,
-Claude and Codex read the vault state note, name the snapshot they used, and flag any entry that
-conflicts with it.
-
-The individual commands remain available for debugging:
+For a complete capture, run:
 
 ```
-node scripts/build-snapshot.mjs local/raw/<timestamp>
-npm run fetch:gamelogs -- --season 2026-27 --snapshot local/snapshots/<timestamp>.json
+npm run sheet -- local/raw/<timestamp>
 ```
 
-The browser remains the source for league membership, available players, matchup state and
-transactions. ESPN supplies player production and estimated usage.
+The command writes `local/sheets/<timestamp>.md`. It refreshes the ESPN box scores itself, so it
+needs outbound HTTPS to `site.api.espn.com`. Add `--no-fetch` to reuse the cached box scores. The
+sheet holds numbers only, with no recommendation. A section it can't compute prints
+`UNAVAILABLE: <file> (<reason>)`. The [playbook](league-playbook.md) says how each section feeds
+the advice.
 
-## Models and token use
-
-The Claude Code `yahoo-reader` is configured as `model: haiku`. That is configuration, not
-verification of a past run's actual model. It collects unchanged page text and returns only
-the capture folder and failures. Node performs snapshot parsing, game-log fetching and
-recommendation arithmetic; these scripts call no LLM.
-
-In Codex, `.claude/agents/yahoo-reader.md` does not select or launch a model. Keep Sol responsible
-for review. Consider a bounded Luna collection assignment only when the signed-in browser and
-unchanged-text file export are available to that worker and the handoff is worthwhile. Verify
-the actual model where runtime metadata permits; otherwise label it requested but unverified.
-Never weaken Yahoo access rules to enable a cheaper worker.
-
-For routine updates, keep collection in its own small context. Run `refresh:analyze` and bring
-the compact output to the reviewing chat; read the full advice only for a specific uncertainty.
-Do not paste whole Yahoo pages or unchanged reports into the review chat. Retain those inputs privately for debugging. This reduces repeated context;
-subscription savings remain unmeasured without comparable observed runs. Tokenomics does not
-automatically switch models, and no router or recurring usage audit is needed per refresh.
-
-On each review, record any newly encountered limitation in `docs/limitations.md` using a
-synthetic description. Put real player/league details and rejection reasons in ignored local
-decision or rehearsal records.
+Record any new limitation in [`limitations.md`](limitations.md) using a synthetic description.
+Put real player and league details in ignored `local/` records.

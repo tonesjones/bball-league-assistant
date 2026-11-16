@@ -2,7 +2,7 @@
   "name": "bball-league-assistant",
   "version": "0.1.0",
   "private": true,
-  "description": "In-season assistant for one Yahoo H2H 9-category fantasy basketball league. Recommends; never acts.",
+  "description": "Read-only facts sheet for one Yahoo H2H 9-category fantasy basketball league. Reads saved Yahoo pages and ESPN box scores; never acts.",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -14,10 +14,6 @@
     "build:ids": "node scripts/build-ids.mjs",
     "match:ids": "node scripts/match-ids.mjs",
     "fetch:gamelogs": "node scripts/fetch-gamelogs.mjs",
-    "bakeoff": "node scripts/bakeoff.mjs",
-    "advise": "node scripts/advise.mjs",
-    "brief": "node scripts/brief.mjs",
-    "refresh:analyze": "node scripts/analyze-refresh.mjs",
-    "did": "node scripts/did.mjs"
+    "sheet": "node scripts/sheet.mjs"
   }
 }

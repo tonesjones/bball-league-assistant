@@ -13,6 +13,7 @@ Parsers that turn the saved text of Yahoo Fantasy Basketball pages into plain da
 - `settings.mjs:parseSettings(text, page?)`: returns `{scoringType, categories, rosterPositions, maxAddsPerWeek, maxGamesPerWeek, waiverType, playoffs, raw}`.
 - `team.mjs:parseTeam(text, page?)`: returns `{name, rank, record, faabBalance, addsUsedThisWeek, pending, roster}`.
 - `team.mjs:parseOtherTeam(text, page)`: returns `{name, roster}` for another team in the league.
+- `roster-tree.mjs:parseRosterTree(text, page?, {activeSlots?})`: reads a team page's roster table from Chrome's `read_page` accessibility-tree text, saved as `team-tree.txt` or `teams/N-tree.txt`. Chrome's plain page text of a team page holds only the header. Returns `{name, date, roster}`, where each roster entry is `{name, nbaTeam, positions, status, slot}`. On Tony's page a starter's slot is hidden, so `activeSlots` (the league's starting slots in order) assigns it. Without `activeSlots`, or on another team's page, `slot` is `null`.
 - `matchup.mjs:parseMatchup(text, page?)`: reads both the live layout and the totals layout. Returns `{week, days, teamName, opponentName, totals, volume, score, roster, opponentRoster}`.
 - `free-agents.mjs:parseFreeAgents(text, page?)`: returns an array of `{name, nbaTeam, positions, status, waiverClears}`.
 - `transactions.mjs:parseTransactions(text, page?)`: returns an array of `{team, time, moves: [{player, nbaTeam, type, faab}]}`.
@@ -31,6 +32,7 @@ Parsers that turn the saved text of Yahoo Fantasy Basketball pages into plain da
 - `settings.mjs:parseSettings` throws on an unknown scoring type or stat category, on empty categories or roster positions, on a bad limit, and on a playoffs format it does not recognize.
 - `matchup.mjs:parseMatchup` requires player rows to come in pairs (yours, then the opponent's) with exactly 9 stat cells. Only your row carries a slot label, and the opponent's row takes the same slot. In the totals layout, a slot label on the opponent's row throws, rows in the `--` slot are left out of both rosters, and empty-slot rows skip the 9-cell check.
 - `team.mjs:parseTeam` throws if the W-L-T record, the weekly adds line or the waiver budget is missing or malformed. `parsePending` throws when the listed pending items exceed the stated count.
+- `roster-tree.mjs:parseRosterTree` throws when the roster caption (`<team>'s Players roster for <date>.`) is missing, a status word is unknown, a starter does not fit the slot its order implies, or there are more starters than starting slots. The tree holds no FAAB balance, adds count or pending claims.
 - `free-agents.mjs:parseFreeAgents` throws when it finds no player rows.
 - `transactions.mjs:parseTransactions` throws "... not found" when the "Recent Transactions" heading or "FAB Offers" tab is missing, and "transactions layout not seen yet" on any other shape it does not recognize.
 

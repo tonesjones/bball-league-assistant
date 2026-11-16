@@ -1,7 +1,9 @@
 import { CATEGORIES } from '../sources/yahoo-pages/common.mjs';
 import { addDays } from './weeks.mjs';
 import { seasonValues } from './season-value.mjs';
-import { identity } from './advice-common.mjs';
+import { normalizeName } from './names.mjs';
+
+export const identity = (p) => p.espnId ?? normalizeName(p.name);
 
 export const STAT = { '3PM': 'fg3m', PTS: 'pts', REB: 'reb', AST: 'ast', STL: 'stl', BLK: 'blk', TO: 'to' };
 export const DEFAULT_PHI = { PTS: 4, REB: 1.5, AST: 1.5, '3PM': 1.5, STL: 1.2, BLK: 1.5, TO: 1.2 };

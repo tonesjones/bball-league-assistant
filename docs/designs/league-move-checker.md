@@ -1,5 +1,7 @@
 # League Move Checker: a clean-sheet design
 
+Retired 2026-11-14 (decision S1). Kept as the record of the trial. The commands it names no longer exist.
+
 *   **Author:** tonesjones
 *   **Status:** Proposed (revised after EGM review, 2026-10-31)
 *   **Date:** 2026-10-31
