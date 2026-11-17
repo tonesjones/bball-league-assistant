@@ -22,6 +22,7 @@ a three-line headline plus the full advice file. The one-week check runs until 2
 | N2 | Claude in Chrome is the one browser path. The built-in pane was signed out on 2026-10-25, 2026-10-26, 2026-11-14 and 2026-11-15, and there is no fallback to it. | Tony, 2026-11-15 |
 | N3 | The retired engine is deleted. Its history is in git and `tasks/archive/`. | Tony, 2026-11-15 |
 | N4 | The journal's `did` field comes from the transactions page, so Tony fills in only `why`. | Tony, 2026-11-15 |
+| C1 | Cloud sessions read the league's public pages signed out (`npm run capture:public`). Nobody signs in from the cloud and no password is stored; a sign-in test on 2026-11-17 found the account's sign-in offers only a password. FAAB is estimated from winning bids. Chrome stays the signed-in path (N2). | Tony, 2026-11-17 |
 
 ## Work
 
@@ -41,6 +42,9 @@ a three-line headline plus the full advice file. The one-week check runs until 2
 - [x] **Injury report (sheet section 9), this pull request.** *Done when:* the sheet prints status,
   report date, return date and comment from ESPN's injuries feed for Tony's, the opponent's and
   the candidates' players, and prints UNAVAILABLE when the feed fails.
+- [ ] **Cloud capture (decision C1), this pull request.** *Done when:* a new cloud session in
+  Tony's Yahoo environment runs "update league" from `npm run capture:public` to the advice file
+  without a rescue, and `npm test` passes.
 - [ ] **One-week check.** Tony uses the playbook for each decision until 2026-11-21 and saves one
   journal line per decision, noting anything it got wrong. *Done when:* on 2026-11-21 Tony decides
   to keep, change or drop it, and each recorded error is either fixed in the playbook or listed
@@ -55,8 +59,9 @@ a three-line headline plus the full advice file. The one-week check runs until 2
 ## Open decisions
 
 - Whether MetaMuse relays the nightly update, and how it can receive one.
-- Whether Yahoo's Fantasy API allows a personal read-only token. It is the only clean way for a
-  cloud run to read the league. See "Ground rules" for why it was ruled out.
+- Whether Yahoo's Fantasy API allows a personal read-only token. The public capture (C1) now lets
+  a cloud run read the league without it, except the exact FAAB balance and pending claims. See
+  "Ground rules" for why it was ruled out.
 - The season pacing cap and the minimum bid.
 - How a browser-only session gets the protected list, which lives in `local/protected.json`.
 

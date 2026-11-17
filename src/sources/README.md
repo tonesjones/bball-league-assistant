@@ -9,7 +9,8 @@ Data loading and parsing. This directory fetches and parses ESPN data, checks Ya
 **Yahoo**
 
 - `yahoo-urls.mjs:checkUrl`: returns `null` when a Yahoo URL is on the read-only allow-list, or a refusal reason. `scripts/guard-yahoo-url.mjs` uses it.
-- `sheet-pages.mjs:parsePages(texts)`: parses each captured page on its own. Returns `{ok: true, value}` or `{ok: false, reason}` per page, plus lists for `fa` and `teams`. When a team page has a `-tree` file, it falls back to `yahoo-pages/roster-tree.mjs`.
+- `sheet-pages.mjs:parsePages(texts, {publicView})`: parses each captured page on its own. Returns `{ok: true, value}` or `{ok: false, reason}` per page, plus lists for `fa` and `teams`. When a team page has a `-tree` file, it falls back to `yahoo-pages/roster-tree.mjs`. With `publicView` (a signed-out public capture), the parsers skip the signed-out check, and Tony's team page is also read as `team-public` (name and roster only); when the full team parse fails there, `team` gets the reason `PUBLIC_TEAM_REASON`.
+- `public-capture.mjs`: the public capture's page plan (`firstPages`, `laterPages`), `teamCount` and `matchupWeek` from page text, the folder `stamp` in a time zone, and `isPublicLog` for the `_log.txt` mode line. Pure.
 - `yahoo-pages/team-values.mjs:parseTeamValues`: reads the FAAB balance from the first `Waiver Budget: $N` match in `team-values.txt`. It reads nothing else from that file.
 - `sheet-pages.mjs:shortReason`: shortens an error message and drops any quoted page text.
 - `league-state.mjs:validate`: checks a snapshot's shape, throws one "invalid snapshot" error listing every problem, and returns the snapshot.

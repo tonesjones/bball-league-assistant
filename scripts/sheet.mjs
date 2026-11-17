@@ -9,6 +9,7 @@ import { parseScoreboard } from '../src/sources/espn-boxscore.mjs';
 import { loadGameLogs, refreshGameLogs } from '../src/sources/gamelogs.mjs';
 import { addDays } from '../src/engine/weeks.mjs';
 import { loadInjuries } from '../src/sources/espn-injuries-load.mjs';
+import { isPublicLog } from '../src/sources/public-capture.mjs';
 
 const FOLDER = /^(\d{4}-\d\d-\d\d)-(\d\d)(\d\d)$/;
 const PAGE = /^(settings|team|team-tree|team-values|matchup|matchup-totals|matchup-next|transactions|fa-\d+)\.txt$/;
@@ -32,6 +33,12 @@ function readPages(dir) {
     }
   }
   return texts;
+}
+
+// A public capture (scripts/capture-public.mjs) says so on the first line of its _log.txt.
+function publicCapture(dir) {
+  const log = join(dir, '_log.txt');
+  return existsSync(log) && isPublicLog(readFileSync(log, 'utf8'));
 }
 
 async function main(args) {
@@ -71,7 +78,7 @@ async function main(args) {
 
   const injuries = await loadInjuries({ noFetch });
 
-  const { markdown, status } = buildSheet({ folder, captureDate, captureTime: `${hh}:${mm}`, pages: parsePages(readPages(dir)),
+  const { markdown, status } = buildSheet({ folder, captureDate, captureTime: `${hh}:${mm}`, pages: parsePages(readPages(dir), { publicView: publicCapture(dir) }),
     ids, schedule, logs, priors, coverage, scoreboard, injuries, warnings });
   const out = join('local', 'sheets', `${folder}.md`);
   mkdirSync(join('local', 'sheets'), { recursive: true });

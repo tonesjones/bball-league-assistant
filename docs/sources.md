@@ -10,8 +10,16 @@ Every outside source the tool reads, with its URL, terms and how we stay polite 
   signed in. It is the only browser path. Firefox can't be driven by the agent's browser tools.
 - **How:** [`update-league.md`](update-league.md). Read only, one read per page per refresh.
 - **Terms:** Yahoo Terms of Service. Personal use of Tony's own league data, read at human pace
-  from his own session. Nothing is submitted or changed.
-- **IDs:** `{L}` is `YAHOO_LEAGUE_ID` and `{T}` is `YAHOO_TEAM_ID` from `.env`. `{OPP}` is the
+  from his own session or signed out from the public pages. Nothing is submitted or changed. The
+  terms restrict automated access; the public capture stays at one run per check, paced, and
+  reads only the pages listed here.
+- **Public view (2026-11-17):** the league is a public league. Every page in the table below
+  loads signed out, with the same data, except that Tony's team page lacks the waiver budget, the
+  weekly adds line and pending claims. A cloud session reads them signed out with
+  `npm run capture:public`: about 20 GET page loads per run, two seconds apart, once per check.
+  The capture folder is the cache; nothing is refetched for the same run.
+- **IDs:** `{L}` is `YAHOO_LEAGUE_ID` and `{T}` is `YAHOO_TEAM_ID` from `.env`, or from the cloud
+  environment's variables. `{OPP}` is the
   opponent's team number, read from the matchup page. Real IDs never go in git.
 
 Base URL: `https://basketball.fantasysports.yahoo.com/nba`

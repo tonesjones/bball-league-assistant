@@ -9,6 +9,7 @@ Command-line entry points. They build the facts sheet from a Yahoo capture folde
 | Script | npm command | What it does |
 |---|---|---|
 | `sheet.mjs` | `sheet -- local/raw/YYYY-MM-DD-HHmm [--no-fetch]` | Builds the facts sheet for one capture folder and writes `local/sheets/<folder>.md`. Prints the file path, any warnings, and one status line per section (`ok`, `partial` or `UNAVAILABLE`). Refreshes ESPN box scores first unless `--no-fetch` is given. |
+| `capture-public.mjs` | `capture:public [-- --tz <zone>] [-- --sunday \| --no-sunday]` | Cloud capture. Reads the league's public pages signed out in headless Chromium and saves their text to `local/raw/<YYYY-MM-DD-HHmm>/`, with `_log.txt` starting `mode: public (signed out)`. Needs `YAHOO_LEAGUE_ID` and `YAHOO_TEAM_ID` in the environment or `.env`, and Playwright (preinstalled in cloud sessions). |
 | `build-snapshot.mjs` | none | Parses a capture folder (default: the newest under `local/raw/`) into `local/snapshots/<folder>.json`. |
 | `fetch-gamelogs.mjs` | `fetch:gamelogs` | Fetches ESPN box scores. Takes `--season 2026-27 \| 2025-26` (required), and optionally `--from`, `--to` and `--snapshot <path>`. |
 | `import-draftlab.mjs` | `import:draftlab` | Imports last season's priors from a Draft Lab checkout. The npm command always reads `../fantasy-basketball-mock-draft`. To read another checkout, run `node scripts/import-draftlab.mjs --from <dir> [--out <dir>]` (default `--out` is `data/priors`). |
@@ -26,7 +27,7 @@ Run each with `npm run <command>`, putting `--` before any arguments.
 - `sheet.mjs` does not fail when the ESPN refresh fails. It adds a warning and uses the cached game logs. A failed injuries feed prints `UNAVAILABLE` in section 9 only. With `--no-fetch`, section 9 uses `local/cache/espn/injuries.json` or prints `UNAVAILABLE` when it is missing.
 - `build-snapshot.mjs` requires a folder named `YYYY-MM-DD-HHmm`, which supplies `asOf`. It refuses an incomplete capture: an empty page file, or a `_log.txt` line marked skipped or sign-in.
 - `fetch-gamelogs.mjs` accepts only seasons 2026-27 and 2025-26. With `--snapshot`, `--to` must equal the snapshot's Eastern date. It throws when a final game has no box score, and writes `_coverage.json` only after every requested day succeeds.
-- `guard-yahoo-url.mjs` exits 2 with "Blocked by the read-only Yahoo guard" when `checkUrl` returns a reason, exits 1 when stdin is not valid JSON, and exits 0 otherwise. It reads `YAHOO_LEAGUE_ID` from `.env` in `CLAUDE_PROJECT_DIR`, or in the working directory. If the key is missing, it does not check the league number.
+- `guard-yahoo-url.mjs` exits 2 with "Blocked by the read-only Yahoo guard" when `checkUrl` returns a reason, exits 1 when stdin is not valid JSON, and exits 0 otherwise. It reads `YAHOO_LEAGUE_ID` from the environment, else from `.env` in `CLAUDE_PROJECT_DIR`, or in the working directory. If the key is missing, it does not check the league number.
 - `import-draftlab.mjs` exits 2 when run directly without `--from`. It runs each Draft Lab file in a `vm` context with a 5-second timeout.
 
 ## Side Effects

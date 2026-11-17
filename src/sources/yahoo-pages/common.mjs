@@ -16,7 +16,10 @@ export function load(text) {
     .filter((l) => l.s !== '');
 }
 
-export function rejectSignedOut(text, page) {
+// A public capture (scripts/capture-public.mjs) reads the signed-out view on purpose; its pages
+// carry the site's "Sign in" link, so the check is off for it.
+export function rejectSignedOut(text, page, { publicView = false } = {}) {
+  if (publicView) return;
   if (text.split(/\r?\n/).some((line) => line.trim() === 'Sign in')) {
     throw new Error(`signed out of Yahoo: ${page} page; sign in to Yahoo in the browser pane and refresh`);
   }

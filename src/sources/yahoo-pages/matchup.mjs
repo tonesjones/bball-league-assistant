@@ -93,8 +93,8 @@ function totalsRow(page, L, i) {
   };
 }
 
-export function parseMatchup(text, page = 'matchup') {
-  rejectSignedOut(text, page);
+export function parseMatchup(text, page = 'matchup', opts = {}) {
+  rejectSignedOut(text, page, opts);
   const L = load(text);
   const w = indexOf(page, L, (s) => /^Week \d+$/.test(s), 'the "Week N" heading');
   const live = L.findIndex((l) => l.s.startsWith('Team\t'));

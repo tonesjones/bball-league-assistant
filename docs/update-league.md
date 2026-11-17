@@ -127,6 +127,42 @@ Write `local/raw/<timestamp>/_log.txt` with one line per page: file name, the UR
 and `ok`, `skipped`, `header-only` or `sign-in`. Then close the tab and tell Tony the folder path
 and any page that wasn't `ok`.
 
+## Cloud capture (public pages, signed out)
+
+A cloud session has no Claude in Chrome, and nobody signs in to Yahoo there. The league's pages
+are public, so the session reads them signed out:
+
+```
+npm run capture:public
+```
+
+The script reads `YAHOO_LEAGUE_ID` and `YAHOO_TEAM_ID` from the environment (the cloud
+environment's variables) or from `.env`. It opens the pages in the table above in headless
+Chromium, two seconds apart, and saves each page's text unchanged to
+`local/raw/<YYYY-MM-DD-HHmm>/`. The folder stamp uses Pacific time; pass `--tz <zone>` to change
+it. On a Pacific Sunday it also saves `matchup-next.txt` (`--sunday` or `--no-sunday` overrides).
+It prints the folder path and any skipped page. Then build the sheet as below.
+
+What it enforces, in code:
+
+- It never signs in, keeps no cookies between runs, and never clicks or types.
+- Every Yahoo request other than GET is aborted, and so is any Yahoo page navigation that
+  `checkUrl` refuses.
+- One retry per page, a minute later. A page that still fails, or that lands on a sign-in page,
+  is logged `skipped`.
+- The first line of `_log.txt` is `mode: public (signed out)`. `npm run sheet` reads it and
+  accepts the signed-out view, whose header has a "Sign in" link. A Chrome capture has no such
+  line, so a signed-out Chrome page still fails as before.
+
+What the public view lacks: Tony's team page shows no adds line, waiver budget or pending claims.
+The sheet reads that page for the roster only (`Roster source: team.txt (public view)`), counts
+adds used from the transactions page, and prints a FAAB estimate: the $100 season budget minus
+Tony's winning bids on the transactions page. The page reaches back only a few days, so the
+estimate is an upper bound. Pending claims are unknown; ask Tony when one matters.
+
+Playwright with Chromium is preinstalled in cloud sessions. It is not a package dependency; on a
+desktop, use the Chrome capture above.
+
 ## Draft and trade pages (only when Tony asks)
 
 Not part of a routine capture. The other teams' pages are routine (row 9). The draft pages

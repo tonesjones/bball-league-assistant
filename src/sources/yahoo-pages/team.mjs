@@ -52,14 +52,14 @@ function parseRoster(page, L) {
 }
 
 // Another team's page has no weekly adds or waiver budget lines, so only the name and roster are read.
-export function parseOtherTeam(text, page) {
-  rejectSignedOut(text, page);
+export function parseOtherTeam(text, page, opts = {}) {
+  rejectSignedOut(text, page, opts);
   const L = load(text);
   return { name: teamName(page, L), roster: parseRoster(page, L) };
 }
 
-export function parseTeam(text, page = 'team') {
-  rejectSignedOut(text, page);
+export function parseTeam(text, page = 'team', opts = {}) {
+  rejectSignedOut(text, page, opts);
   const L = load(text);
   const name = teamName(page, L);
 

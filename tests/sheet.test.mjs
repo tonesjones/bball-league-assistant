@@ -58,8 +58,8 @@ const rowOf = (text, name) => text.split('\n').find((l) => l.startsWith(`| ${nam
 
 test('the header gives the version, the claim date and the processing week', () => {
   const h = section(sheet().markdown, 1);
-  assert.equal(SHEET_VERSION, 3);
-  assert.match(h, /Sheet version: 3/);
+  assert.equal(SHEET_VERSION, 4);
+  assert.match(h, /Sheet version: 4/);
   assert.match(h, /Capture as of: 2026-11-11 23:00 \(Wed\)/);
   assert.match(h, /Games on 2026-11-11: 3 final, 0 not final/);
   assert.match(h, /First date a claim placed tonight can play: 2026-11-12 \(Thu\)/);
@@ -168,6 +168,22 @@ test('FAAB is UNAVAILABLE and names both files when team-values.txt is missing o
   assert.match(section(sheet({ team: no('x'), 'team-values': bad }).markdown, 2),
     /FAAB left: UNAVAILABLE: team\.txt \(x\); UNAVAILABLE: team-values\.txt \(no "Waiver Budget: \$N" match\)/);
   assert.match(section(sheet({ team: no('x') }).markdown, 2), /UNAVAILABLE: team\.txt \(x\); UNAVAILABLE: team-values\.txt \(missing\)/);
+});
+
+test('a public capture: roster from the public team page, FAAB estimated from winning bids', () => {
+  const { markdown, status } = sheet({ team: no('public view: no adds line, waiver budget or pending claims'),
+    'team-public': ok({ name: 'Tony Team', roster: tonyRoster() }) });
+  const b = section(markdown, 2);
+  assert.match(b, /Roster source: team\.txt \(public view\)/);
+  assert.match(b, /FAAB left: UNAVAILABLE: team\.txt \(public view/);
+  assert.match(b, /FAAB estimate: at most \$97 \(\$100 season budget minus \$3 in 1 winning bid on transactions\.txt, which reaches back to 2026-11-10; older bids are not counted\)/);
+  assert.match(b, /counted on transactions\.txt/);
+  assert.match(b, /IL check .*: Ed Eve \(IL, status D\)/);
+  assert.ok(status.includes('2. Budget and slots: partial'));
+});
+
+test('no FAAB estimate when the team page gives the balance', () => {
+  assert.doesNotMatch(section(sheet().markdown, 2), /FAAB estimate/);
 });
 
 test('the injury report lists Tony, opponent and candidate players found in the feed', () => {
