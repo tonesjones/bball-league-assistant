@@ -57,16 +57,23 @@ async function main(args) {
   const season = schedule.season ?? '2026-27';
   const logRoot = join('local', 'gamelogs');
   const warnings = [];
+  const coverageFile = join(logRoot, season, '_coverage.json');
+  const seasonStart = schedule.games.map((g) => g.date).sort()[0];
+  // A fresh checkout (a new cloud session) has no game logs, so it fetches the whole season once.
+  // After that, the last week is enough: refreshGameLogs merges it with the older days.
+  const before = existsSync(coverageFile) ? readJson(coverageFile) : null;
+  const fullSeason = !(before?.from <= seasonStart);
   if (!noFetch) {
     try {
-      await refreshGameLogs({ season, from: addDays(captureDate, -6), to: captureDate, root: logRoot });
+      await refreshGameLogs({ season, from: fullSeason ? seasonStart : addDays(captureDate, -6), to: captureDate, root: logRoot });
     } catch (err) {
       warnings.push(`ESPN refresh failed (${shortReason(err)}); using cached game logs`);
     }
   }
-  const coverageFile = join(logRoot, season, '_coverage.json');
   const coverage = existsSync(coverageFile) ? readJson(coverageFile) : null;
-  const seasonStart = schedule.games.map((g) => g.date).sort()[0];
+  if (!(coverage?.from <= seasonStart)) {
+    warnings.push(`game logs start ${coverage?.from ?? 'nowhere'}, after the season's first game (${seasonStart}); last-5 lines and season MPG miss the earlier games`);
+  }
   const logs = await loadGameLogs(season, seasonStart, captureDate, { root: logRoot });
   const boardFile = join('local', 'cache', 'espn', `scoreboard-${captureDate.replaceAll('-', '')}.json`);
   let scoreboard = null;
