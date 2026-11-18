@@ -22,6 +22,11 @@ test('every planned page is on the read-only list, and Tony\'s team is not read 
   assert.ok(all.find((p) => p.file === 'matchup-next.txt').url.endsWith('matchup?mid1=7&week=6'));
   assert.deepEqual(files.filter((f) => f.startsWith('fa-')), ['fa-1.txt', 'fa-2.txt', 'fa-3.txt', 'fa-4.txt']);
   assert.equal(files.filter((f) => f.startsWith('teams/')).length, 11);
+  const hot = all.filter((p) => p.file.startsWith('hot-'));
+  assert.deepEqual(hot.map((p) => p.file), ['hot-l7a-1.txt', 'hot-l7a-2.txt', 'hot-l7t-1.txt', 'hot-l7t-2.txt',
+    'hot-l14a-1.txt', 'hot-l14a-2.txt', 'hot-l14t-1.txt', 'hot-l14t-2.txt']);
+  assert.ok(hot[0].url.endsWith('players?status=A&pos=P&stat1=S_AL7&sort=AR&sdir=1&count=0'));
+  assert.ok(hot[7].url.endsWith('stat1=S_L14&sort=AR&sdir=1&count=25'));
   assert.ok(!files.includes('teams/7.txt'));
   assert.equal(new Set(files).size, files.length);
 });
@@ -67,6 +72,14 @@ test('a "Video Forecast" label is not part of the name and keeps the status', ()
   assert.deepEqual(name('Test PlayerOVideo ForecastPlayer Note'), ['Test Player', 'O']);
   assert.deepEqual(name('Test Player IIIGTDPlayer Note'), ['Test Player III', 'GTD']);
   assert.deepEqual(name('Test PlayerNo new player Notes'), ['Test Player', null]);
+});
+
+test('hot pages parse into one list per window', () => {
+  const fa = page('fa-1');
+  const p = parsePages({ 'hot-l7a-1': fa, 'hot-l7a-2': page('fa-2'), 'hot-l14t-1': fa });
+  assert.deepEqual(p.hot.l7a.map((x) => [x.file, x.ok]), [['hot-l7a-1.txt', true], ['hot-l7a-2.txt', true]]);
+  assert.equal(p.hot.l14t.length, 1);
+  assert.deepEqual(p.hot.l7t, []);
 });
 
 test('a public team page gives the roster only, without owner lines', () => {

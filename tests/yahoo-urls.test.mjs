@@ -11,6 +11,7 @@ test('allows every page in docs/update-league.md', () => {
     '/7',
     '/matchup?mid1=7',
     '/players?status=A&pos=P&sort=AR&sdir=1&count=75',
+    '/players?status=A&pos=P&stat1=S_AL7&sort=AR&sdir=1&count=25',
     '/transactions',
     '/draft',
     '/draftresults',

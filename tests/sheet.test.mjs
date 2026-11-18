@@ -58,8 +58,8 @@ const rowOf = (text, name) => text.split('\n').find((l) => l.startsWith(`| ${nam
 
 test('the header gives the version, the claim date and the processing week', () => {
   const h = section(sheet().markdown, 1);
-  assert.equal(SHEET_VERSION, 4);
-  assert.match(h, /Sheet version: 4/);
+  assert.equal(SHEET_VERSION, 5);
+  assert.match(h, /Sheet version: 5/);
   assert.match(h, /Capture as of: 2026-11-11 23:00 \(Wed\)/);
   assert.match(h, /Games on 2026-11-11: 3 final, 0 not final/);
   assert.match(h, /First date a claim placed tonight can play: 2026-11-12 \(Thu\)/);
@@ -180,6 +180,25 @@ test('a public capture: roster from the public team page, FAAB estimated from wi
   assert.match(b, /counted on transactions\.txt/);
   assert.match(b, /IL check .*: Ed Eve \(IL, status D\)/);
   assert.ok(status.includes('2. Budget and slots: partial'));
+});
+
+test('candidates carry season and recent-window ranks, and hot-only players join the list', () => {
+  const hotOnly = { name: 'Jo Hot', nbaTeam: 'HHH', positions: ['C'], status: null, waiverClears: null };
+  const c = section(sheet({ hot: { l7a: [{ file: 'hot-l7a-1.txt', ...ok([hotOnly, freeAgents[1]]) }], l7t: [], l14a: [], l14t: [] } }).markdown, 6);
+  assert.match(c, /\| Season rank \| L7 avg \| L7 tot \| L14 avg \| L14 tot \|/);
+  // Ivy Ink: season rank 2, 7-day average rank 2.
+  assert.match(c, /\| fa-1 \| Ivy Ink \| BBB \|  \| PG \| 2 \| 2 \|  \|  \|  \|/);
+  // Hal Hill is in the season list only.
+  assert.match(c, /\| fa-1 \| Hal Hill \| HHH \|  \| C \| 1 \|  \|  \|  \|  \|/);
+  // Jo Hot is in the 7-day list only, after the season pages.
+  assert.match(c, /\| hot-l7a-1 \| Jo Hot \| HHH \|  \| C \|  \| 1 \|  \|  \|  \|/);
+  assert.match(c, /hot pages: L7 avg\)/);
+});
+
+test('without hot pages the rank columns stay and say none were captured', () => {
+  const c = section(sheet().markdown, 6);
+  assert.match(c, /\| fa-1 \| Hal Hill \| HHH \|  \| C \| 1 \|  \|  \|  \|  \|/);
+  assert.match(c, /hot pages: none captured/);
 });
 
 test('no FAAB estimate when the team page gives the balance', () => {

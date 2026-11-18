@@ -103,6 +103,7 @@ Replace `{L}` with `YAHOO_LEAGUE_ID`, `{T}` with `YAHOO_TEAM_ID`. Base URL:
 | 5 | `fa-2.txt` | same, `count=25` | |
 | 6 | `fa-3.txt` | same, `count=50` | |
 | 7 | `fa-4.txt` | same, `count=75` | |
+| 4b | `hot-<w>-1.txt`, `hot-<w>-2.txt` | same as row 4 plus `&stat1=<S>`, `count=0` and `count=25`, for each window `<w>`/`<S>`: `l7a`/`S_AL7` (last 7 days, average), `l7t`/`S_L7` (last 7 days, total), `l14a`/`S_AL14`, `l14t`/`S_L14` | Hot lists: the top 50 available players ranked over each recent window. The sheet shows each candidate's rank in every window and adds hot players missing from rows 4 to 7. Eight pages. |
 | 8 | `transactions.txt` | `/{L}/transactions` | Adds used this week, other teams' moves, winning FAAB bids, and Tony's own adds and drops with dates. |
 | 9 | `teams/<N>.txt` | `/{L}/{N}`, for every team number `{N}` from 1 to the league size except `{T}` | Every other roster. The role-change watch list leaves out players on any league roster. In a 12-team league that is 11 more page reads. |
 | 10 | `matchup-next.txt` | `/{L}/matchup?mid1={T}&week={W+1}` | Sunday nights only. Next week's opponent and schedule, because a claim placed on Sunday night counts in next week. `{W+1}` is the week number in `matchup.txt` plus 1. |

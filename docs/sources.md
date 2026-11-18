@@ -16,7 +16,7 @@ Every outside source the tool reads, with its URL, terms and how we stay polite 
 - **Public view (2026-11-17):** the league is a public league. Every page in the table below
   loads signed out, with the same data, except that Tony's team page lacks the waiver budget, the
   weekly adds line and pending claims. A cloud session reads them signed out with
-  `npm run capture:public`: about 20 GET page loads per run, two seconds apart, once per check.
+  `npm run capture:public`: about 28 GET page loads per run, two seconds apart, once per check.
   The capture folder is the cache; nothing is refetched for the same run.
 - **IDs:** `{L}` is `YAHOO_LEAGUE_ID` and `{T}` is `YAHOO_TEAM_ID` from `.env`, or from the cloud
   environment's variables. `{OPP}` is the
@@ -31,6 +31,7 @@ Base URL: `https://basketball.fantasysports.yahoo.com/nba`
 | Matchup | `/{L}/matchup?mid1={T}` | Current week, category totals for both teams (live, and per day), both rosters' stats. |
 | Opponent | `/{L}/{OPP}` | The opponent's roster, same layout as Tony's team. Not read by default: the matchup page lists both rosters with slots. |
 | Free agents | `/{L}/players?status=A&pos=P&sort=AR&sdir=1&count={0,25,50,75}` | 25 available players per page, ranked, with team, positions, status and stats. Four pages cover the top 100. |
+| Hot lists | `/{L}/players?status=A&pos=P&stat1={S_AL7,S_L7,S_AL14,S_L14}&sort=AR&sdir=1&count={0,25}` | The same free-agent table, ranked by Yahoo over the last 7 or 14 days, per-game average (`S_AL`) or total (`S_L`). The `stat1` options were read from the page's stat filter on 2026-11-17; it also offers 30-day, projection and standard-deviation windows. |
 | Transactions | `/{L}/transactions` | Adds, drops, trades and winning FAAB bids. Empty before the first move ("No recent transactions"). |
 | Other teams | `/{L}/{1..12}` | Each team's roster, same layout as Tony's team. Read only for trade research Tony asks for. |
 | Draft | `/{L}/draft` | The league draft. Read only for trade research; no query parameters allowed. |

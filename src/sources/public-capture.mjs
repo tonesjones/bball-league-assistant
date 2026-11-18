@@ -1,3 +1,5 @@
+import { HOT_WINDOWS, HOT_PAGES } from './hot-lists.mjs';
+
 // Pure helpers for the public (signed-out) capture in scripts/capture-public.mjs. No I/O.
 // The league's pages are public, so a cloud session reads them without signing in to Yahoo.
 // See docs/update-league.md, "Cloud capture".
@@ -22,6 +24,11 @@ export function laterPages(league, team, { week, teams, sunday }) {
   if (week != null && sunday) pages.push({ file: 'matchup-next.txt', url: `${BASE}/${league}/matchup?mid1=${team}&week=${week + 1}` });
   for (const [i, count] of FA_OFFSETS.entries()) {
     pages.push({ file: `fa-${i + 1}.txt`, url: `${BASE}/${league}/players?status=A&pos=P&sort=AR&sdir=1&count=${count}` });
+  }
+  for (const w of HOT_WINDOWS) {
+    for (let i = 0; i < HOT_PAGES; i++) {
+      pages.push({ file: `hot-${w.key}-${i + 1}.txt`, url: `${BASE}/${league}/players?status=A&pos=P&stat1=${w.stat}&sort=AR&sdir=1&count=${i * 25}` });
+    }
   }
   pages.push({ file: 'transactions.txt', url: `${BASE}/${league}/transactions` });
   for (let n = 1; n <= (teams ?? 0); n++) {
