@@ -5,6 +5,7 @@ import { firstPages, laterPages, teamCount, matchupWeek, stamp, isPublicLog, PUB
 import { checkUrl } from '../src/sources/yahoo-urls.mjs';
 import { parsePages, PUBLIC_TEAM_REASON } from '../src/sources/sheet-pages.mjs';
 import { parseSettings } from '../src/sources/yahoo-pages/settings.mjs';
+import { NAME_RE } from '../src/sources/yahoo-pages/common.mjs';
 
 const dir = new URL('./fixtures/yahoo-pages/', import.meta.url);
 const page = (name) => readFileSync(new URL(`${name}.txt`, dir), 'utf8');
@@ -58,6 +59,14 @@ test('the signed-out check stays on unless the capture was public', () => {
   assert.deepEqual(parseSettings(text, 'settings', { publicView: true }).categories, parseSettings(page('settings')).categories);
   assert.match(parsePages({ settings: text }).settings.reason, /signed out of Yahoo/);
   assert.equal(parsePages({ settings: text }, { publicView: true }).settings.ok, true);
+});
+
+test('a "Video Forecast" label is not part of the name and keeps the status', () => {
+  const name = (s) => { const m = NAME_RE.exec(s); return m && [m[1].trim(), m[2] ?? null]; };
+  assert.deepEqual(name('Test PlayerVideo ForecastNew Player Note'), ['Test Player', null]);
+  assert.deepEqual(name('Test PlayerOVideo ForecastPlayer Note'), ['Test Player', 'O']);
+  assert.deepEqual(name('Test Player IIIGTDPlayer Note'), ['Test Player III', 'GTD']);
+  assert.deepEqual(name('Test PlayerNo new player Notes'), ['Test Player', null]);
 });
 
 test('a public team page gives the roster only, without owner lines', () => {
