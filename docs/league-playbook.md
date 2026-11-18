@@ -4,14 +4,18 @@ You are advising Tony on waiver claims in his Yahoo head-to-head fantasy basketb
 this document step by step. It is all the context you get. Code may give you a facts sheet of
 computed numbers. You decide the move. Tony makes every move by hand.
 
-Playbook version 5 (2026-11-15). Version 1 was tested on live pages on 2026-11-14, and the
+Playbook version 6 (2026-11-17). Version 1 was tested on live pages on 2026-11-14, and the
 archived plan (`tasks/archive/PLAN-2026-11-14.md`) lists what the test changed. Version 3 starts
 from the facts sheet (`npm run sheet`), adds a three-line headline to the output and fills the
 journal's `did` field from the transactions page. Version 4 adds the sheet's Injury report to the
 section table, a default for classifying a week with no game played yet, and a rule for quoting
 an injured player's return date. Version 5 reads the sheet's new opportunity data (returning
 players, missed games, last season's minutes, teammates out) and requires the long-term claim to
-beat the best opportunity candidates by name.
+beat the best opportunity candidates by name. Version 6 (2026-11-17), from Tony's review of a
+run that advised a long-term add whose minutes depended on injured teammates: test a long-term add
+against every teammate due back, weigh a drop's role security, plan for IL players coming back,
+keep an unused add for a named later use, and show current and projected totals on every matchup
+line.
 
 ## Purpose and the read-only rule
 
@@ -174,8 +178,18 @@ Work through these steps in order. Write the result of each step in your answer.
    team. For each, name whom his minutes depend on from "Out on the candidates' teams", with that
    player's return date. A player back from injury is judged by last season's minutes and line,
    not by his few games this season.
+   Before calling any add long-term, list every rotation player due back on his team from "Out on
+   the candidates' teams", including players with no games this season (use last season's
+   minutes), with their return dates. A role built while they were out is a short-term role, even
+   when it has lasted all season. Judge the add by his likely minutes after they return.
 7. List drop candidates. First check whether a drop is needed at all: if a rostered player is
    out (O or INJ) and an IL slot is open, moving him to IL frees a roster spot at no cost. Start with the weakest players by current-season production and role.
+   Weigh role security before naming a player the weakest. A low-scoring player whose minutes are
+   protected by long-term injuries on his team (returns weeks or months away) keeps his role and
+   is a worse drop than his line suggests. Say whom his minutes are protected by and for how long.
+   Count the IL players due back within ten days (Injury report return dates). Each needs an open
+   roster spot when he returns, so name the player Tony would cut for each. A stream that uses
+   that player's spot until then costs nothing extra; a long-term add adds to the cuts.
    Take an injured player's return timeline from the sheet's Injury report and quote its date and
    comment. When the feed gives no return date, write "return not given" and do not guess. When a
    move depends on that player being out long term, the headline is HOLD, the move appears as a
@@ -246,6 +260,10 @@ categories.
   is not a long-term add unless his minutes or role just changed. Before advising a long-term
   claim, name the two or three best opportunity candidates from step 6 and say why each loses to
   it. If one of them beats it, advise him instead.
+- An unused add keeps its value until the Saturday-night deadline. When no claim helps the in-play
+  categories tonight, hold and name the plan for each add left: a known later stream, with the
+  night its claim must be placed (a player's waiver date and open days decide it), or an opening
+  to watch for as injuries happen. Rerun each night and check the plan against the new numbers.
 - Never drop a core player for one week's category gain. Season value comes first. Chasing the
   closest category this week by dropping good players loses the season.
 - When a pickup would start in place of a player with better historical numbers, still count the
@@ -325,7 +343,7 @@ Claim 2: ...
 
 Lean (only when the headline is HOLD): <the move, with the fields above>
 
-Matchup: <one line per category: Tony, opponent, class>
+Matchup: <one line per category: now Tony-opponent (banked, as on Yahoo's matchup page), projected final Tony-opponent, class>
 Depends on: <the assumptions this advice needs to hold>
 Unknowns: <categories or facts marked unknown, and why>
 Confidence: <low, medium or high>, <one sentence on why>
