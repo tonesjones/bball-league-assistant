@@ -4,7 +4,7 @@ You are advising Tony on waiver claims in his Yahoo head-to-head fantasy basketb
 this document step by step. It is all the context you get. Code may give you a facts sheet of
 computed numbers. You decide the move. Tony makes every move by hand.
 
-Playbook version 6 (2026-11-17). Version 1 was tested on live pages on 2026-11-14, and the
+Playbook version 7 (2026-11-17). Version 1 was tested on live pages on 2026-11-14, and the
 archived plan (`tasks/archive/PLAN-2026-11-14.md`) lists what the test changed. Version 3 starts
 from the facts sheet (`npm run sheet`), adds a three-line headline to the output and fills the
 journal's `did` field from the transactions page. Version 4 adds the sheet's Injury report to the
@@ -15,7 +15,8 @@ beat the best opportunity candidates by name. Version 6 (2026-11-17), from Tony'
 run that advised a long-term add whose minutes depended on injured teammates: test a long-term add
 against every teammate due back, weigh a drop's role security, plan for IL players coming back,
 keep an unused add for a named later use, and show current and projected totals on every matchup
-line.
+line. Version 7 reads the sheet's recent-window ranks (Yahoo's hot lists over the last 7 and 14
+days) next to the season rank, at Tony's request: who is good now, not only over the season.
 
 ## Purpose and the read-only rule
 
@@ -73,7 +74,7 @@ decide the move. Each section feeds one or more steps of the decision procedure:
 | Budget and slots: adds used and left, FAAB, open spots, IL check | 2 and 3 |
 | Matchup by category: banked, projected remaining, projected final, gap, cautious figure | 4 |
 | Open-day grid and Roster lines (last-5 lines for both teams) | 4 and 5 |
-| Candidates: usable starts, last-5 line, minutes, last season's minutes, missed games. Role-change watch list over the last three nights, with returning players | 6 |
+| Candidates: season and recent-window ranks, usable starts, last-5 line, minutes, last season's minutes, missed games. Role-change watch list over the last three nights, with returning players | 6 |
 | Transactions: Tony's own adds and drops with dates, winning bids | 2, 8 and the journal |
 | Injury report: ESPN status, report date, return date and comment for Tony's, the opponent's and the candidates' players. Out on the candidates' teams: injured teammates, their minutes and return dates | 6 and 7 |
 
@@ -173,6 +174,12 @@ Work through these steps in order. Write the result of each step in your answer.
    the processing week, and which of those games fall on a day with an open slot he can fill. A
    candidate is claimable tonight only if his waiver date is tomorrow or earlier. Look past the
    first pages of the ranking: a one-day specialist can sit low on the list.
+   Read the recent-window ranks (L7 avg, L7 tot, L14 avg, L14 tot) next to the season rank. A
+   season rank says who was good, not who is good now. Name the players ranked high over the last
+   7 or 14 days, including those found only on the hot lists. A high average rank on few games
+   is a small sample: check the games played and minutes before trusting it. A high total rank
+   means he has also been playing every night. A player hot in both windows is the strongest
+   signal; one hot only in the 7-day average needs a reason (a role change, a teammate out).
    Then list the opportunity candidates: every claimable player on the watch list (minutes,
    starter or returning) and every candidate with a long latest absence or a starter out on his
    team. For each, name whom his minutes depend on from "Out on the candidates' teams", with that

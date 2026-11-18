@@ -7,6 +7,7 @@ import { parseFreeAgents } from './yahoo-pages/free-agents.mjs';
 import { parseTransactions } from './yahoo-pages/transactions.mjs';
 import { parseRosterTree } from './yahoo-pages/roster-tree.mjs';
 import { parseTeamValues } from './yahoo-pages/team-values.mjs';
+import { HOT_WINDOWS } from './hot-lists.mjs';
 
 const parsers = (o) => ({
   settings: (t) => parseSettings(t, 'settings', o),
@@ -48,6 +49,9 @@ export function parsePages(texts, { publicView = false } = {}) {
   }
   const numbered = (re) => Object.keys(texts).filter((k) => re.test(k)).sort((a, b) => Number(/\d+$/.exec(a)[0]) - Number(/\d+$/.exec(b)[0]));
   out.fa = numbered(/^fa-\d+$/).map((k) => ({ file: `${k}.txt`, ...parseOne(texts[k], (t) => parseFreeAgents(t, k, o)) }));
+  // Free agents ranked over recent windows (hot-<window>-N), same layout as the fa pages.
+  out.hot = Object.fromEntries(HOT_WINDOWS.map((w) => [w.key,
+    numbered(new RegExp(`^hot-${w.key}-\\d+$`)).map((k) => ({ file: `${k}.txt`, ...parseOne(texts[k], (t) => parseFreeAgents(t, k, o)) }))]));
   // A header-only team page (Chrome) comes with <page>-tree.txt, the roster table's accessibility tree.
   const activeSlots = out.settings.ok ? out.settings.value.rosterPositions.filter((p) => !['BN', 'IL', 'IL+', 'NA'].includes(p.slot))
     .flatMap((p) => Array(p.count).fill(p.slot)) : null;

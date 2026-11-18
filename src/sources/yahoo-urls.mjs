@@ -6,7 +6,7 @@ const HOST = 'basketball.fantasysports.yahoo.com';
 const PAGES = {
   settings: [],
   matchup: ['mid1', 'mid2', 'week'],
-  players: ['status', 'pos', 'sort', 'sdir', 'count'],
+  players: ['status', 'pos', 'sort', 'sdir', 'count', 'stat1'],
   transactions: [],
   draft: [],
   draftresults: [],
