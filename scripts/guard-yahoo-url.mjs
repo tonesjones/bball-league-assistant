@@ -4,7 +4,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { checkUrl } from '../src/sources/yahoo-urls.mjs';
 
+// A cloud environment sets YAHOO_LEAGUE_ID as an environment variable; a desktop checkout keeps it in .env.
 function leagueIdFromEnv() {
+  if (/^\d+$/.test(process.env.YAHOO_LEAGUE_ID ?? '')) return process.env.YAHOO_LEAGUE_ID;
   const dir = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
   try {
     const m = readFileSync(join(dir, '.env'), 'utf8').match(/^YAHOO_LEAGUE_ID=(\d+)\s*$/m);

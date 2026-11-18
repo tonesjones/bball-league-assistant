@@ -1,8 +1,8 @@
 import { load, fail, indexOf, stopIndex, player, NAME_RE, rejectSignedOut } from './common.mjs';
 
 // One page of Yahoo's available-players list, in the order shown. The rank is assigned by the caller.
-export function parseFreeAgents(text, page = 'fa') {
-  rejectSignedOut(text, page);
+export function parseFreeAgents(text, page = 'fa', opts = {}) {
+  rejectSignedOut(text, page, opts);
   const L = load(text);
   const r = indexOf(page, L, (s) => s === 'Roster Status', 'the player table header ("Roster Status")');
   const hdr = indexOf(page, L, (s) => s === 'TO', 'the end of the player table header ("TO")', r);

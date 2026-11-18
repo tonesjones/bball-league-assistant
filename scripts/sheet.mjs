@@ -9,6 +9,7 @@ import { parseScoreboard } from '../src/sources/espn-boxscore.mjs';
 import { loadGameLogs, refreshGameLogs } from '../src/sources/gamelogs.mjs';
 import { addDays } from '../src/engine/weeks.mjs';
 import { loadInjuries } from '../src/sources/espn-injuries-load.mjs';
+import { isPublicLog } from '../src/sources/public-capture.mjs';
 
 const FOLDER = /^(\d{4}-\d\d-\d\d)-(\d\d)(\d\d)$/;
 const PAGE = /^(settings|team|team-tree|team-values|matchup|matchup-totals|matchup-next|transactions|fa-\d+)\.txt$/;
@@ -34,6 +35,12 @@ function readPages(dir) {
   return texts;
 }
 
+// A public capture (scripts/capture-public.mjs) says so on the first line of its _log.txt.
+function publicCapture(dir) {
+  const log = join(dir, '_log.txt');
+  return existsSync(log) && isPublicLog(readFileSync(log, 'utf8'));
+}
+
 async function main(args) {
   const noFetch = args.includes('--no-fetch');
   const rest = args.filter((a) => a !== '--no-fetch');
@@ -50,16 +57,23 @@ async function main(args) {
   const season = schedule.season ?? '2026-27';
   const logRoot = join('local', 'gamelogs');
   const warnings = [];
+  const coverageFile = join(logRoot, season, '_coverage.json');
+  const seasonStart = schedule.games.map((g) => g.date).sort()[0];
+  // A fresh checkout (a new cloud session) has no game logs, so it fetches the whole season once.
+  // After that, the last week is enough: refreshGameLogs merges it with the older days.
+  const before = existsSync(coverageFile) ? readJson(coverageFile) : null;
+  const fullSeason = !(before?.from <= seasonStart);
   if (!noFetch) {
     try {
-      await refreshGameLogs({ season, from: addDays(captureDate, -6), to: captureDate, root: logRoot });
+      await refreshGameLogs({ season, from: fullSeason ? seasonStart : addDays(captureDate, -6), to: captureDate, root: logRoot });
     } catch (err) {
       warnings.push(`ESPN refresh failed (${shortReason(err)}); using cached game logs`);
     }
   }
-  const coverageFile = join(logRoot, season, '_coverage.json');
   const coverage = existsSync(coverageFile) ? readJson(coverageFile) : null;
-  const seasonStart = schedule.games.map((g) => g.date).sort()[0];
+  if (!(coverage?.from <= seasonStart)) {
+    warnings.push(`game logs start ${coverage?.from ?? 'nowhere'}, after the season's first game (${seasonStart}); last-5 lines and season MPG miss the earlier games`);
+  }
   const logs = await loadGameLogs(season, seasonStart, captureDate, { root: logRoot });
   const boardFile = join('local', 'cache', 'espn', `scoreboard-${captureDate.replaceAll('-', '')}.json`);
   let scoreboard = null;
@@ -71,7 +85,7 @@ async function main(args) {
 
   const injuries = await loadInjuries({ noFetch });
 
-  const { markdown, status } = buildSheet({ folder, captureDate, captureTime: `${hh}:${mm}`, pages: parsePages(readPages(dir)),
+  const { markdown, status } = buildSheet({ folder, captureDate, captureTime: `${hh}:${mm}`, pages: parsePages(readPages(dir), { publicView: publicCapture(dir) }),
     ids, schedule, logs, priors, coverage, scoreboard, injuries, warnings });
   const out = join('local', 'sheets', `${folder}.md`);
   mkdirSync(join('local', 'sheets'), { recursive: true });

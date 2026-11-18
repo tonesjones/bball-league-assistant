@@ -6,8 +6,8 @@ const TIME_RE = /^[A-Z][a-z]{2} \d{1,2}, \d{1,2}:\d{2} (?:am|pm)$/;
 const PAGER_RE = /^Previous \d+ Next \d+$/;
 const isEnd = (s) => /^Yahoo Sports - NBC/.test(s) || PAGER_RE.test(s);
 
-export function parseTransactions(text, page = 'transactions') {
-  rejectSignedOut(text, page);
+export function parseTransactions(text, page = 'transactions', opts = {}) {
+  rejectSignedOut(text, page, opts);
   const L = load(text);
   const h = indexOf(page, L, (s) => s === 'Recent Transactions', 'the "Recent Transactions" heading');
   const f = indexOf(page, L, (s) => s === 'FAB Offers', 'the "FAB Offers" tab', h);

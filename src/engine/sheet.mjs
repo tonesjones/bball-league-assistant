@@ -7,7 +7,7 @@ import { trimComment } from '../sources/espn-injuries.mjs';
 import { estimateVolume } from './shooting-volume.mjs';
 import { absences, roleChangeReport } from './role-change.mjs';
 
-export const SHEET_VERSION = 3;
+export const SHEET_VERSION = 4;
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -33,6 +33,19 @@ const signed = (n, digits = 1) => (n == null ? 'unknown' : `${n > 0 ? '+' : ''}$
 const unavailable = (file, reason) => `UNAVAILABLE: ${file} (${reason})`;
 const table = (head, rows) => [`| ${head.join(' | ')} |`, `|${head.map(() => '---').join('|')}|`, ...rows.map((r) => `| ${r.join(' | ')} |`)];
 const dateList = (dates) => (dates.length ? dates.map(dayLabel).join(', ') : 'none');
+
+// The season's FAAB budget, from the league facts in AGENTS.md. Yahoo's settings page doesn't show it.
+export const FAAB_SEASON_BUDGET = 100;
+
+// Budget minus Tony's winning bids on the transactions page. The page lists only recent moves, so
+// a bid older than its oldest entry is missed and the real balance can be lower: "at most".
+export function faabEstimate(tx, tonyName, captureDate) {
+  const bids = tx.filter((t) => t.team === tonyName).flatMap((t) => t.moves.filter((m) => m.type === 'add' && m.faab != null).map((m) => m.faab));
+  const spent = bids.reduce((a, b) => a + b, 0);
+  const oldest = tx.map((t) => monthDayIso(t.time, captureDate)).filter(Boolean).sort()[0];
+  return `at most $${FAAB_SEASON_BUDGET - spent} ($${FAAB_SEASON_BUDGET} season budget minus $${spent} in ${bids.length} winning bid${bids.length === 1 ? '' : 's'} on transactions.txt`
+    + `${oldest ? `, which reaches back to ${oldest}` : ''}; older bids are not counted)`;
+}
 
 // "Nov 9, 1:26 am" or "Nov 17" to YYYY-MM-DD, with the year taken from the capture date.
 export function monthDayIso(text, captureDate) {
@@ -134,13 +147,15 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
   const week = matchup ? matchup.week + (later ? 1 : 0) : null;
   const slots = settings?.rosterPositions.filter((p) => !BENCH_SLOTS.includes(p.slot)) ?? null;
 
-  // A header-only team page (Chrome) leaves the roster to team-tree.txt.
+  // A header-only team page (Chrome) leaves the roster to team-tree.txt. A public capture reads
+  // Tony's team page like another team's: name and roster only.
   const tree = P['team-tree']?.ok ? P['team-tree'].value : null;
-  const rosterSource = team ? 'team.txt' : tree ? 'team-tree.txt' : matchup ? 'matchup.txt' : null;
+  const pub = P['team-public']?.ok ? P['team-public'].value : null;
+  const rosterSource = team ? 'team.txt' : pub ? 'team.txt (public view)' : tree ? 'team-tree.txt' : matchup ? 'matchup.txt' : null;
   const rosterMissing = [unavailable('team.txt', P.team.reason ?? ''), ...(P['team-tree'] ? [unavailable('team-tree.txt', P['team-tree'].reason)] : []),
     unavailable('matchup.txt', P.matchup.reason ?? '')].join('; ');
-  const tonyName = team?.name ?? tree?.name ?? matchup?.teamName ?? null;
-  const tony = (team?.roster ?? tree?.roster ?? matchup?.roster ?? null)?.map(ctx.enrich) ?? null;
+  const tonyName = team?.name ?? pub?.name ?? tree?.name ?? matchup?.teamName ?? null;
+  const tony = (team?.roster ?? pub?.roster ?? tree?.roster ?? matchup?.roster ?? null)?.map(ctx.enrich) ?? null;
 
   // The opponent for the processing week.
   let opp = null, oppMissing = null;
@@ -203,7 +218,10 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
     const values = P['team-values'] ?? { ok: false, reason: 'missing' };
     if (team) L.push(`- FAAB left: $${team.faabBalance} (team.txt)`);
     else if (values.ok) L.push(`- FAAB left: $${values.value.faabBalance} (team-values.txt)`);
-    else L.push(`- FAAB left: ${unavailable('team.txt', P.team.reason)}; ${unavailable('team-values.txt', values.reason)}`);
+    else {
+      L.push(`- FAAB left: ${unavailable('team.txt', P.team.reason)}; ${unavailable('team-values.txt', values.reason)}`);
+      if (P.transactions.ok && tonyName) L.push(`- FAAB estimate: ${faabEstimate(P.transactions.value, tonyName, captureDate)}`);
+    }
     if (tony && settings) {
       const ilSlots = settings.rosterPositions.filter((p) => isIL(p.slot)).reduce((n, p) => n + p.count, 0);
       const inIL = tony.filter((p) => isIL(p.slot));

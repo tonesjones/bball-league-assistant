@@ -8,15 +8,19 @@ import { parseTransactions } from './yahoo-pages/transactions.mjs';
 import { parseRosterTree } from './yahoo-pages/roster-tree.mjs';
 import { parseTeamValues } from './yahoo-pages/team-values.mjs';
 
-const PARSERS = {
-  settings: parseSettings,
-  team: parseTeam,
-  matchup: (t) => parseMatchup(t, 'matchup'),
-  'matchup-totals': (t) => parseMatchup(t, 'matchup-totals'),
-  'matchup-next': (t) => parseMatchup(t, 'matchup-next'),
-  transactions: parseTransactions,
+const parsers = (o) => ({
+  settings: (t) => parseSettings(t, 'settings', o),
+  team: (t) => parseTeam(t, 'team', o),
+  matchup: (t) => parseMatchup(t, 'matchup', o),
+  'matchup-totals': (t) => parseMatchup(t, 'matchup-totals', o),
+  'matchup-next': (t) => parseMatchup(t, 'matchup-next', o),
+  transactions: (t) => parseTransactions(t, 'transactions', o),
   'team-values': parseTeamValues,
-};
+});
+
+// The public view of Tony's team page lacks the owner-only lines (adds used, waiver budget, pending
+// claims), so it is read like another team's page: name and roster only.
+export const PUBLIC_TEAM_REASON = 'public view: no adds line, waiver budget or pending claims';
 
 export const shortReason = (err) => String(err?.message ?? err).replace(/: "[\s\S]*$/, '').replace(/^[\w/-]+: (?=line \d)/, '');
 
@@ -31,13 +35,19 @@ function parseOne(input, parse) {
   }
 }
 
+// publicView: the capture read the signed-out pages on purpose (scripts/capture-public.mjs).
 // texts: { settings, team, 'team-tree', 'team-values', matchup, 'matchup-totals', 'matchup-next', transactions, 'fa-N', 'teams/N', 'teams/N-tree' },
 // each a string or { reason } when the capture logged the page as skipped.
-export function parsePages(texts) {
+export function parsePages(texts, { publicView = false } = {}) {
+  const o = { publicView };
   const out = {};
-  for (const [key, parse] of Object.entries(PARSERS)) out[key] = parseOne(texts[key], parse);
+  for (const [key, parse] of Object.entries(parsers(o))) out[key] = parseOne(texts[key], parse);
+  if (publicView) {
+    out['team-public'] = parseOne(texts.team, (t) => parseOtherTeam(t, 'team', o));
+    if (!out.team.ok && out['team-public'].ok) out.team = { ok: false, reason: PUBLIC_TEAM_REASON };
+  }
   const numbered = (re) => Object.keys(texts).filter((k) => re.test(k)).sort((a, b) => Number(/\d+$/.exec(a)[0]) - Number(/\d+$/.exec(b)[0]));
-  out.fa = numbered(/^fa-\d+$/).map((k) => ({ file: `${k}.txt`, ...parseOne(texts[k], (t) => parseFreeAgents(t, k)) }));
+  out.fa = numbered(/^fa-\d+$/).map((k) => ({ file: `${k}.txt`, ...parseOne(texts[k], (t) => parseFreeAgents(t, k, o)) }));
   // A header-only team page (Chrome) comes with <page>-tree.txt, the roster table's accessibility tree.
   const activeSlots = out.settings.ok ? out.settings.value.rosterPositions.filter((p) => !['BN', 'IL', 'IL+', 'NA'].includes(p.slot))
     .flatMap((p) => Array(p.count).fill(p.slot)) : null;
@@ -45,7 +55,7 @@ export function parsePages(texts) {
     : { file: `${key}-tree.txt`, ...parseOne(texts[`${key}-tree`], (t) => parseRosterTree(t, `${key}-tree`, { activeSlots: key === 'team' ? activeSlots : null })) });
   out['team-tree'] = tree('team');
   out.teams = numbered(/^teams\/\d+$/).map((k) => {
-    const plain = { file: `${k}.txt`, teamNumber: Number(k.slice(6)), ...parseOne(texts[k], (t) => parseOtherTeam(t, k)) };
+    const plain = { file: `${k}.txt`, teamNumber: Number(k.slice(6)), ...parseOne(texts[k], (t) => parseOtherTeam(t, k, o)) };
     const t = plain.ok ? null : tree(k);
     return t?.ok ? { ...t, teamNumber: plain.teamNumber } : t ? { ...plain, reason: `${plain.reason}; ${t.file}: ${t.reason}` } : plain;
   });

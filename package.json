@@ -14,6 +14,7 @@
     "build:ids": "node scripts/build-ids.mjs",
     "match:ids": "node scripts/match-ids.mjs",
     "fetch:gamelogs": "node scripts/fetch-gamelogs.mjs",
-    "sheet": "node scripts/sheet.mjs"
+    "sheet": "node scripts/sheet.mjs",
+    "capture:public": "node scripts/capture-public.mjs"
   }
 }

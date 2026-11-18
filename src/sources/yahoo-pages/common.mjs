@@ -1,7 +1,8 @@
 // Shared helpers for the page parsers. Parsers are pure: text in, data out.
 
 export const SLOT_RE = /^(PG|SG|G|SF|PF|F|C|Util|BN|IL\+?|NA)$/;
-export const NAME_RE = /^(.+?)(INJ|GTD|DTD|SUSP|NA|O|P|Q|D)?(?:New Player Note|Player Note|No new player Notes)$/;
+// Some players carry a "Video Forecast" label between the name (or status) and the note link.
+export const NAME_RE = /^(.+?)(INJ|GTD|DTD|SUSP|NA|O|P|Q|D)?(?:Video Forecast)?(?:New Player Note|Player Note|No new player Notes)$/;
 export const TEAMPOS_RE = /^([A-Z]{2,3}) - ([A-Z]{1,2}(?:,[A-Z]{1,2})*)$/;
 export const CATEGORIES = ['FG%', 'FT%', '3PM', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'TO'];
 
@@ -16,7 +17,10 @@ export function load(text) {
     .filter((l) => l.s !== '');
 }
 
-export function rejectSignedOut(text, page) {
+// A public capture (scripts/capture-public.mjs) reads the signed-out view on purpose; its pages
+// carry the site's "Sign in" link, so the check is off for it.
+export function rejectSignedOut(text, page, { publicView = false } = {}) {
+  if (publicView) return;
   if (text.split(/\r?\n/).some((line) => line.trim() === 'Sign in')) {
     throw new Error(`signed out of Yahoo: ${page} page; sign in to Yahoo in the browser pane and refresh`);
   }
