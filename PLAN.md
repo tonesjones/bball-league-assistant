@@ -67,6 +67,13 @@ a three-line headline plus the full advice file. The one-week check runs until 2
 
 ## Parked
 
+- Shorter Candidates section (Tony, 2026-11-17). The section is about half the facts sheet (26 KB of
+  52 KB), all read by the main model each run. Filter it in code to rows with a usable start, a top
+  25 rank in any window, a watch-list flag or a starter out on his team, plus a count of the rest.
+  Revisit if the next few runs keep naming players Tony doesn't care about.
+- Chrome capture of the signed-in team page only. Every page except Tony's team page reads the same
+  signed out, so `yahoo-reader` could save just that page (FAAB, adds used, pending claims) and
+  `npm run capture:public` the rest, about 28 pages fewer to copy by hand.
 - Opponent category profile from past weeks. Tony judges adds by what the opponent is strong at.
   It needs a new read-only page in `src/sources/yahoo-urls.mjs`.
 - `npm run check:raw <dir>`: run each page parser on a saved capture and print ok or the error,
