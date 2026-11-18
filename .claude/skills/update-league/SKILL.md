@@ -50,6 +50,9 @@ longer exist.
    scripts in the session scratchpad, never in the repo.
 5. **Fill the previous `did`.** In `local/journal.md`, fill the `did` field of the previous line
    from the sheet's Transactions section (the playbook's journal rule).
+   **Cloud session:** no journal or past advice carries over, and Tony keeps no record. Read what he
+   did from the sheet's Transactions section: his adds and drops since the last run are his choice;
+   none means he held. Don't ask him for it. The lessons from past reviews are in the playbook.
 6. **Follow the playbook** from its first step to the journal line. On a Sunday night it switches
    to next week. On the last day of a close week it answers the last-day fit and the season claim
    separately.
