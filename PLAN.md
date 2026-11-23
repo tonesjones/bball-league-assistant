@@ -45,6 +45,10 @@ a three-line headline plus the full advice file. The one-week check runs until 2
 - [ ] **Cloud capture (decision C1), this pull request.** *Done when:* a new cloud session in
   Tony's Yahoo environment runs "update league" from `npm run capture:public` to the advice file
   without a rescue, and `npm test` passes.
+- [x] **Current ranks on the sheet (playbook v9, "Five ranks"), this pull request.** *Done when:*
+  `npm run sheet` on a capture with the `taken-<stat>-<n>.txt` pages prints Yahoo's season, L7 avg,
+  L7 tot, L14 avg and L14 tot "Current" ranks, with games, for every rostered player and
+  candidate, and `npm test` passes.
 - [ ] **One-week check.** Tony uses the playbook for each decision until 2026-11-21 and saves one
   journal line per decision, noting anything it got wrong. *Done when:* on 2026-11-21 Tony decides
   to keep, change or drop it, and each recorded error is either fixed in the playbook or listed

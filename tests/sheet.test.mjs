@@ -58,8 +58,8 @@ const rowOf = (text, name) => text.split('\n').find((l) => l.startsWith(`| ${nam
 
 test('the header gives the version, the claim date and the processing week', () => {
   const h = section(sheet().markdown, 1);
-  assert.equal(SHEET_VERSION, 5);
-  assert.match(h, /Sheet version: 5/);
+  assert.equal(SHEET_VERSION, 6);
+  assert.match(h, /Sheet version: 6/);
   assert.match(h, /Capture as of: 2026-11-11 23:00 \(Wed\)/);
   assert.match(h, /Games on 2026-11-11: 3 final, 0 not final/);
   assert.match(h, /First date a claim placed tonight can play: 2026-11-12 \(Thu\)/);
@@ -81,7 +81,7 @@ test('FG% comes from summed makes and attempts, banked plus projected', () => {
 
 test('last-5 lines use the last five games with minutes, and a player with no log says so', () => {
   const r = section(sheet().markdown, 5);
-  assert.match(rowOf(r, 'Ann Able'), /^\| Ann Able \| PG \| {2}\| PG \| 30\.0 \| 14\.0 \| 4\.0 \|.*\| 5\.0\/10\.0 \| 1\.0\/2\.0 \| 2\.0 \| {2}\| 30\.0 \| 2: Thu 11-12, Sat 11-14 \|$/);
+  assert.match(rowOf(r, 'Ann Able'), /^\| Ann Able \| PG \| {2}\| PG \| 30\.0 \| 14\.0 \| 4\.0 \|.*\| 5\.0\/10\.0 \| 1\.0\/2\.0 \| 2\.0 \| {2}\| 30\.0 \| 2: Thu 11-12, Sat 11-14 \|( {2}\|){5}$/);
   assert.match(rowOf(r, 'Bo Baker'), /\| 2 \| 22\.0 \|/);
   assert.match(rowOf(r, 'Gus Gray'), /\| no log \| {2}\|.*\| no log \| 1: Fri 11-13 \|$/);
   assert.doesNotMatch(rowOf(r, 'Gus Gray'), /0\.0/);
@@ -185,7 +185,7 @@ test('a public capture: roster from the public team page, FAAB estimated from wi
 test('candidates carry season and recent-window ranks, and hot-only players join the list', () => {
   const hotOnly = { name: 'Jo Hot', nbaTeam: 'HHH', positions: ['C'], status: null, waiverClears: null };
   const c = section(sheet({ hot: { l7a: [{ file: 'hot-l7a-1.txt', ...ok([hotOnly, freeAgents[1]]) }], l7t: [], l14a: [], l14t: [] } }).markdown, 6);
-  assert.match(c, /\| Season rank \| L7 avg \| L7 tot \| L14 avg \| L14 tot \|/);
+  assert.match(c, /\| Avail\. only Season \| Avail\. only L7 avg \| Avail\. only L7 tot \| Avail\. only L14 avg \| Avail\. only L14 tot \| Current \(all players\) Season \|/);
   // Ivy Ink: season rank 2, 7-day average rank 2.
   assert.match(c, /\| fa-1 \| Ivy Ink \| BBB \|  \| PG \| 2 \| 2 \|  \|  \|  \|/);
   // Hal Hill is in the season list only.
@@ -193,6 +193,32 @@ test('candidates carry season and recent-window ranks, and hot-only players join
   // Jo Hot is in the 7-day list only, after the season pages.
   assert.match(c, /\| hot-l7a-1 \| Jo Hot \| HHH \|  \| C \|  \| 1 \|  \|  \|  \|/);
   assert.match(c, /hot pages: L7 avg\)/);
+});
+
+test('Current (all players) ranks print for Tony\'s players and candidates, with games', () => {
+  const r = (name, nbaTeam, rank, gp) => ({ name, nbaTeam, rank, gp });
+  const ranks = {
+    season: [{ file: 'team.txt', ...ok([r('Ann Able', 'AAA', 236, 12), r('Bo Baker', 'BBB', null, 10)]) },
+      { file: 'fa-1.txt', ...ok([r('Hal Hill', 'HHH', 140, 11), r('Ivy Ink', 'BBB', 300, 9)]) }],
+    l7a: [{ file: 'taken-S_AL7-0.txt', ...ok([r('Ann Able', 'AAA', 76, 3)]) }, { file: 'hot-l7a-1.txt', ...ok([r('Hal Hill', 'HHH', 46, 4)]) }],
+    l7t: [{ file: 'taken-S_L7-0.txt', ...no('missing') }],
+    l14a: [{ file: 'taken-S_AL14-0.txt', ...ok([r('Ann Able', 'AAA', 175, 6)]) }],
+    l14t: [{ file: 'taken-S_L14-0.txt', ...ok([r('Ann Able', 'AAA', 100, 6)]) }],
+  };
+  const { markdown, status } = sheet({ ranks });
+  const roster = section(markdown, 5);
+  assert.match(roster, /\| Current \(all players\) Season \| Current \(all players\) L7 avg \| Current \(all players\) L7 tot \| Current \(all players\) L14 avg \| Current \(all players\) L14 tot \|/);
+  assert.match(rowOf(roster, 'Ann Able'), /\| 236 \(12 g\) \| 76 \(3 g\) \|  \| 175 \(6 g\) \| 100 \(6 g\) \|$/);
+  assert.match(rowOf(roster, 'Bo Baker'), /\| - \(10 g\) \|  \|  \|  \|  \|$/);
+  assert.match(roster, /UNAVAILABLE: taken-S_L7-0\.txt \(missing\)/);
+  assert.match(roster, /Current rank pages read for Tony's players: Season: team\.txt; L7 avg: taken-S_AL7-0\.txt; L7 tot: none;/);
+  assert.match(roster, /Missing a Current rank in at least one window: Ann Able, Bo Baker, Cy Cole, Di Dunn, Ed Eve\./);
+  assert.ok(status.includes('5. Roster lines: partial'));
+  // The opponent's table has no Current columns.
+  assert.match(rowOf(roster, 'Gus Gray'), /\| 1: Fri 11-13 \|$/);
+  const c = section(markdown, 6);
+  assert.match(rowOf(c, 'fa-1 | Hal Hill'), /\| 1 \|  \|  \|  \|  \| 140 \(11 g\) \| 46 \(4 g\) \|  \|  \|  \| W \(Nov 12\) \|/);
+  assert.match(c, /Current \(all players\): Yahoo's "Current" rank among all players/);
 });
 
 test('without hot pages the rank columns stay and say none were captured', () => {

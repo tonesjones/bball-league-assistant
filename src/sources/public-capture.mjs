@@ -1,4 +1,4 @@
-import { HOT_WINDOWS, HOT_PAGES } from './hot-lists.mjs';
+import { HOT_WINDOWS, HOT_PAGES, TAKEN_OFFSETS, takenFile } from './hot-lists.mjs';
 
 // Pure helpers for the public (signed-out) capture in scripts/capture-public.mjs. No I/O.
 // The league's pages are public, so a cloud session reads them without signing in to Yahoo.
@@ -35,6 +35,22 @@ export function laterPages(league, team, { week, teams, sunday }) {
     if (String(n) !== String(team)) pages.push({ file: `teams/${n}.txt`, url: `${BASE}/${league}/${n}` });
   }
   return pages;
+}
+
+// Taken-player pages, one list per recent window, in page order. The capture reads a window's
+// pages in order and stops it early once takenWindowDone says so.
+export function takenPages(league) {
+  return HOT_WINDOWS.map((w) => ({
+    stat: w.stat,
+    pages: TAKEN_OFFSETS.map((n) => ({ file: takenFile(w.stat, n), url: `${BASE}/${league}/players?status=T&pos=P&stat1=${w.stat}&sort=AR&sdir=1&count=${n}` })),
+  }));
+}
+
+// A window is done when every rostered player (name|team keys) has been seen on its pages, or when
+// a page came back short (fewer than 25 rows: the end of the list). Without a roster, read them all.
+export function takenWindowDone(rosterKeys, seenKeys, lastPageRows) {
+  if (lastPageRows != null && lastPageRows < 25) return true;
+  return rosterKeys.length > 0 && rosterKeys.every((k) => seenKeys.has(k));
 }
 
 // "Max Teams:<TAB>12" on the settings page.

@@ -7,6 +7,7 @@ import { parseFreeAgents } from './yahoo-pages/free-agents.mjs';
 import { parseTransactions } from './yahoo-pages/transactions.mjs';
 import { parseRosterTree } from './yahoo-pages/roster-tree.mjs';
 import { parseTeamValues } from './yahoo-pages/team-values.mjs';
+import { parseRankRows } from './yahoo-pages/ranks.mjs';
 import { HOT_WINDOWS } from './hot-lists.mjs';
 
 const parsers = (o) => ({
@@ -52,6 +53,16 @@ export function parsePages(texts, { publicView = false } = {}) {
   // Free agents ranked over recent windows (hot-<window>-N), same layout as the fa pages.
   out.hot = Object.fromEntries(HOT_WINDOWS.map((w) => [w.key,
     numbered(new RegExp(`^hot-${w.key}-\\d+$`)).map((k) => ({ file: `${k}.txt`, ...parseOne(texts[k], (t) => parseFreeAgents(t, k, o)) }))]));
+  // Yahoo's "Current" rank (among all players) per window. Season: the team page's rows (Tony's
+  // players) and the fa pages. Recent windows: the taken-<stat>-N pages (rostered players) and the
+  // hot pages (free agents).
+  const rankPages = (keys, layout) => keys.map((k) => ({ file: `${k}.txt`, ...parseOne(texts[k], (t) => parseRankRows(t, k, { ...o, layout })) }));
+  out.ranks = {
+    season: [...(texts.team == null ? [] : rankPages(['team'], 'team')), ...rankPages(numbered(/^fa-\d+$/), 'list')],
+    ...Object.fromEntries(HOT_WINDOWS.map((w) => [w.key, [
+      ...rankPages(numbered(new RegExp(`^taken-${w.stat}-\\d+$`)), 'list'),
+      ...rankPages(numbered(new RegExp(`^hot-${w.key}-\\d+$`)), 'list')]])),
+  };
   // A header-only team page (Chrome) comes with <page>-tree.txt, the roster table's accessibility tree.
   const activeSlots = out.settings.ok ? out.settings.value.rosterPositions.filter((p) => !['BN', 'IL', 'IL+', 'NA'].includes(p.slot))
     .flatMap((p) => Array(p.count).fill(p.slot)) : null;

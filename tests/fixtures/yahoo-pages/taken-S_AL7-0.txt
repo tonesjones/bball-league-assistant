@@ -1,0 +1,171 @@
+Title: Players | Fantasy Basketball | Yahoo! Sports
+URL: https://basketball.fantasysports.yahoo.com/nba/4242/players?status=T&pos=P&stat1=S_AL7&sort=AR&sdir=1&count=0
+Source element: <body>
+---
+Fixture Hoops Test 4242 (ID# 4242)
+Yahoo Sports Fantasy Basketball
+Player List
+
+Stats
+Last 7 Days (avg)
+
+Players
+
+Opp: 11/22
+
+Roster Status
+
+GP*
+
+Pre-Season
+
+Current
+
+% Ros
+
+MPG
+
+FGM/A*
+
+FG%
+
+FTM/A*
+
+FT%
+
+3PTM
+
+PTS
+
+REB
+
+AST
+
+ST
+
+BLK
+
+TO
+
+
+
+Jalen TestwoodPlayer Note
+OKC - PG
+
+W, 120-110 vs BBB
+
+@CCC
+
+Test Squad
+
+3
+
+12
+
+5
+
+97%
+
+33:13
+
+10.8/19.4
+
+.553
+
+7.9/9.0
+
+.879
+
+1.7
+
+31.1
+
+4.3
+
+6.6
+
+1.4
+
+0.8
+
+2.2
+
+
+Marcus Mockwell Jr.QPlayer Note
+TOR - SG,SF,PF
+
+vs DDD
+
+Alpha Test
+
+4
+
+36
+
+41
+
+96%
+
+32:04
+
+9.8/19.4
+
+.505
+
+5.7/6.4
+
+.892
+
+2.6
+
+27.9
+
+5.0
+
+3.1
+
+1.0
+
+0.4
+
+2.0
+
+
+Bo BenchwardINJPlayer Note
+BOS - C
+
+Fixture Five
+
+0
+
+140
+
+-
+
+40%
+
+-
+
+-/-
+
+-
+
+-/-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+Legends and Glossaries
