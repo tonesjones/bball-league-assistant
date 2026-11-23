@@ -15,6 +15,13 @@ export const HOT_PAGES = 2;
 
 export const HOT_FILE = /^hot-(l7a|l7t|l14a|l14t)-(\d+)$/;
 
+// Taken players ranked over each recent window (players?status=T&stat1=<stat>), read to find the
+// "Current" rank (among all players) of every rostered player. 12 teams x 16 players = 192 taken
+// players, so 8 pages of 25. Saved as taken-<stat>-<offset>.txt, for example taken-S_AL7-25.txt.
+export const TAKEN_OFFSETS = [0, 25, 50, 75, 100, 125, 150, 175];
+export const takenFile = (stat, offset) => `taken-${stat}-${offset}.txt`;
+export const TAKEN_FILE = /^taken-(S_AL7|S_L7|S_AL14|S_L14)-(\d+)$/;
+
 // 1-based rank of each player (name|team) across a window's pages, in page order.
 export function rankMap(pages) {
   const ranks = new Map();

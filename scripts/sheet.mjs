@@ -12,7 +12,7 @@ import { loadInjuries } from '../src/sources/espn-injuries-load.mjs';
 import { isPublicLog } from '../src/sources/public-capture.mjs';
 
 const FOLDER = /^(\d{4}-\d\d-\d\d)-(\d\d)(\d\d)$/;
-const PAGE = /^(settings|team|team-tree|team-values|matchup|matchup-totals|matchup-next|transactions|fa-\d+|hot-(?:l7a|l7t|l14a|l14t)-\d+)\.txt$/;
+const PAGE = /^(settings|team|team-tree|team-values|matchup|matchup-totals|matchup-next|transactions|fa-\d+|hot-(?:l7a|l7t|l14a|l14t)-\d+|taken-(?:S_AL7|S_L7|S_AL14|S_L14)-\d+)\.txt$/;
 const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
 
 // Pages the capture log marks as skipped or sign-in count as missing, with that reason.

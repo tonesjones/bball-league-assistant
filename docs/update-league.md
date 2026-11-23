@@ -82,6 +82,10 @@ The roster table lacks the FAAB balance. After saving `team-tree.txt`, the captu
 for "Waiver Budget" and saves the matched elements to `team-values.txt`, one element per line, as
 the tool printed them. The value looks like `Waiver Budget: $82`.
 
+A header-only `team.txt` has no roster rows, so the sheet has no season "Current" rank for
+Tony's players and says so in section 5 (`UNAVAILABLE: team.txt`); the window ranks still come
+from row 4c.
+
 The sheet reads this file only when `team.txt` did not parse. It takes FAAB from the first
 `Waiver Budget: $N` match and prints the source file next to it. With no match or no file, it
 prints `UNAVAILABLE`, naming both `team.txt` and `team-values.txt`. The team page's adds line
@@ -104,6 +108,7 @@ Replace `{L}` with `YAHOO_LEAGUE_ID`, `{T}` with `YAHOO_TEAM_ID`. Base URL:
 | 6 | `fa-3.txt` | same, `count=50` | |
 | 7 | `fa-4.txt` | same, `count=75` | |
 | 4b | `hot-<w>-1.txt`, `hot-<w>-2.txt` | same as row 4 plus `&stat1=<S>`, `count=0` and `count=25`, for each window `<w>`/`<S>`: `l7a`/`S_AL7` (last 7 days, average), `l7t`/`S_L7` (last 7 days, total), `l14a`/`S_AL14`, `l14t`/`S_L14` | Hot lists: the top 50 available players ranked over each recent window. The sheet shows each candidate's rank in every window and adds hot players missing from rows 4 to 7. Eight pages. |
+| 4c | `taken-<S>-<n>.txt` | `/{L}/players?status=T&pos=P&stat1=<S>&sort=AR&sdir=1&count=<n>`, for each `<S>` in `S_AL7`, `S_L7`, `S_AL14`, `S_L14` and `<n>` = 0, 25, 50, ... 175 | Taken players ranked over each recent window. The sheet reads Yahoo's "Current" rank (among all players) and games played for Tony's players from these, and the season Current rank from row 2. Read a window's pages in order and stop it once every player on Tony's roster has appeared, or at a page with fewer than 25 players. Up to 32 pages, usually far fewer. |
 | 8 | `transactions.txt` | `/{L}/transactions` | Adds used this week, other teams' moves, winning FAAB bids, and Tony's own adds and drops with dates. |
 | 9 | `teams/<N>.txt` | `/{L}/{N}`, for every team number `{N}` from 1 to the league size except `{T}` | Every other roster. The role-change watch list leaves out players on any league roster. In a 12-team league that is 11 more page reads. |
 | 10 | `matchup-next.txt` | `/{L}/matchup?mid1={T}&week={W+1}` | Sunday nights only. Next week's opponent and schedule, because a claim placed on Sunday night counts in next week. `{W+1}` is the week number in `matchup.txt` plus 1. |
@@ -142,6 +147,8 @@ environment's variables) or from `.env`. It opens the pages in the table above i
 Chromium, two seconds apart, and saves each page's text unchanged to
 `local/raw/<YYYY-MM-DD-HHmm>/`. The folder stamp uses Pacific time; pass `--tz <zone>` to change
 it. On a Pacific Sunday it also saves `matchup-next.txt` (`--sunday` or `--no-sunday` overrides).
+It reads each window of row 4c only until every player on Tony's roster (from `team.txt`) has
+appeared, or until a short page; when it cannot read the roster it reads all 32 pages.
 It prints the folder path and any skipped page. Then build the sheet as below.
 
 What it enforces, in code:

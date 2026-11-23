@@ -16,6 +16,7 @@ Parsers that turn the saved text of Yahoo Fantasy Basketball pages into plain da
 - `roster-tree.mjs:parseRosterTree(text, page?, {activeSlots?})`: reads a team page's roster table from Chrome's `read_page` accessibility-tree text, saved as `team-tree.txt` or `teams/N-tree.txt`. Chrome's plain page text of a team page holds only the header. Returns `{name, date, roster}`, where each roster entry is `{name, nbaTeam, positions, status, slot}`. On Tony's page a starter's slot is hidden, so `activeSlots` (the league's starting slots in order) assigns it. Without `activeSlots`, or on another team's page, `slot` is `null`.
 - `matchup.mjs:parseMatchup(text, page?)`: reads both the live layout and the totals layout. Returns `{week, days, teamName, opponentName, totals, volume, score, roster, opponentRoster}`.
 - `free-agents.mjs:parseFreeAgents(text, page?)`: returns an array of `{name, nbaTeam, positions, status, waiverClears}`.
+- `ranks.mjs:parseRankRows(text, page, {publicView?, layout?})`: Yahoo's "Current" rank (among all players, for the page's stat window) and games played, for each player row. `layout` is `'list'` (default: `fa-*`, `hot-*` and `taken-*` players pages) or `'team'` (a team page). Returns an array of `{name, nbaTeam, rank, gp}`; a `-` reads as `null`.
 - `transactions.mjs:parseTransactions(text, page?)`: returns an array of `{team, time, moves: [{player, nbaTeam, type, faab}]}`.
 - `common.mjs`: shared helpers and constants used by the parsers: `load`, `rejectSignedOut`, `end`, `fail`, `indexOf`, `stopIndex`, `player`, `num`, `SLOT_RE`, `NAME_RE`, `TEAMPOS_RE` and `CATEGORIES`.
 
@@ -34,6 +35,7 @@ Parsers that turn the saved text of Yahoo Fantasy Basketball pages into plain da
 - `team.mjs:parseTeam` throws if the W-L-T record, the weekly adds line or the waiver budget is missing or malformed. `parsePending` throws when the listed pending items exceed the stated count.
 - `roster-tree.mjs:parseRosterTree` throws when the roster caption (`<team>'s Players roster for <date>.`) is missing, a status word is unknown, a starter does not fit the slot its order implies, or there are more starters than starting slots. The tree holds no FAAB balance, adds count or pending claims.
 - `free-agents.mjs:parseFreeAgents` throws when it finds no player rows.
+- `ranks.mjs:parseRankRows` throws when the header has no "Current" or "Rank" column or there are no player rows. On a list page Current is the line before the `NN%` line and GP* three lines before it; a row without them throws. On a team page Current is the line before `NN%`, or without one the first whole number after GP* and the opponent; GP* is the first whole number after `TEAM - POS`.
 - `transactions.mjs:parseTransactions` throws "... not found" when the "Recent Transactions" heading or "FAB Offers" tab is missing, and "transactions layout not seen yet" on any other shape it does not recognize.
 
 ## Side Effects

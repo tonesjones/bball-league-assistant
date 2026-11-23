@@ -10,7 +10,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { checkUrl } from '../src/sources/yahoo-urls.mjs';
-import { firstPages, laterPages, teamCount, matchupWeek, stamp, PUBLIC_MODE_LINE } from '../src/sources/public-capture.mjs';
+import { firstPages, laterPages, takenPages, takenWindowDone, teamCount, matchupWeek, stamp, PUBLIC_MODE_LINE } from '../src/sources/public-capture.mjs';
+import { parseOtherTeam } from '../src/sources/yahoo-pages/team.mjs';
+import { parseRankRows } from '../src/sources/yahoo-pages/ranks.mjs';
 
 const SPACING_MS = 2000; // between page loads
 const RETRY_MS = 60000; // one retry per page, a minute later (docs/update-league.md)
@@ -103,6 +105,26 @@ async function main() {
     const week = matchupWeek(texts['matchup.txt']);
     const teams = teamCount(texts['settings.txt']);
     for (const p of laterPages(league, team, { week, teams, sunday })) await read(p);
+    // Taken-player pages: stop each window once all of Tony's rostered players are found.
+    let rosterKeys = [];
+    try {
+      rosterKeys = parseOtherTeam(texts['team.txt'] ?? '', 'team', { publicView: true }).roster.map((p) => `${p.name}|${p.nbaTeam}`);
+    } catch {
+      log.push('taken pages: Tony\'s roster not read from team.txt, so every taken page is read');
+    }
+    for (const w of takenPages(league)) {
+      const seen = new Set();
+      for (const p of w.pages) {
+        await read(p);
+        let rows = null;
+        try {
+          const parsed = parseRankRows(texts[p.file] ?? '', p.file, { publicView: true });
+          rows = parsed.length;
+          for (const r of parsed) seen.add(`${r.name}|${r.nbaTeam}`);
+        } catch { /* a skipped or unreadable page: keep reading the window */ }
+        if (takenWindowDone(rosterKeys, seen, rows)) break;
+      }
+    }
   } finally {
     writeFileSync(join(dir, '_log.txt'), log.join('\n') + '\n');
     await browser.close();

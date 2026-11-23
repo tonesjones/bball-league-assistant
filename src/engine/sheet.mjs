@@ -8,7 +8,7 @@ import { estimateVolume } from './shooting-volume.mjs';
 import { absences, roleChangeReport } from './role-change.mjs';
 import { HOT_WINDOWS, rankMap } from '../sources/hot-lists.mjs';
 
-export const SHEET_VERSION = 5;
+export const SHEET_VERSION = 6;
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -117,6 +117,8 @@ const lineCells = (p) => {
     `${l.fgm.toFixed(1)}/${l.fga.toFixed(1)}`, `${l.ftm.toFixed(1)}/${l.fta.toFixed(1)}`, l.to.toFixed(1), l.games < 5 ? String(l.games) : ''];
 };
 const LINE_HEAD = ['MIN', 'PTS', 'REB', 'AST', 'STL', 'BLK', '3PM', 'FGM/FGA', 'FTM/FTA', 'TO', 'G if <5'];
+// Windows for Yahoo's "Current" rank: the season, then the recent windows of the hot and taken pages.
+const CURRENT_WINDOWS = [{ key: 'season', label: 'Season' }, ...HOT_WINDOWS];
 const mpg = (p) => (p.seasonMpg == null ? 'no log' : p.seasonMpg.toFixed(1));
 
 export function buildSheet({ folder, captureDate, captureTime, pages, ids, schedule, logs, priors = [], coverage = null, scoreboard = null, injuries = null, warnings = [] }) {
@@ -337,19 +339,44 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
     section('4. Open-day grid', L);
   }
 
+  // Yahoo's "Current" rank: the rank among ALL players (rostered or not) for each window, with the
+  // games played in it. Season: team.txt and the fa pages. Windows: the taken-<stat>-N pages, then
+  // the hot pages. Not the same as the candidates' positions among available players.
+  const rankKey = (name, nbaTeam) => `${normalizeName(name)}|${nbaTeam}`;
+  const currentRanks = CURRENT_WINDOWS.map((w) => {
+    const m = new Map();
+    for (const pg of P.ranks?.[w.key] ?? []) if (pg.ok) for (const r of pg.value) if (!m.has(rankKey(r.name, r.nbaTeam))) m.set(rankKey(r.name, r.nbaTeam), r);
+    return m;
+  });
+  const currentCells = (p) => currentRanks.map((m) => {
+    const r = m.get(rankKey(p.name, p.nbaTeam));
+    return r ? `${r.rank ?? '-'} (${r.gp ?? '?'} g)` : '';
+  });
+  const CURRENT_HEAD = CURRENT_WINDOWS.map((w) => `Current (all players) ${w.label}`);
+  const CURRENT_NOTE = '- Current (all players): Yahoo\'s "Current" rank among all players, rostered or not, for the season and each recent window, then the games he played in that window. Blank: not on any captured page for that window. "-": Yahoo shows no rank.';
+
   // 5. Roster lines
   {
     const L = [];
-    const rosterTable = (list) => table(['Player', 'Slot', 'Status', 'Pos', ...LINE_HEAD, 'Season MPG', `Games ${claimDate.slice(5)} to ${sunday.slice(5)}`],
+    const rosterTable = (list, ranks = false) => table(['Player', 'Slot', 'Status', 'Pos', ...LINE_HEAD, 'Season MPG', `Games ${claimDate.slice(5)} to ${sunday.slice(5)}`, ...(ranks ? CURRENT_HEAD : [])],
       list.map((p) => [p.name, p.slot ?? '', p.status ?? '', p.positions.join(','), ...lineCells(p), mpg(p), (() => {
         const dates = days.filter((d) => ctx.teamsByDate.get(d)?.has(p.nbaTeam));
         return `${dates.length}: ${dateList(dates)}`;
-      })()]));
+      })(), ...(ranks ? currentCells(p) : [])]));
     L.push(`### Tony${tonyName ? ` (${tonyName})` : ''}`, '');
-    if (tony) L.push(`Roster from ${rosterSource}.`, '', ...rosterTable(tony)); else L.push(rosterMissing);
+    if (tony) L.push(`Roster from ${rosterSource}.`, '', ...rosterTable(tony, true)); else L.push(rosterMissing);
     L.push('', `### Opponent${opp ? ` (${opp.name})` : ''}`, '');
     if (opp) L.push(`Roster from ${opp.source}.`, '', ...rosterTable(opp.roster)); else L.push(oppMissing);
     L.push('', '- Last-5 line: mean of the player\'s last 5 games with minutes > 0 through the capture date. Season MPG is the mean over all his games with minutes this season through the capture date.');
+    if (tony) {
+      L.push(CURRENT_NOTE);
+      const pagesOf = (w) => (P.ranks?.[w.key] ?? []).filter((pg) => w.key === 'season' ? pg.file === 'team.txt' : pg.file.startsWith('taken-'));
+      const read = CURRENT_WINDOWS.map((w) => `${w.label}: ${pagesOf(w).filter((pg) => pg.ok).length ? pagesOf(w).filter((pg) => pg.ok).map((pg) => pg.file).join(', ') : 'none'}`);
+      L.push(`- Current rank pages read for Tony's players: ${read.join('; ')}.`);
+      for (const w of CURRENT_WINDOWS) for (const pg of pagesOf(w)) if (!pg.ok) L.push(unavailable(pg.file, pg.reason));
+      const missing = tony.filter((p) => currentCells(p).some((c) => c === '')).map((p) => p.name);
+      if (missing.length) L.push(`- Missing a Current rank in at least one window: ${missing.join(', ')}.`);
+    }
     section('5. Roster lines', L);
   }
 
@@ -385,15 +412,15 @@ export function buildSheet({ folder, captureDate, captureTime, pages, ids, sched
           usable = `${dates.length}: ${dateList(dates)}`;
         }
         rows.push([page.file.replace('.txt', ''), p.name, p.nbaTeam, p.status ?? '', p.positions.join(','),
-          rankCell(seasonRank, key), ...hotRanks.map((r) => rankCell(r, key)), raw.waiverClears ? `W (${raw.waiverClears})` : '',
+          rankCell(seasonRank, key), ...hotRanks.map((r) => rankCell(r, key)), ...currentCells(p), raw.waiverClears ? `W (${raw.waiverClears})` : '',
           `${games.length}: ${dateList(games)}`, usable, p.line ? p.line.min.toFixed(1) : 'no log', mpg(p), lastSeason(p.name), absenceCell(p.espnId), ...lineCells(p).slice(1)]);
       }
     }
     if (rows.length) {
-      L.push(...table(['Page', 'Player', 'Team', 'Status', 'Pos', 'Season rank', ...hot.map((w) => w.label), 'Waiver', `Games ${claimDate.slice(5)} to ${sunday.slice(5)}`,
+      L.push(...table(['Page', 'Player', 'Team', 'Status', 'Pos', 'Avail. only Season', ...hot.map((w) => `Avail. only ${w.label}`), ...CURRENT_HEAD, 'Waiver', `Games ${claimDate.slice(5)} to ${sunday.slice(5)}`,
         'Usable starts', 'L5 MIN', 'Season MPG', 'Last season MPG', 'Missed', ...LINE_HEAD.slice(1)], rows));
       const read = hot.filter((w) => w.pages.some((pg) => pg.ok)).map((w) => w.label);
-      L.push('', `- Ranks: Yahoo's rank among available players for the season (fa pages) and for each recent window (hot pages: ${read.length ? read.join(', ') : 'none captured'}). Blank: not in that list. avg ranks per-game averages, tot ranks totals, so tot also rewards games played.`,
+      L.push('', CURRENT_NOTE, `- Avail. only: position among available players only (not Yahoo's Current rank; never compare it with a rostered player's rank) for the season (fa pages) and for each recent window (hot pages: ${read.length ? read.join(', ') : 'none captured'}). Blank: not in that list. avg ranks per-game averages, tot ranks totals, so tot also rewards games played.`,
         '- Usable start: a game on a day when adding him to Tony\'s lineup (O, INJ, SUSP and NA left out) fills one more slot. A date before his waiver date does not count.',
         '- Last season MPG: from data/priors; blank when the priors have none.',
         "- Missed: of his current team's logged games, those he missed (no box-score row, or a DNP other than a coach's decision), then his latest absence and the team games since. A player new to his team counts its earlier games as missed.");

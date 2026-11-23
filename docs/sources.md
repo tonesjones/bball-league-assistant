@@ -32,6 +32,7 @@ Base URL: `https://basketball.fantasysports.yahoo.com/nba`
 | Opponent | `/{L}/{OPP}` | The opponent's roster, same layout as Tony's team. Not read by default: the matchup page lists both rosters with slots. |
 | Free agents | `/{L}/players?status=A&pos=P&sort=AR&sdir=1&count={0,25,50,75}` | 25 available players per page, ranked, with team, positions, status and stats. Four pages cover the top 100. |
 | Hot lists | `/{L}/players?status=A&pos=P&stat1={S_AL7,S_L7,S_AL14,S_L14}&sort=AR&sdir=1&count={0,25}` | The same free-agent table, ranked by Yahoo over the last 7 or 14 days, per-game average (`S_AL`) or total (`S_L`). The `stat1` options were read from the page's stat filter on 2026-11-17; it also offers 30-day, projection and standard-deviation windows. |
+| Taken players | `/{L}/players?status=T&pos=P&stat1={S_AL7,S_L7,S_AL14,S_L14}&sort=AR&sdir=1&count={0,25,...,175}` | Rostered players ranked over each recent window. The sheet reads each row's Yahoo "Current" rank (among all players) and GP*. A capture stops a window once all of Tony's players have appeared. |
 | Transactions | `/{L}/transactions` | Adds, drops, trades and winning FAAB bids. Empty before the first move ("No recent transactions"). |
 | Other teams | `/{L}/{1..12}` | Each team's roster, same layout as Tony's team. Read only for trade research Tony asks for. |
 | Draft | `/{L}/draft` | The league draft. Read only for trade research; no query parameters allowed. |

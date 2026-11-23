@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { firstPages, laterPages, teamCount, matchupWeek, stamp, isPublicLog, PUBLIC_MODE_LINE } from '../src/sources/public-capture.mjs';
+import { firstPages, laterPages, takenPages, takenWindowDone, teamCount, matchupWeek, stamp, isPublicLog, PUBLIC_MODE_LINE } from '../src/sources/public-capture.mjs';
 import { checkUrl } from '../src/sources/yahoo-urls.mjs';
 import { parsePages, PUBLIC_TEAM_REASON } from '../src/sources/sheet-pages.mjs';
 import { parseSettings } from '../src/sources/yahoo-pages/settings.mjs';
@@ -90,4 +90,31 @@ test('a public team page gives the roster only, without owner lines', () => {
   assert.ok(p['team-public'].value.roster.length > 0);
   assert.equal(parsePages({ team: pub }).team.ok, false);
   assert.equal(parsePages({ team: pub })['team-public'], undefined);
+});
+
+test('taken pages: four windows of eight pages, on the read-only list, named taken-<stat>-<offset>', () => {
+  const windows = takenPages('4242');
+  assert.deepEqual(windows.map((w) => w.stat), ['S_AL7', 'S_L7', 'S_AL14', 'S_L14']);
+  for (const w of windows) {
+    assert.deepEqual(w.pages.map((p) => p.file), [0, 25, 50, 75, 100, 125, 150, 175].map((n) => `taken-${w.stat}-${n}.txt`));
+    for (const p of w.pages) assert.equal(checkUrl(p.url, '4242'), null, p.url);
+  }
+  assert.ok(windows[0].pages[1].url.endsWith('/4242/players?status=T&pos=P&stat1=S_AL7&sort=AR&sdir=1&count=25'));
+});
+
+test('a taken window stops once every rostered player is found, or at a short page', () => {
+  const roster = ['A|AAA', 'B|BBB'];
+  assert.equal(takenWindowDone(roster, new Set(['A|AAA']), 25), false);
+  assert.equal(takenWindowDone(roster, new Set(['A|AAA', 'B|BBB', 'C|CCC']), 25), true);
+  assert.equal(takenWindowDone(roster, new Set(), 7), true);
+  assert.equal(takenWindowDone([], new Set(['A|AAA']), 25), false, 'no roster: read every page');
+});
+
+test('taken, fa and team pages parse into Current ranks per window', () => {
+  const p = parsePages({ team: signedOut(page('team')), 'fa-1': signedOut(page('fa-1')), 'taken-S_AL7-0': page('taken-S_AL7-0'), 'taken-S_AL7-25': page('taken-S_AL7-0') }, { publicView: true });
+  assert.deepEqual(p.ranks.season.map((x) => [x.file, x.ok]), [['team.txt', true], ['fa-1.txt', true]]);
+  assert.deepEqual(p.ranks.season[0].value[0], { name: 'Jalen Testwood', nbaTeam: 'OKC', rank: 8, gp: 41 });
+  assert.deepEqual(p.ranks.l7a.map((x) => x.file), ['taken-S_AL7-0.txt', 'taken-S_AL7-25.txt']);
+  assert.equal(p.ranks.l7a[0].value[1].rank, 41);
+  assert.deepEqual(p.ranks.l14t, []);
 });
