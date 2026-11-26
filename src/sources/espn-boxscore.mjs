@@ -13,7 +13,9 @@ export function parseBoxScore(json, { date, standardCode }) {
       for (const label of ['MIN', 'PTS', 'FG', '3PT', 'FT', 'REB', 'AST', 'TO', 'STL', 'BLK']) {
         if (positions[label] === undefined) throw new Error(`event ${eventId}: missing label ${label}`);
       }
-      const didNotPlay = (p) => p.didNotPlay || (/^--?$/.test(p.stats?.[positions.MIN] ?? '') && Boolean(p.reason)
+      // An inactive player can also carry placeholder minutes and zero stats with no reason (2026-11-25).
+      const didNotPlay = (p) => p.didNotPlay || (/^--?$/.test(p.stats?.[positions.MIN] ?? '')
+        && (Boolean(p.reason) || p.active === false)
         && labels.every((label, i) => label === 'MIN' || /^(?:0|0-0)$/.test(p.stats[i])));
       // ESPN shows a sub-minute appearance (2026-10-30) as placeholder minutes with a coach's-decision
       // reason but active and with real stats, so it is a played row with 0 minutes.

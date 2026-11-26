@@ -97,3 +97,17 @@ test('an active coach\'s-decision row with placeholder minutes and stats is a 0-
   player.stats[group.labels.indexOf('MIN')] = '';
   assert.throws(parse, /invalid minutes/);
 });
+
+test('an inactive row with placeholder minutes, zero stats and no reason is a DNP', () => {
+  const copy = structuredClone(summary);
+  copy.boxscore.players = [copy.boxscore.players[0]];
+  const group = copy.boxscore.players[0].statistics[0];
+  const player = { athlete: { id: 'example', displayName: 'Sample Inactive' }, starter: false, active: false,
+    didNotPlay: false, stats: group.labels.map((label) => label === 'MIN' ? '--' : ['FG', '3PT', 'FT'].includes(label) ? '0-0' : '0') };
+  group.athletes.push(player);
+  const row = parseBoxScore(copy, { date: '2026-01-15', standardCode: map }).at(-1);
+  assert.equal(row.didNotPlay, true);
+  assert.equal(row.min, null);
+  player.active = true;
+  assert.throws(() => parseBoxScore(copy, { date: '2026-01-15', standardCode: map }), /invalid minutes/);
+});
